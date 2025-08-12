@@ -1,0 +1,223 @@
+/* Navbar.module.css */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 250px;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  padding-top: 20px;
+  box-sizing: border-box;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+}
+
+.RuleLabel {
+  color: #7f8c8d;
+  font-size: 10px;
+  font-weight: bold;
+  margin-left: 30px;
+  text-align: left;
+  margin-top: 20px;
+  margin-bottom: 5px;
+}
+
+.employeeName {
+  color: #2c3e50;
+  font-size: 18px;
+  margin-bottom: 10px;
+  font-weight: 800;
+  text-transform:capitalize;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.linearBlank {
+  margin-bottom: 20px;
+  border-bottom: 2px solid #dcdcdc;
+  padding-bottom: 10px;
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+.navbarList {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.navbarItem {
+  width: 180px;
+  padding: 10px 20px;
+  margin: 5px 0;
+  border-radius: 20px;
+  transition: background 0.3s ease, transform 0.2s ease;
+  outline: none;
+  border: none;
+  box-shadow: none;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  background-color: transparent;
+}
+
+.navbarItem:hover {
+  background-color: #ecf0f1;
+  cursor: pointer;
+  transform: scale(1.05);
+}
+
+.navbarItem:active {
+  transform: scale(0.95);
+}
+
+.navbarLink {
+  color: #2c3e50;
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  transition: color 0.3s ease;
+}
+
+.navbarLink:hover {
+  color: #34495e;
+}
+
+.navbarItem.active {
+  background-color: #ececec;
+  color: #ffffff;
+}
+
+.navbarItem.active .navbarLink {
+  color: #656565;
+}
+
+/* Modal Styles */
+.modal {
+  background: linear-gradient(135deg, #ffffff, #f2f2f2);
+  padding: 2rem;
+  width: 90%;
+  max-width: 400px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  border: 3px solid #ac1f21;
+  animation: scaleIn 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  position: relative;
+  z-index: 100;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.modal:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+
+.overlay {
+  background: rgba(0, 0, 0, 0.6);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.4s ease;
+  z-index: 99;
+}
+
+.modal h2 {
+  font-size: 1.25rem;
+  color: #343a40;
+  margin-top: 2rem;
+  margin-bottom: 3rem;
+  letter-spacing: 0.05em;
+}
+
+.modalButtons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.confirmButton {
+  background: linear-gradient(135deg, #ac1f21, #d32f2f);
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.3s ease, transform 0.2s ease;
+  font-weight: bold;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.confirmButton:hover {
+  background: linear-gradient(135deg, #d32f2f, #ac1f21);
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+}
+
+.confirmButton:active {
+  transform: translateY(2px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+}
+
+.cancelButton {
+  background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  cursor: pointer;
+  border-radius: 8px;
+  margin-right: 40px;
+  transition: background 0.3s ease, transform 0.2s ease;
+  font-weight: bold;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.cancelButton:hover {
+  background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+}
+
+.cancelButton:active {
+  transform: translateY(2px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+      opacity: 0;
+  }
+  to {
+      opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  0% {
+      transform: scale(0.8);
+      opacity: 0;
+  }
+  100% {
+      transform: scale(1);
+      opacity: 1;
+  }
+}

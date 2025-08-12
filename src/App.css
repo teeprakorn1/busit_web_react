@@ -1,5 +1,7 @@
 .App {
   text-align: center;
+  transform-origin: center center;
+  animation: zoomInOut 2s ease-in-out infinite;
 }
 
 .App-logo {
@@ -34,5 +36,17 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes zoomInOut {
+  0% {
+    transform: scale(0.8);
+  }
+  50% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0.8);
   }
 }
