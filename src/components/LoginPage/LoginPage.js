@@ -6,12 +6,17 @@ import axios from "axios";
 import CustomModal from '../../services/CustomModal';
 import Logo from '../../assets/logo/busitplus_logo.png';
 
+const getApiUrl = (endpoint) => {
+  return `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}${endpoint}`;
+};
+
 function LoginPage() {
   const [Employee_Username, setUsername] = useState("");
   const [Employee_Password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -22,10 +27,8 @@ function LoginPage() {
 
   useEffect(() => {
     const savedUsername = localStorage.getItem("savedUsername");
-    const savedPassword = localStorage.getItem("savedPassword");
-    if (savedUsername && savedPassword) {
+    if (savedUsername) {
       setUsername(savedUsername);
-      setPassword(savedPassword);
       setRememberMe(true);
     }
   }, []);
@@ -42,46 +45,47 @@ function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isLoading) return;
 
     if (!Employee_Username || !Employee_Password) {
-      openLoginModal("กรุณากรอกชื่อผู้ใช้และรหัสผ่านของคุณให้ครบถ้วน.");
+      openLoginModal("กรุณากรอกชื่อผู้ใช้และรหัสผ่านให้ครบถ้วน.");
       return;
     }
 
+    setIsLoading(true);
     try {
       const response = await axios.post(
-        process.env.REACT_APP_BASE_URL + process.env.REACT_APP_API_LOGINL,
+        getApiUrl(process.env.REACT_APP_API_LOGIN_WEBSITE),
         {
-          Employee_Username,
-          Employee_Password,
+          Users_Email: Employee_Username,
+          Users_Password: Employee_Password
         }
       );
 
       const result = response.data;
-      if (result['status'] === true) {
-        const encrypted = encryptToken(result['token']);
-        localStorage.setItem('token', encrypted);
 
+      if (result.status === true) {
+        const encrypted = encryptToken(result.token);
+        localStorage.setItem('token', encrypted);
         if (rememberMe) {
           localStorage.setItem("savedUsername", Employee_Username);
-          localStorage.setItem("savedPassword", Employee_Password);
         } else {
           localStorage.removeItem("savedUsername");
-          localStorage.removeItem("savedPassword");
         }
-
         window.location.href = '/';
       } else {
-        openLoginModal(result['message']);
+        openLoginModal(result.message || "รหัสผ่านหรือชื่อผู้ใช้ไม่ถูกต้อง.");
       }
     } catch (error) {
-      openLoginModal("มีบางอย่างผิดพลาด โปรดลองอีกครั้ง.");
-    }
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleSubmit(e);
+      if (error.response) {
+        openLoginModal("รหัสผ่านหรือชื่อผู้ใช้ไม่ถูกต้อง.");
+      } else if (error.request) {
+        openLoginModal("ไม่สามารถเชื่อมต่อ server ได้ โปรดลองอีกครั้ง.");
+      } else {
+        openLoginModal("มีบางอย่างผิดพลาด โปรดลองอีกครั้ง.");
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -94,17 +98,17 @@ function LoginPage() {
           className={styles.loginLogo}
           alt="Company Logo"
         />
-
         <h1 className={styles.loginTitle}>Admin Login</h1>
 
-        <form className={styles.loginForm} onSubmit={handleSubmit}>
+        <form className={styles.loginForm} onSubmit={handleSubmit} autoComplete="on">
           <InputField
             id="username"
             type="text"
             placeholder="Email / Username"
             value={Employee_Username}
             onChange={(e) => setUsername(e.target.value)}
-            onKeyPress={handleKeyPress}
+            autoFocus
+            autoComplete="username"
           />
           <InputField
             id="password"
@@ -112,7 +116,7 @@ function LoginPage() {
             placeholder="Password"
             value={Employee_Password}
             onChange={(e) => setPassword(e.target.value)}
-            onKeyPress={handleKeyPress}
+            autoComplete="current-password"
           />
 
           <div className={styles.rememberMe}>
@@ -125,9 +129,12 @@ function LoginPage() {
             <label htmlFor="rememberMe">Remember Me</label>
           </div>
 
-
-          <button className={styles.loginButton} type="submit">
-            LOGIN
+          <button
+            className={styles.loginButton}
+            type="submit"
+            disabled={isLoading}
+          >
+            {isLoading ? "Loading..." : "LOGIN"}
           </button>
         </form>
       </div>

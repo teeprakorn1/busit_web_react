@@ -2,11 +2,11 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Modal from "react-modal";
 import styles from "./NavigationBar.module.css";
-import { ReactComponent as DashboardIcon } from "../../assets/icons/dashboard-icon.svg";
-import { ReactComponent as EmployeeIcon } from "../../assets/icons/employee-icon.svg";
-import { ReactComponent as AddAdminIcon } from "../../assets/icons/add-employee-icon.svg";
-import { ReactComponent as LogoutIcon } from "../../assets/icons/logout-icon.svg";
-import { decryptToken , encryptToken } from '../../utils/crypto';
+import { ReactComponent as DashboardIcon } from "../../assets/icons/users_icon.svg";
+import { ReactComponent as EmployeeIcon } from "../../assets/icons/users_icon.svg";
+import { ReactComponent as AddAdminIcon } from "../../assets/icons/users_icon.svg";
+import { ReactComponent as LogoutIcon } from "../../assets/icons/users_icon.svg";
+import { decryptToken, encryptToken } from '../../utils/crypto';
 import axios from "axios";
 
 Modal.setAppElement("#root");
@@ -22,58 +22,67 @@ const NavigationBar = () => {
   const [employee, setEmployee] = useState({ firstName: "", lastName: "", typeName: "" });
 
   const fetchEmployeeData = useCallback(async () => {
-    const storedToken = localStorage.getItem("token");
-    if (!storedToken) return navigate("/login");
+  const storedToken = localStorage.getItem("token");
+  if (!storedToken) return navigate("/login");
 
-    const decryptedToken = decryptToken(storedToken);
+  const decryptedToken = decryptToken(storedToken);
 
-    const sessionEmployee = sessionStorage.getItem("employee");
-    if (sessionEmployee) {
-      const decryptedEmployee = decryptToken(sessionEmployee);
-      setEmployee(JSON.parse(decryptedEmployee));
-      return;
-    }
+  const sessionEmployee = sessionStorage.getItem("employee");
+  if (sessionEmployee) {
+    const decryptedEmployee = decryptToken(sessionEmployee);
+    setEmployee(JSON.parse(decryptedEmployee));
+    return;
+  }
 
-    try {
-      const verifyResponse = await axios.post(
-        `${process.env.REACT_APP_BASE_URL}${process.env.REACT_APP_API_VERIFY}`,
-        {},
-        {
-          headers: { "Content-Type": "application/json", "x-access-token": decryptedToken },
-        }
-      );
-      if (!verifyResponse.data.status) throw new Error("Invalid token");
-      const { Employee_ID } = verifyResponse.data;
-      const typeid = verifyResponse.data.EmployeeType_ID;
-      const encryptedTypeId = encryptToken(typeid.toString());
-      localStorage.setItem("typeid", encryptedTypeId);
-      setTypeid(typeid);
-
-      const employeeResponse = await axios.get(
-        `${process.env.REACT_APP_BASE_URL}${process.env.REACT_APP_API_EMPLOYEE}${Employee_ID}`,
-        {
-          headers: { "Content-Type": "application/json", "x-access-token": decryptedToken },
-        }
-      );
-
-      if (employeeResponse.data.status) {
-        const employeeData = {
-          firstName: employeeResponse.data.Employee_FirstName,
-          lastName: employeeResponse.data.Employee_LastName,
-          typeName: employeeResponse.data.EmployeeType_Name,
-        };
-        setEmployee(employeeData);
-        const EmployeeDataEncrypted = encryptToken(JSON.stringify(employeeData));
-        sessionStorage.setItem("employee", EmployeeDataEncrypted);
-      } else {
-        setEmployee({ firstName: "Unknown", lastName: "Unknown", typeName: "Unknown" });
+  try {
+    const verifyResponse = await axios.post(
+      `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_API_VERIFY}`,
+      {},
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${decryptedToken}`,
+        },
       }
-    } catch (error) {
-      localStorage.removeItem("token");
-      sessionStorage.removeItem("employee");
-      navigate("/login");
+    );
+
+    if (!verifyResponse.data.status) throw new Error("Invalid token");
+
+    const { UsersType_ID } = verifyResponse.data;
+    const encryptedTypeId = encryptToken(UsersType_ID.toString());
+    localStorage.setItem("typeid", encryptedTypeId);
+    setTypeid(UsersType_ID);
+
+    const profileResponse = await axios.get(
+      `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_API_PROFILE_GET_WEBSITE}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${decryptedToken}`,
+        },
+      }
+    );
+
+    if (profileResponse.data.status) {
+      const profile = profileResponse.data;
+      const employeeData = {
+        firstName: profile.Teacher_FirstName || profile.Student_FirstName || "",
+        lastName: profile.Teacher_LastName || profile.Student_LastName || "",
+        typeName: profile.Users_Type_Table || "",
+      };
+      setEmployee(employeeData);
+
+      const EmployeeDataEncrypted = encryptToken(JSON.stringify(employeeData));
+      sessionStorage.setItem("employee", EmployeeDataEncrypted);
+    } else {
+      setEmployee({ firstName: "Unknown", lastName: "Unknown", typeName: "Unknown" });
     }
-  }, [navigate]);
+  } catch (error) {
+    localStorage.removeItem("token");
+    sessionStorage.removeItem("employee");
+    navigate("/login");
+  }
+}, [navigate]);
 
   useEffect(() => {
     fetchEmployeeData();
@@ -84,12 +93,12 @@ const NavigationBar = () => {
     if (Data_typeId.toString() !== "2" && path !== "/dashboard") {
       setAlertMessage("You do not have permission to access this page.");
       setIsAlertModalOpen(true);
-    }else{
+    } else {
       setActivePath(path);
       navigate(path);
     }
   };
-  
+
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -125,10 +134,10 @@ const NavigationBar = () => {
           <button onClick={handleLogout} className={styles.confirmButton}>YES</button>
         </div>
       </Modal>
-      <Modal 
-        isOpen={isAlertModalOpen} 
-        onRequestClose={() => setIsAlertModalOpen(false)} 
-        className={styles.modal} 
+      <Modal
+        isOpen={isAlertModalOpen}
+        onRequestClose={() => setIsAlertModalOpen(false)}
+        className={styles.modal}
         overlayClassName={styles.overlay}
       >
         <h2>{alertMessage}</h2>

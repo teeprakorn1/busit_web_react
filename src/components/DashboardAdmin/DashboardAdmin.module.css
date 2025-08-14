@@ -1,0 +1,19 @@
+/* DashboardEmployee.module.css */
+.container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .mainContent {
+    margin-left: 250px;
+    padding: 20px;
+    background-color: #f0f0f0;
+    flex-grow: 1;
+  }
+  
+  .heading {
+    margin-left: 20px;
+    color: #5E5E5E;
+  }
+  

@@ -4,36 +4,37 @@
 .loginPage {
   font-family: 'Noto Sans', sans-serif;
   background: linear-gradient(to bottom right, rgba(224,240,255,0.6), rgba(255,255,255,0.6)),
-              url('../../assets/images/login_background.jpg') no-repeat center center;
+              url('../../assets/images/login_background.jpg') no-repeat center top;
   background-size: cover;
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 1rem;
+  overflow-y: auto; /* สำหรับมือถือ scroll */
 }
 
 /* ====== Container ====== */
 .loginContainer {
-  background: rgba(255,255,255,0.97);
+  background: rgba(255,255,255,0.98);
   padding: clamp(2rem, 5vw, 3rem);
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgb(192, 207, 224);
-  width: clamp(300px, 90%, 420px);
-  max-width: 95%;
+  border-radius: 20px;
+  box-shadow: 0 12px 45px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 420px;
   text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
 }
 
 .loginContainer:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 15px 45px #a6bed8;
+  transform: translateY(-3px);
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
 }
 
 /* ====== Logo & Title ====== */
 .loginLogo {
-  width: clamp(70px, 15vw, 200px);
-  margin-bottom: 5px;
+  width: clamp(70px, 20vw, 150px);
+  margin-bottom: 15px;
 }
 
 .loginTitle {
@@ -48,18 +49,18 @@
 .loginForm {
   display: flex;
   flex-direction: column;
-  gap: clamp(0.8rem, 2.5vw, 1.2rem);
+  gap: clamp(0.8rem, 3vw, 1.2rem);
 }
 
-/* ====== Input Field ====== */
+/* ====== Input Field Wrapper ====== */
 .inputWrapper {
   position: relative;
   display: flex;
   align-items: center;
   background: #f7f9fc;
   border: 1.5px solid #d1d5db;
-  border-radius: 10px;
-  padding: clamp(0.5rem, 1vw, 0.65rem) clamp(0.6rem, 1.5vw, 0.75rem);
+  border-radius: 12px;
+  padding: clamp(0.5rem, 2vw, 0.7rem) clamp(0.6rem, 2vw, 0.8rem);
   transition: border 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
 }
 
@@ -70,21 +71,24 @@
 
 .inputWrapper:focus-within {
   border-color: #0069d2;
-  box-shadow: 0 0 0 3px rgba(0,105,210,0.15);
+  box-shadow: 0 0 0 4px rgba(0,105,210,0.15);
 }
 
+/* ====== Left Icon ====== */
 .inputIcon {
-  width: clamp(18px, 3vw, 22px);
-  height: clamp(18px, 3vw, 22px);
+  width: clamp(20px, 4vw, 24px);
+  height: clamp(20px, 4vw, 24px);
   margin-right: 0.75rem;
   opacity: 0.7;
+  flex-shrink: 0;
 }
 
+/* ====== Input Field ====== */
 .inputField {
   flex: 1;
   border: none;
   background: transparent;
-  font-size: clamp(0.9rem, 2vw, 1rem);
+  font-size: clamp(0.9rem, 3vw, 1.05rem);
   padding: 0.4rem 0;
   outline: none;
   color: #1e293b;
@@ -94,7 +98,7 @@
   color: #9ca3af;
 }
 
-/* ====== Password Toggle ====== */
+/* ====== Password Toggle Button ====== */
 .passwordToggle {
   position: absolute;
   right: 0.75rem;
@@ -106,6 +110,7 @@
   justify-content: center;
   opacity: 0.7;
   transition: opacity 0.2s ease;
+  padding: 0;
 }
 
 .passwordToggle:hover {
@@ -122,18 +127,17 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: clamp(0.8rem, 2vw, 1rem);
+  font-size: clamp(0.8rem, 2.5vw, 1rem);
   margin-top: 0.5rem;
   cursor: pointer;
 }
 
-/* ====== Remember Me Checkbox ====== */
 .rememberMe input[type="checkbox"] {
   appearance: none;
   width: clamp(18px, 2.5vw, 20px);
   height: clamp(18px, 2.5vw, 20px);
   border: 2px solid #d1d5db;
-  border-radius: 4px;
+  border-radius: 5px;
   background-color: white;
   cursor: pointer;
   display: flex;
@@ -185,23 +189,68 @@
   background: linear-gradient(135deg, #0069d2, #004e9f);
   color: white;
   border: none;
-  padding: clamp(0.75rem, 2vw, 0.95rem);
-  border-radius: 10px;
+  padding: clamp(0.7rem, 3vw, 0.95rem);
+  border-radius: 12px;
   font-weight: 700;
   cursor: pointer;
-  font-size: clamp(0.95rem, 2vw, 1.05rem);
+  font-size: clamp(1rem, 3vw, 1.1rem);
   transition: all 0.3s ease;
-  box-shadow: 0 5px 15px rgba(0,105,210,0.2);
-  margin-top: 1.2rem;
+  box-shadow: 0 6px 18px rgba(0,105,210,0.25);
+  margin-top: 1.5rem;
 }
 
 .loginButton:hover {
   background: linear-gradient(135deg, #004e9f, #0069d2);
   transform: translateY(-2px);
-  box-shadow: 0 10px 40px rgba(0, 32, 65, 0.3);
+  box-shadow: 0 10px 35px rgba(0, 32, 65, 0.25);
 }
 
 .loginButton:disabled {
   background: #cccccc;
   cursor: not-allowed;
+}
+
+/* ====== Responsive for Mobile ====== */
+@media (max-width: 480px) {
+  .loginContainer {
+    padding: 1.5rem 1rem;
+    width: 95%;
+  }
+
+  .loginTitle {
+    font-size: 1.5rem;
+  }
+
+  .loginButton {
+    font-size: 1rem;
+    padding: 0.65rem 0;
+  }
+
+  .rememberMe {
+    font-size: 0.85rem;
+  }
+
+  .inputField {
+    font-size: 0.95rem;
+  }
+
+  .loginLogo {
+    width: 90px;
+  }
+
+  .inputIcon {
+    width: 18px;
+    height: 18px;
+    margin-right: 0.5rem;
+  }
+
+  .eyeIcon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .loginContainer:hover {
+    transform: none;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  }
 }

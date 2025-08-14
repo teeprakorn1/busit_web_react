@@ -12,12 +12,16 @@ const InputField = ({ id, type, placeholder, value, onChange }) => {
 
   const isPassword = type === 'password';
   const inputType = isPassword && showPassword ? 'text' : type;
-
-  const iconSrc = isPassword ? LockIcon : UserIcon;
+  const leftIconSrc = isPassword ? LockIcon : UserIcon;
 
   return (
     <div className={styles.inputWrapper}>
-      <img loading="lazy" src={iconSrc} className={styles.inputIcon} alt="" />
+      <img
+        loading="lazy"
+        src={leftIconSrc}
+        className={styles.inputIcon}
+        alt=""
+      />
       <input
         type={inputType}
         id={id}
@@ -27,7 +31,12 @@ const InputField = ({ id, type, placeholder, value, onChange }) => {
         onChange={onChange}
       />
       {isPassword && (
-        <button type="button" className={styles.passwordToggle} onClick={togglePassword}>
+        <button
+          type="button"
+          className={styles.passwordToggle}
+          onClick={togglePassword}
+          tabIndex={-1}
+        >
           <img
             src={showPassword ? EyeOpenIcon : EyeClosedIcon}
             alt={showPassword ? "Hide password" : "Show password"}
