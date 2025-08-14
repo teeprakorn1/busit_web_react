@@ -36,16 +36,17 @@ const NavigationBar = () => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
-      if (!mobile) setIsCollapsed(false);
-      else setIsCollapsed(true);
+      setIsCollapsed(mobile);
     };
-
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Fetch admin data
+  const closeNavbarOnMobile = () => {
+    if (isMobile) setIsCollapsed(true);
+  };
+
   const fetchAdminData = useCallback(async () => {
     const storedToken = localStorage.getItem("token");
     if (!storedToken) return navigate("/login");
@@ -76,7 +77,6 @@ const NavigationBar = () => {
 
       if (profileResponse.data.status) {
         const profile = profileResponse.data;
-
         let firstName = "";
         let lastName = "";
         let typeName = "";
@@ -112,7 +112,6 @@ const NavigationBar = () => {
   useEffect(() => {
     fetchAdminData();
     setUsersTypeID(
-
       localStorage.getItem("UsersTypeID")
         ? decryptToken(localStorage.getItem("UsersTypeID"))
         : ""
@@ -130,8 +129,8 @@ const NavigationBar = () => {
     } else {
       setActivePath(path);
       navigate(path);
-      if (isMobile) setIsCollapsed(true);
     }
+    closeNavbarOnMobile(); // ปิด Navbar บนมือถือทุกครั้ง
   };
 
   const handleLogout = () => {
@@ -139,6 +138,12 @@ const NavigationBar = () => {
     sessionStorage.removeItem("admin");
     setIsLogoutModalOpen(false);
     navigate("/login");
+    closeNavbarOnMobile(); // ปิด Navbar
+  };
+
+  const handleLogoutClick = () => {
+    setIsLogoutModalOpen(true);
+    closeNavbarOnMobile(); // ปิด Navbar
   };
 
   return (
@@ -179,7 +184,7 @@ const NavigationBar = () => {
           </li>
         </ul>
 
-        <div className={styles.logoutButton} onClick={() => setIsLogoutModalOpen(true)}>
+        <div className={styles.logoutButton} onClick={handleLogoutClick}>
           <LogoutIcon width="20" height="20" />
           <span>Logout</span>
         </div>

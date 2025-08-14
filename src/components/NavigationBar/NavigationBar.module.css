@@ -214,7 +214,7 @@ body {
 }
 
 .confirmButton {
-    background: linear-gradient(135deg, #0069D2, #004e9f);
+    background: linear-gradient(135deg, #AC1F21, #D32F2F);
     color: white;
     border: none;
     padding: 0.8rem 2.2rem;
@@ -227,7 +227,7 @@ body {
 }
 
 .confirmButton:hover {
-    background: linear-gradient(135deg, #004e9f, #0069D2);
+    background: linear-gradient(135deg, #D32F2F, #AC1F21);
     transform: translateY(-2px);
     box-shadow: 0 12px 28px rgba(0, 105, 210, 0.3);
 }
