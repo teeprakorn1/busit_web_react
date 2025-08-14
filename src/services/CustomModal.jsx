@@ -4,12 +4,13 @@ import styles from "./CustomModal.module.css";
 
 Modal.setAppElement("#root");
 
-function CustomModal({ isOpen, message, onClose, icon }) {
+function CustomModal({ isOpen, message, onClose, icon, buttons }) {
   return (
     <Modal
       isOpen={isOpen}
-      onRequestClose={() => { }}
-      shouldCloseOnOverlayClick={false}
+      onRequestClose={onClose}
+      shouldCloseOnOverlayClick={true}
+      shouldCloseOnEsc={true}
       className={styles.modal}
       overlayClassName={styles.overlay}
     >
@@ -24,9 +25,21 @@ function CustomModal({ isOpen, message, onClose, icon }) {
       <h2>{message}</h2>
 
       <div className={styles.modalButtons}>
-        <button onClick={onClose} className={styles.confirmButton}>
-          ตกลง
-        </button>
+        {buttons && buttons.length > 0 ? (
+          buttons.map((btn, idx) => (
+            <button
+              key={idx}
+              onClick={btn.onClick}
+              className={btn.className || styles.confirmButton}
+            >
+              {btn.label}
+            </button>
+          ))
+        ) : (
+          <button onClick={onClose} className={styles.confirmButton}>
+            ตกลง
+          </button>
+        )}
       </div>
     </Modal>
   );

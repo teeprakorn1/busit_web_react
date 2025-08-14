@@ -1,149 +1,205 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import Modal from "react-modal";
 import styles from "./NavigationBar.module.css";
-import { ReactComponent as DashboardIcon } from "../../assets/icons/users_icon.svg";
-import { ReactComponent as EmployeeIcon } from "../../assets/icons/users_icon.svg";
-import { ReactComponent as AddAdminIcon } from "../../assets/icons/users_icon.svg";
-import { ReactComponent as LogoutIcon } from "../../assets/icons/users_icon.svg";
-import { decryptToken, encryptToken } from '../../utils/crypto';
+import Logo from "../../assets/logo/busitplus_logo.png";
+import { ReactComponent as MainIcon } from "../../assets/icons/main_icon.svg";
+import { ReactComponent as DashboardIcon } from "../../assets/icons/dashboard_icon.svg";
+import { ReactComponent as ActivityIcon } from "../../assets/icons/activity_icon.svg";
+import { ReactComponent as EditActivityIcon } from "../../assets/icons/edit_activity_icon.svg";
+import { ReactComponent as NameRegisterIcon } from "../../assets/icons/name_register_icon.svg";
+import { ReactComponent as StaffManagementIcon } from "../../assets/icons/staff_management_icon.svg";
+import { ReactComponent as LogoutIcon } from "../../assets/icons/logout_icon.svg";
+import { ReactComponent as MenuIcon } from "../../assets/icons/menu_icon.svg";
+import { decryptToken, encryptToken } from "../../utils/crypto";
+import CustomModal from "../../services/CustomModal";
 import axios from "axios";
 
-Modal.setAppElement("#root");
+const getApiUrl = (endpoint) => {
+  return `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}${endpoint}`;
+};
 
 const NavigationBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
   const [activePath, setActivePath] = useState(location.pathname);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
-  const [Data_typeId, setTypeid] = useState("");
-  const [employee, setEmployee] = useState({ firstName: "", lastName: "", typeName: "" });
+  const [Data_UsersTypeID, setUsersTypeID] = useState("");
+  const [Admin, setAdmin] = useState({ firstName: "", lastName: "", typeName: "" });
 
-  const fetchEmployeeData = useCallback(async () => {
-  const storedToken = localStorage.getItem("token");
-  if (!storedToken) return navigate("/login");
-
-  const decryptedToken = decryptToken(storedToken);
-
-  const sessionEmployee = sessionStorage.getItem("employee");
-  if (sessionEmployee) {
-    const decryptedEmployee = decryptToken(sessionEmployee);
-    setEmployee(JSON.parse(decryptedEmployee));
-    return;
-  }
-
-  try {
-    const verifyResponse = await axios.post(
-      `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_API_VERIFY}`,
-      {},
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${decryptedToken}`,
-        },
-      }
-    );
-
-    if (!verifyResponse.data.status) throw new Error("Invalid token");
-
-    const { UsersType_ID } = verifyResponse.data;
-    const encryptedTypeId = encryptToken(UsersType_ID.toString());
-    localStorage.setItem("typeid", encryptedTypeId);
-    setTypeid(UsersType_ID);
-
-    const profileResponse = await axios.get(
-      `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_API_PROFILE_GET_WEBSITE}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${decryptedToken}`,
-        },
-      }
-    );
-
-    if (profileResponse.data.status) {
-      const profile = profileResponse.data;
-      const employeeData = {
-        firstName: profile.Teacher_FirstName || profile.Student_FirstName || "",
-        lastName: profile.Teacher_LastName || profile.Student_LastName || "",
-        typeName: profile.Users_Type_Table || "",
-      };
-      setEmployee(employeeData);
-
-      const EmployeeDataEncrypted = encryptToken(JSON.stringify(employeeData));
-      sessionStorage.setItem("employee", EmployeeDataEncrypted);
-    } else {
-      setEmployee({ firstName: "Unknown", lastName: "Unknown", typeName: "Unknown" });
-    }
-  } catch (error) {
-    localStorage.removeItem("token");
-    sessionStorage.removeItem("employee");
-    navigate("/login");
-  }
-}, [navigate]);
+  const [isCollapsed, setIsCollapsed] = useState(window.innerWidth <= 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
-    fetchEmployeeData();
-    setTypeid(localStorage.getItem("typeid") ? decryptToken(localStorage.getItem("typeid")) : "");
-  }, [fetchEmployeeData]);
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (!mobile) setIsCollapsed(false);
+      else setIsCollapsed(true);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Fetch admin data
+  const fetchAdminData = useCallback(async () => {
+    const storedToken = localStorage.getItem("token");
+    if (!storedToken) return navigate("/login");
+
+    const decryptedToken = decryptToken(storedToken);
+    const sessionAdmin = sessionStorage.getItem("admin");
+    if (sessionAdmin) {
+      setAdmin(JSON.parse(decryptToken(sessionAdmin)));
+      return;
+    }
+
+    try {
+      const verifyResponse = await axios.post(
+        getApiUrl(process.env.REACT_APP_API_VERIFY),
+        {},
+        { headers: { Authorization: `Bearer ${decryptedToken}` } }
+      );
+
+      if (!verifyResponse.data.status) throw new Error("Invalid token");
+      const { UsersType_ID } = verifyResponse.data;
+      localStorage.setItem("UsersTypeID", encryptToken(UsersType_ID.toString()));
+      setUsersTypeID(UsersType_ID);
+
+      const profileResponse = await axios.get(
+        getApiUrl(process.env.REACT_APP_API_ADMIN_GET_WEBSITE),
+        { headers: { Authorization: `Bearer ${decryptedToken}` } }
+      );
+
+      if (profileResponse.data.status) {
+        const profile = profileResponse.data;
+
+        let firstName = "";
+        let lastName = "";
+        let typeName = "";
+
+        if (profile.Users_Type_Table === "teacher") {
+          firstName = profile.Teacher_FirstName || "";
+          lastName = profile.Teacher_LastName || "";
+          typeName = "Teacher";
+        } else if (profile.Users_Type_Table === "staff") {
+          firstName = profile.Staff_FirstName || "";
+          lastName = profile.Staff_LastName || "";
+          typeName = "Staff";
+        } else {
+          firstName = profile.Staff_FirstName || profile.Teacher_FirstName || "Unknown";
+          lastName = profile.Staff_LastName || profile.Teacher_LastName || "Unknown";
+          typeName = profile.Users_Type_Table || "Unknown";
+        }
+
+        const adminData = { firstName, lastName, typeName };
+        setAdmin(adminData);
+        sessionStorage.setItem("admin", encryptToken(JSON.stringify(adminData)));
+      } else {
+        setAdmin({ firstName: "Unknown", lastName: "Unknown", typeName: "Unknown" });
+      }
+    } catch (err) {
+      console.error(err);
+      localStorage.removeItem("token");
+      sessionStorage.removeItem("admin");
+      navigate("/login");
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    fetchAdminData();
+    setUsersTypeID(
+
+      localStorage.getItem("UsersTypeID")
+        ? decryptToken(localStorage.getItem("UsersTypeID"))
+        : ""
+    );
+  }, [fetchAdminData]);
+
+  useEffect(() => {
+    setActivePath(location.pathname);
+  }, [location.pathname]);
 
   const handleNavigation = (path) => {
-    if (Data_typeId.toString() !== "2" && path !== "/dashboard") {
-      setAlertMessage("You do not have permission to access this page.");
+    if (Data_UsersTypeID.toString() !== "1" && path !== "/dashboard") {
+      setAlertMessage("คุณไม่มีสิทธิ์เข้าถึงหน้านี้.");
       setIsAlertModalOpen(true);
     } else {
       setActivePath(path);
       navigate(path);
+      if (isMobile) setIsCollapsed(true);
     }
   };
 
-
   const handleLogout = () => {
     localStorage.removeItem("token");
-    sessionStorage.removeItem("employee");
+    sessionStorage.removeItem("admin");
     setIsLogoutModalOpen(false);
     navigate("/login");
   };
 
   return (
-    <div className={styles.navbar}>
-      <div className={styles.RuleLabel}>{employee.typeName}</div>
-      <div className={styles.employeeName}>{employee.firstName} {employee.lastName}</div>
-      <div className={styles.linearBlank}></div>
-      <ul className={styles.navbarList}>
-        <li className={`${styles.navbarItem} ${activePath === "/dashboard" ? styles.active : ""}`} onClick={() => handleNavigation("/dashboard")}>
-          <span className={styles.navbarLink}><DashboardIcon width="20" height="20" /> Dashboard</span>
-        </li>
-        <li className={`${styles.navbarItem} ${activePath === "/employee" ? styles.active : ""}`} onClick={() => handleNavigation("/employee")}>
-          <span className={styles.navbarLink}><EmployeeIcon width="20" height="20" /> Employee</span>
-        </li>
-        <li className={`${styles.navbarItem} ${activePath === "/add-admin" ? styles.active : ""}`} onClick={() => handleNavigation("/add-admin")}>
-          <span className={styles.navbarLink}><AddAdminIcon width="20" height="20" /> Add Admin</span>
-        </li>
-        <li className={styles.navbarItem} onClick={() => setIsLogoutModalOpen(true)}>
-          <span className={styles.navbarLink}><LogoutIcon width="20" height="20" /> Logout</span>
-        </li>
-      </ul>
-
-      <Modal isOpen={isLogoutModalOpen} onRequestClose={() => setIsLogoutModalOpen(false)} className={styles.modal} overlayClassName={styles.overlay}>
-        <h2>Are you sure you want to logout?</h2>
-        <div className={styles.modalButtons}>
-          <button onClick={() => setIsLogoutModalOpen(false)} className={styles.cancelButton}>NO</button>
-          <button onClick={handleLogout} className={styles.confirmButton}>YES</button>
+    <>
+      {isMobile && (
+        <div className={styles.hamburger} onClick={() => setIsCollapsed(!isCollapsed)}>
+          <MenuIcon width="24" height="24" />
         </div>
-      </Modal>
-      <Modal
+      )}
+
+      <div className={`${styles.navbar} ${isCollapsed ? styles.collapsed : styles.expanded}`}>
+        <div className={styles.logoContainer} onClick={() => handleNavigation("/MainAdmin")}>
+          <img src={Logo} alt="BusitPlus Logo" className={styles.logo} />
+        </div>
+
+        <div className={styles.RuleLabel}>{Admin.typeName}</div>
+        <div className={styles.adminName}>{Admin.firstName} {Admin.lastName}</div>
+        <div className={styles.linearBlank}></div>
+
+        <ul className={styles.navbarList}>
+          <li className={`${styles.navbarItem} ${activePath === "/MainAdmin" ? styles.active : ""}`} onClick={() => handleNavigation("/MainAdmin")}>
+            <span className={styles.navbarLink}><MainIcon width="20" height="20" /> หน้าหลัก</span>
+          </li>
+          <li className={`${styles.navbarItem} ${activePath === "/DashboardAdmin" ? styles.active : ""}`} onClick={() => handleNavigation("/DashboardAdmin")}>
+            <span className={styles.navbarLink}><DashboardIcon width="20" height="20" /> แดชบอร์ด</span>
+          </li>
+          <li className={`${styles.navbarItem} ${activePath === "/ActivityAdmin" ? styles.active : ""}`} onClick={() => handleNavigation("/ActivityAdmin")}>
+            <span className={styles.navbarLink}><ActivityIcon width="20" height="20" /> สร้างกิจกรรม</span>
+          </li>
+          <li className={`${styles.navbarItem} ${activePath === "/EditActivityAdmin" ? styles.active : ""}`} onClick={() => handleNavigation("/EditActivityAdmin")}>
+            <span className={styles.navbarLink}><EditActivityIcon width="20" height="20" /> จัดการกิจกรรม</span>
+          </li>
+          <li className={`${styles.navbarItem} ${activePath === "/NameRegisterAdmin" ? styles.active : ""}`} onClick={() => handleNavigation("/NameRegisterAdmin")}>
+            <span className={styles.navbarLink}><NameRegisterIcon width="20" height="20" /> ทะเบียนรายชื่อ</span>
+          </li>
+          <li className={`${styles.navbarItem} ${activePath === "/StaffManagementAdmin" ? styles.active : ""}`} onClick={() => handleNavigation("/StaffManagementAdmin")}>
+            <span className={styles.navbarLink}><StaffManagementIcon width="20" height="20" /> หน้าจัดการเจ้าหน้าที่</span>
+          </li>
+        </ul>
+
+        <div className={styles.logoutButton} onClick={() => setIsLogoutModalOpen(true)}>
+          <LogoutIcon width="20" height="20" />
+          <span>Logout</span>
+        </div>
+      </div>
+
+      <CustomModal
+        isOpen={isLogoutModalOpen}
+        message="คุณแน่ใจว่าต้องการออกจากระบบใช่ไหม?"
+        buttons={[
+          { label: "ไม่", onClick: () => setIsLogoutModalOpen(false), className: styles.cancelButton },
+          { label: "ยืนยัน", onClick: handleLogout, className: styles.confirmButton }
+        ]}
+      />
+
+      <CustomModal
         isOpen={isAlertModalOpen}
-        onRequestClose={() => setIsAlertModalOpen(false)}
-        className={styles.modal}
-        overlayClassName={styles.overlay}
-      >
-        <h2>{alertMessage}</h2>
-        <button onClick={() => setIsAlertModalOpen(false)} className={styles.confirmButton}>OK</button>
-      </Modal>
-    </div>
+        message={alertMessage}
+        onClose={() => setIsAlertModalOpen(false)}
+      />
+    </>
   );
 };
 

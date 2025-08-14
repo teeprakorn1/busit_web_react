@@ -11,8 +11,8 @@ const getApiUrl = (endpoint) => {
 };
 
 function LoginPage() {
-  const [Employee_Username, setUsername] = useState("");
-  const [Employee_Password, setPassword] = useState("");
+  const [Admin_Username, setUsername] = useState("");
+  const [Admin_Password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
@@ -47,7 +47,7 @@ function LoginPage() {
     e.preventDefault();
     if (isLoading) return;
 
-    if (!Employee_Username || !Employee_Password) {
+    if (!Admin_Username || !Admin_Password) {
       openLoginModal("กรุณากรอกชื่อผู้ใช้และรหัสผ่านให้ครบถ้วน.");
       return;
     }
@@ -57,8 +57,8 @@ function LoginPage() {
       const response = await axios.post(
         getApiUrl(process.env.REACT_APP_API_LOGIN_WEBSITE),
         {
-          Users_Email: Employee_Username,
-          Users_Password: Employee_Password
+          Users_Email: Admin_Username,
+          Users_Password: Admin_Password
         }
       );
 
@@ -68,7 +68,7 @@ function LoginPage() {
         const encrypted = encryptToken(result.token);
         localStorage.setItem('token', encrypted);
         if (rememberMe) {
-          localStorage.setItem("savedUsername", Employee_Username);
+          localStorage.setItem("savedUsername", Admin_Username);
         } else {
           localStorage.removeItem("savedUsername");
         }
@@ -105,7 +105,7 @@ function LoginPage() {
             id="username"
             type="text"
             placeholder="Email / Username"
-            value={Employee_Username}
+            value={Admin_Username}
             onChange={(e) => setUsername(e.target.value)}
             autoFocus
             autoComplete="username"
@@ -114,7 +114,7 @@ function LoginPage() {
             id="password"
             type="password"
             placeholder="Password"
-            value={Employee_Password}
+            value={Admin_Password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
           />

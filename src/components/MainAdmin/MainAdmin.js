@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../NavigationBar/NavigationBar';
-import styles from './DashboardAdmin.module.css';
+import styles from './MainAdmin.module.css';
 
-function DashboardAdmin() {
+function MainAdmin() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
 
@@ -24,10 +24,10 @@ function DashboardAdmin() {
           ${isMobile ? styles.mobileContent : ""} 
           ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}
       >
-        <h1 className={styles.heading}>แดชบอร์ด</h1>
+        <h1 className={styles.heading}>หน้าหลัก</h1>
       </div>
     </div>
   );
 }
 
-export default DashboardAdmin;
+export default MainAdmin;
