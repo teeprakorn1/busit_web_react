@@ -5,7 +5,7 @@ import Logo from "../../assets/logo/busitplus_logo.png";
 import { ReactComponent as MainIcon } from "../../assets/icons/main_icon.svg";
 import { ReactComponent as DashboardIcon } from "../../assets/icons/dashboard_icon.svg";
 import { ReactComponent as ActivityIcon } from "../../assets/icons/activity_icon.svg";
-import { ReactComponent as EditActivityIcon } from "../../assets/icons/edit_activity_icon.svg";
+import { ReactComponent as ApplicationIcon } from "../../assets/icons/application_icon.svg";
 import { ReactComponent as NameRegisterIcon } from "../../assets/icons/name_register_icon.svg";
 import { ReactComponent as StaffManagementIcon } from "../../assets/icons/staff_management_icon.svg";
 import { ReactComponent as LogoutIcon } from "../../assets/icons/logout_icon.svg";
@@ -130,7 +130,7 @@ const NavigationBar = () => {
       setActivePath(path);
       navigate(path);
     }
-    closeNavbarOnMobile(); // ปิด Navbar บนมือถือทุกครั้ง
+    closeNavbarOnMobile();
   };
 
   const handleLogout = () => {
@@ -138,12 +138,12 @@ const NavigationBar = () => {
     sessionStorage.removeItem("admin");
     setIsLogoutModalOpen(false);
     navigate("/login");
-    closeNavbarOnMobile(); // ปิด Navbar
+    closeNavbarOnMobile();
   };
 
   const handleLogoutClick = () => {
     setIsLogoutModalOpen(true);
-    closeNavbarOnMobile(); // ปิด Navbar
+    closeNavbarOnMobile();
   };
 
   return (
@@ -155,7 +155,7 @@ const NavigationBar = () => {
       )}
 
       <div className={`${styles.navbar} ${isCollapsed ? styles.collapsed : styles.expanded}`}>
-        <div className={styles.logoContainer} onClick={() => handleNavigation("/MainAdmin")}>
+        <div className={styles.logoContainer} onClick={() => handleNavigation("/main")}>
           <img src={Logo} alt="BusitPlus Logo" className={styles.logo} />
         </div>
 
@@ -164,23 +164,23 @@ const NavigationBar = () => {
         <div className={styles.linearBlank}></div>
 
         <ul className={styles.navbarList}>
-          <li className={`${styles.navbarItem} ${activePath === "/MainAdmin" ? styles.active : ""}`} onClick={() => handleNavigation("/MainAdmin")}>
+          <li className={`${styles.navbarItem} ${activePath === "/main" ? styles.active : ""}`} onClick={() => handleNavigation("/main")}>
             <span className={styles.navbarLink}><MainIcon width="20" height="20" /> หน้าหลัก</span>
           </li>
-          <li className={`${styles.navbarItem} ${activePath === "/DashboardAdmin" ? styles.active : ""}`} onClick={() => handleNavigation("/DashboardAdmin")}>
+          <li className={`${styles.navbarItem} ${activePath === "/dashboard" ? styles.active : ""}`} onClick={() => handleNavigation("/dashboard")}>
             <span className={styles.navbarLink}><DashboardIcon width="20" height="20" /> แดชบอร์ด</span>
           </li>
-          <li className={`${styles.navbarItem} ${activePath === "/ActivityAdmin" ? styles.active : ""}`} onClick={() => handleNavigation("/ActivityAdmin")}>
-            <span className={styles.navbarLink}><ActivityIcon width="20" height="20" /> สร้างกิจกรรม</span>
+          <li className={`${styles.navbarItem} ${activePath === "/activity" ? styles.active : ""}`} onClick={() => handleNavigation("/activity")}>
+            <span className={styles.navbarLink}><ActivityIcon width="20" height="20" /> จัดการกิจกรรม</span>
           </li>
-          <li className={`${styles.navbarItem} ${activePath === "/EditActivityAdmin" ? styles.active : ""}`} onClick={() => handleNavigation("/EditActivityAdmin")}>
-            <span className={styles.navbarLink}><EditActivityIcon width="20" height="20" /> จัดการกิจกรรม</span>
+          <li className={`${styles.navbarItem} ${activePath === "/application" ? styles.active : ""}`} onClick={() => handleNavigation("/application")}>
+            <span className={styles.navbarLink}><ApplicationIcon width="20" height="20" /> จัดการแอปพลิเคชัน</span>
           </li>
-          <li className={`${styles.navbarItem} ${activePath === "/NameRegisterAdmin" ? styles.active : ""}`} onClick={() => handleNavigation("/NameRegisterAdmin")}>
+          <li className={`${styles.navbarItem} ${activePath === "/name-register" ? styles.active : ""}`} onClick={() => handleNavigation("/name-register")}>
             <span className={styles.navbarLink}><NameRegisterIcon width="20" height="20" /> ทะเบียนรายชื่อ</span>
           </li>
-          <li className={`${styles.navbarItem} ${activePath === "/StaffManagementAdmin" ? styles.active : ""}`} onClick={() => handleNavigation("/StaffManagementAdmin")}>
-            <span className={styles.navbarLink}><StaffManagementIcon width="20" height="20" /> หน้าจัดการเจ้าหน้าที่</span>
+          <li className={`${styles.navbarItem} ${activePath === "/staff-management" ? styles.active : ""}`} onClick={() => handleNavigation("/staff-management")}>
+            <span className={styles.navbarLink}><StaffManagementIcon width="20" height="20" /> จัดการเจ้าหน้าที่</span>
           </li>
         </ul>
 
