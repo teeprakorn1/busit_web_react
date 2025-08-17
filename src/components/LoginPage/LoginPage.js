@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styles from './LoginPage.module.css';
 import InputField from './InputField';
-import { encryptToken } from '../../utils/crypto';
 import axios from "axios";
 import CustomModal from '../../services/CustomModal';
 import Logo from '../../assets/logo/busitplus_logo.png';
@@ -59,14 +58,13 @@ function LoginPage() {
         {
           Users_Email: Admin_Username,
           Users_Password: Admin_Password
-        }
+        },
+        { withCredentials: true }
       );
 
       const result = response.data;
 
       if (result.status === true) {
-        const encrypted = encryptToken(result.token);
-        localStorage.setItem('token', encrypted);
         if (rememberMe) {
           localStorage.setItem("savedUsername", Admin_Username);
         } else {

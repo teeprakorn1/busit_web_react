@@ -10,7 +10,6 @@ import { ReactComponent as NameRegisterIcon } from "../../assets/icons/name_regi
 import { ReactComponent as StaffManagementIcon } from "../../assets/icons/staff_management_icon.svg";
 import { ReactComponent as LogoutIcon } from "../../assets/icons/logout_icon.svg";
 import { ReactComponent as MenuIcon } from "../../assets/icons/menu_icon.svg";
-import { decryptToken, encryptToken } from "../../utils/crypto";
 import CustomModal from "../../services/CustomModal";
 import axios from "axios";
 
@@ -23,14 +22,16 @@ const NavigationBar = () => {
   const location = useLocation();
 
   const [activePath, setActivePath] = useState(location.pathname);
+  const [isCollapsed, setIsCollapsed] = useState(window.innerWidth <= 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  const [Data_UsersType, setUsersType] = useState("");
+  const [isLoadingUserType, setIsLoadingUserType] = useState(true);
+  const [Admin, setAdmin] = useState({ firstName: "", lastName: "", typeName: "" });
+
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
-  const [Data_UsersTypeID, setUsersTypeID] = useState("");
-  const [Admin, setAdmin] = useState({ firstName: "", lastName: "", typeName: "" });
-
-  const [isCollapsed, setIsCollapsed] = useState(window.innerWidth <= 768);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
     const handleResize = () => {
@@ -48,13 +49,12 @@ const NavigationBar = () => {
   };
 
   const fetchAdminData = useCallback(async () => {
-    const storedToken = localStorage.getItem("token");
-    if (!storedToken) return navigate("/login");
-
-    const decryptedToken = decryptToken(storedToken);
     const sessionAdmin = sessionStorage.getItem("admin");
     if (sessionAdmin) {
-      setAdmin(JSON.parse(decryptToken(sessionAdmin)));
+      setAdmin(JSON.parse(sessionAdmin));
+      const UsersType = sessionStorage.getItem("UsersType");
+      if (UsersType) setUsersType(UsersType);
+      setIsLoadingUserType(false);
       return;
     }
 
@@ -62,17 +62,18 @@ const NavigationBar = () => {
       const verifyResponse = await axios.post(
         getApiUrl(process.env.REACT_APP_API_VERIFY),
         {},
-        { headers: { Authorization: `Bearer ${decryptedToken}` } }
+        { withCredentials: true }
       );
 
       if (!verifyResponse.data.status) throw new Error("Invalid token");
-      const { UsersType_ID } = verifyResponse.data;
-      localStorage.setItem("UsersTypeID", encryptToken(UsersType_ID.toString()));
-      setUsersTypeID(UsersType_ID);
+
+      const { Users_Type } = verifyResponse.data;
+      setUsersType(Users_Type);
+      sessionStorage.setItem("UsersType", Users_Type);
 
       const profileResponse = await axios.get(
         getApiUrl(process.env.REACT_APP_API_ADMIN_GET_WEBSITE),
-        { headers: { Authorization: `Bearer ${decryptedToken}` } }
+        { withCredentials: true }
       );
 
       if (profileResponse.data.status) {
@@ -97,25 +98,20 @@ const NavigationBar = () => {
 
         const adminData = { firstName, lastName, typeName };
         setAdmin(adminData);
-        sessionStorage.setItem("admin", encryptToken(JSON.stringify(adminData)));
+        sessionStorage.setItem("admin", JSON.stringify(adminData));
       } else {
         setAdmin({ firstName: "Unknown", lastName: "Unknown", typeName: "Unknown" });
       }
     } catch (err) {
       console.error(err);
-      localStorage.removeItem("token");
-      sessionStorage.removeItem("admin");
       navigate("/login");
+    } finally {
+      setIsLoadingUserType(false);
     }
   }, [navigate]);
 
   useEffect(() => {
     fetchAdminData();
-    setUsersTypeID(
-      localStorage.getItem("UsersTypeID")
-        ? decryptToken(localStorage.getItem("UsersTypeID"))
-        : ""
-    );
   }, [fetchAdminData]);
 
   useEffect(() => {
@@ -123,20 +119,58 @@ const NavigationBar = () => {
   }, [location.pathname]);
 
   const handleNavigation = (path) => {
-    if (Data_UsersTypeID.toString() !== "1" && path !== "/dashboard") {
+  if (isLoadingUserType) {
+    setAlertMessage("กำลังโหลดข้อมูลผู้ใช้ โปรดลองอีกครั้งในภายหลัง.");
+    setIsAlertModalOpen(true);
+    return closeNavbarOnMobile();
+  }
+
+  const userType = Data_UsersType?.trim().toLowerCase() || "";
+
+  const allowedPaths = ["/main", "/dashboard", "/activity", "/application", "/name-register", "/staff-management"];
+  if (!allowedPaths.includes(path)) {
+    setAlertMessage("หน้าที่คุณเข้าถึงไม่ถูกต้อง.");
+    setIsAlertModalOpen(true);
+    return closeNavbarOnMobile();
+  }
+
+  if (userType === "staff") {
+    setActivePath(path);
+    navigate(path);
+    return closeNavbarOnMobile();
+  }
+
+  const restrictedForTeacher = ["/activity", "/staff-management", "/application"];
+  if (userType === "teacher" && restrictedForTeacher.includes(path)) {
+    setAlertMessage("คุณไม่มีสิทธิ์เข้าถึงหน้านี้.");
+    setIsAlertModalOpen(true);
+    return closeNavbarOnMobile();
+  }
+
+
+  if (userType !== "teacher" && userType !== "staff") {
+    const allowedForOther = ["/main", "/dashboard", "/name-register"];
+    if (!allowedForOther.includes(path)) {
       setAlertMessage("คุณไม่มีสิทธิ์เข้าถึงหน้านี้.");
       setIsAlertModalOpen(true);
-    } else {
-      setActivePath(path);
-      navigate(path);
+      return closeNavbarOnMobile();
     }
-    closeNavbarOnMobile();
-  };
+  }
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    sessionStorage.removeItem("admin");
+  setActivePath(path);
+  navigate(path);
+  closeNavbarOnMobile();
+};
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(getApiUrl(process.env.REACT_APP_API_LOGOUT_WEBSITE), {}, { withCredentials: true });
+    } catch (err) {
+      console.error(err);
+    }
     setIsLogoutModalOpen(false);
+    sessionStorage.removeItem("admin");
+    sessionStorage.removeItem("UsersType");
     navigate("/login");
     closeNavbarOnMobile();
   };
