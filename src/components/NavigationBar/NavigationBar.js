@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { format } from 'date-fns';
 import styles from "./NavigationBar.module.css";
 import Logo from "../../assets/logo/busitplus_logo.png";
+import { encryptValue, decryptValue } from "../../utils/crypto";
 import { ReactComponent as MainIcon } from "../../assets/icons/main_icon.svg";
 import { ReactComponent as DashboardIcon } from "../../assets/icons/dashboard_icon.svg";
 import { ReactComponent as ActivityIcon } from "../../assets/icons/activity_icon.svg";
@@ -51,67 +52,93 @@ const NavigationBar = () => {
   };
 
   const fetchAdminData = useCallback(async () => {
-    const sessionAdmin = sessionStorage.getItem("admin");
-    if (sessionAdmin) {
-      setAdmin(JSON.parse(sessionAdmin));
-      const UsersType = sessionStorage.getItem("UsersType");
-      if (UsersType) setUsersType(UsersType);
-      setIsLoadingUserType(false);
-      return;
-    }
+  // ดึงค่า session ก่อน decrypt
+  const sessionAdminRaw = sessionStorage.getItem("admin");
+  let sessionAdmin = null;
 
+  if (sessionAdminRaw) {
     try {
-      const verifyResponse = await axios.post(
-        getApiUrl(process.env.REACT_APP_API_VERIFY),
-        {},
-        { withCredentials: true }
-      );
-
-      if (!verifyResponse.data.status) throw new Error("Invalid token");
-
-      const { Users_Type, Users_Email } = verifyResponse.data;
-      setUsersType(Users_Type);
-      setEmail(Users_Email);
-      sessionStorage.setItem("UsersType", Users_Type);
-
-      const profileResponse = await axios.get(
-        getApiUrl(process.env.REACT_APP_API_ADMIN_GET_WEBSITE),
-        { withCredentials: true }
-      );
-
-      if (profileResponse.data.status) {
-        const profile = profileResponse.data;
-        let firstName = "";
-        let lastName = "";
-        let typeName = "";
-
-        if (profile.Users_Type_Table === "teacher") {
-          firstName = profile.Teacher_FirstName || "";
-          lastName = profile.Teacher_LastName || "";
-          typeName = "Teacher";
-        } else if (profile.Users_Type_Table === "staff") {
-          firstName = profile.Staff_FirstName || "";
-          lastName = profile.Staff_LastName || "";
-          typeName = "Staff";
-        } else {
-          firstName = profile.Staff_FirstName || profile.Teacher_FirstName || "Unknown";
-          lastName = profile.Staff_LastName || profile.Teacher_LastName || "Unknown";
-          typeName = profile.Users_Type_Table || "Unknown";
-        }
-
-        const adminData = { firstName, lastName, typeName };
-        setAdmin(adminData);
-        sessionStorage.setItem("admin", JSON.stringify(adminData));
-      } else {
-        setAdmin({ firstName: "Unknown", lastName: "Unknown", typeName: "Unknown" });
-      }
+      // decrypt และ parse JSON
+      sessionAdmin = JSON.parse(decryptValue(sessionAdminRaw));
     } catch (err) {
-      console.error(err);
-      navigate("/login");
-    } finally {
-      setIsLoadingUserType(false);
+      console.error("Failed to decrypt session admin:", err);
+      sessionAdmin = null;
+      sessionStorage.removeItem("admin"); // ลบข้อมูลที่เสียหาย
     }
-  }, [navigate]);
+  }
+
+  if (sessionAdmin) {
+    setAdmin(sessionAdmin);
+
+    const sessionUsersTypeRaw = sessionStorage.getItem("UsersType");
+    if (sessionUsersTypeRaw) {
+      try {
+        const usersType = decryptValue(sessionUsersTypeRaw);
+        setUsersType(usersType);
+      } catch (err) {
+        console.error("Failed to decrypt UsersType:", err);
+        sessionStorage.removeItem("UsersType");
+      }
+    }
+
+    setIsLoadingUserType(false);
+    return;
+  }
+
+  // ถ้าไม่มี session หรือ decrypt ล้มเหลว ให้ fetch จาก server
+  try {
+    const verifyResponse = await axios.post(
+      getApiUrl(process.env.REACT_APP_API_VERIFY),
+      {},
+      { withCredentials: true }
+    );
+
+    if (!verifyResponse.data.status) throw new Error("Invalid token");
+
+    const { Users_Type, Users_Email } = verifyResponse.data;
+    setUsersType(Users_Type);
+    setEmail(Users_Email);
+    sessionStorage.setItem("UsersType", encryptValue(Users_Type));
+
+    const profileResponse = await axios.get(
+      getApiUrl(process.env.REACT_APP_API_ADMIN_GET_WEBSITE),
+      { withCredentials: true }
+    );
+
+    if (profileResponse.data.status) {
+      const profile = profileResponse.data;
+      let firstName = "";
+      let lastName = "";
+      let typeName = "";
+
+      if (profile.Users_Type_Table === "teacher") {
+        firstName = profile.Teacher_FirstName || "";
+        lastName = profile.Teacher_LastName || "";
+        typeName = "Teacher";
+      } else if (profile.Users_Type_Table === "staff") {
+        firstName = profile.Staff_FirstName || "";
+        lastName = profile.Staff_LastName || "";
+        typeName = "Staff";
+      } else {
+        firstName = profile.Staff_FirstName || profile.Teacher_FirstName || "Unknown";
+        lastName = profile.Staff_LastName || profile.Teacher_LastName || "Unknown";
+        typeName = profile.Users_Type_Table || "Unknown";
+      }
+
+      const adminData = { firstName, lastName, typeName };
+      setAdmin(adminData);
+
+      sessionStorage.setItem("admin", encryptValue(JSON.stringify(adminData)));
+    } else {
+      setAdmin({ firstName: "Unknown", lastName: "Unknown", typeName: "Unknown" });
+    }
+  } catch (err) {
+    console.error(err);
+    navigate("/login");
+  } finally {
+    setIsLoadingUserType(false);
+  }
+}, [navigate]);
 
   useEffect(() => {
     fetchAdminData();
@@ -188,6 +215,7 @@ const NavigationBar = () => {
     setIsLogoutModalOpen(false);
     sessionStorage.removeItem("admin");
     sessionStorage.removeItem("UsersType");
+    sessionStorage.removeItem("userSession");
     navigate("/login");
     closeNavbarOnMobile();
   };

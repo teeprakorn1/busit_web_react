@@ -104,6 +104,7 @@ function LoginPage() {
 
     const success = await loginUser(Admin_Username, Admin_Password, rememberMe);
     if (success) {
+      sessionStorage.setItem("userSession", true);
       window.location.href = '/';
     }
   };
