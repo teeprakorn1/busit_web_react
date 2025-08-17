@@ -52,18 +52,16 @@ const NavigationBar = () => {
   };
 
   const fetchAdminData = useCallback(async () => {
-  // ดึงค่า session ก่อน decrypt
   const sessionAdminRaw = sessionStorage.getItem("admin");
   let sessionAdmin = null;
 
   if (sessionAdminRaw) {
     try {
-      // decrypt และ parse JSON
       sessionAdmin = JSON.parse(decryptValue(sessionAdminRaw));
     } catch (err) {
       console.error("Failed to decrypt session admin:", err);
       sessionAdmin = null;
-      sessionStorage.removeItem("admin"); // ลบข้อมูลที่เสียหาย
+      sessionStorage.removeItem("admin");
     }
   }
 
@@ -85,7 +83,6 @@ const NavigationBar = () => {
     return;
   }
 
-  // ถ้าไม่มี session หรือ decrypt ล้มเหลว ให้ fetch จาก server
   try {
     const verifyResponse = await axios.post(
       getApiUrl(process.env.REACT_APP_API_VERIFY),

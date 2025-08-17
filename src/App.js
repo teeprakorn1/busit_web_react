@@ -1,8 +1,8 @@
 import './App.css';
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import NotFoundPage from './components/NotFoundPage/NotFoundPage';
 
-// Pages
 import Login from './components/LoginPage/LoginPage';
 import MainAdmin from './components/MainAdmin/MainAdmin';
 import DashboardAdmin from './components/DashboardAdmin/DashboardAdmin';
@@ -11,18 +11,8 @@ import ApplicationAdmin from './components/ApplicationAdmin/ApplicationAdmin';
 import NameRegisterAdmin from './components/NameRegisterAdmin/NameRegisterAdmin';
 import StaffManagementAdmin from './components/StaffManagementAdmin/StaffManagementAdmin';
 
-// 404 Page
-function NotFound() {
-  return (
-    <div style={{ textAlign: 'center', marginTop: '50px' }}>
-      <h1>404</h1>
-      <p>Page not found</p>
-      <button onClick={() => window.location.href = '/'} style={{ padding: '10px 20px', marginTop: '20px', cursor: 'pointer' }}>
-        Go to Main
-      </button>
-    </div>
-  );
-}
+import GetTimestampAdmin from './components/ApplicationAdmin/GetTimestampAdmin/GetTimestampAdmin';
+import StudentNameAll from './components/NameRegisterAdmin/StudentNameAll/StudentNameAll';
 
 const ProtectedRoute = ({ children }) => {
   const isLoggedIn = sessionStorage.getItem("userSession");
@@ -45,8 +35,14 @@ function App() {
         <Route path='/name-register' element={<ProtectedRoute><NameRegisterAdmin /></ProtectedRoute>} />
         <Route path='/staff-management' element={<ProtectedRoute><StaffManagementAdmin /></ProtectedRoute>} />
 
+        {/* Application Redirects */}
+        <Route path='/application/get-timestamp' element={<ProtectedRoute><GetTimestampAdmin /></ProtectedRoute>} />
+
+        {/* Name Register Redirects */}
+        <Route path='/name-register/student-name' element={<ProtectedRoute><StudentNameAll /></ProtectedRoute>} />
+
         {/* 404 Page */}
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Router>
   );

@@ -96,7 +96,7 @@ function NameRegisterAdmin() {
             <FiLayers size={36} />
             <span>รายชื่อตามสาขา</span>
           </div>
-          <div className={`${styles.card} ${styles.card02}`} onClick={() => navigate("/join-activity")}>
+          <div className={`${styles.card} ${styles.card02}`} onClick={() => navigate("/name-register/student-name")}>
             <FiUsers size={36} />
             <span>รายชื่อนักศึกษาทั้งหมด</span>
           </div>

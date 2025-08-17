@@ -96,7 +96,7 @@ function ApplicationAdmin() {
             <FiAirplay size={36} />
             <span>จัดการประชาสัมพันธ์</span>
           </div>
-          <div className={`${styles.card} ${styles.card02}`} onClick={() => navigate("/join-activity")}>
+          <div className={`${styles.card} ${styles.card02}`} onClick={() => navigate("/application/get-timestamp")}>
             <FiUserCheck  size={36} />
             <span>ประวัติการใช้งานรายบุคคล</span>
           </div>
