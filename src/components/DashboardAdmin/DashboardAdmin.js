@@ -79,7 +79,7 @@ function DashboardAdmin() {
       />
       <main className={`${styles.mainContent} ${isMobile ? styles.mobileContent : ""} ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}>
         <div className={styles.headerBar}>
-          <h1 className={styles.heading}>แดชบอร์ด</h1>
+          <h1 className={styles.heading}>แดชบอร์ด (ตัวอย่าง)</h1>
           <div className={styles.headerRight}>
             <div className={styles.searchContainer}>
               <input type="text" placeholder="ค้นหา..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />

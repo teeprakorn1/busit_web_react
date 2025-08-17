@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { format } from 'date-fns';
 import styles from "./NavigationBar.module.css";
 import Logo from "../../assets/logo/busitplus_logo.png";
 import { ReactComponent as MainIcon } from "../../assets/icons/main_icon.svg";
@@ -26,6 +27,7 @@ const NavigationBar = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   const [Data_UsersType, setUsersType] = useState("");
+  const [Data_Email, setEmail] = useState("");
   const [isLoadingUserType, setIsLoadingUserType] = useState(true);
   const [Admin, setAdmin] = useState({ firstName: "", lastName: "", typeName: "" });
 
@@ -67,8 +69,9 @@ const NavigationBar = () => {
 
       if (!verifyResponse.data.status) throw new Error("Invalid token");
 
-      const { Users_Type } = verifyResponse.data;
+      const { Users_Type, Users_Email } = verifyResponse.data;
       setUsersType(Users_Type);
+      setEmail(Users_Email);
       sessionStorage.setItem("UsersType", Users_Type);
 
       const profileResponse = await axios.get(
@@ -119,55 +122,69 @@ const NavigationBar = () => {
   }, [location.pathname]);
 
   const handleNavigation = (path) => {
-  if (isLoadingUserType) {
-    setAlertMessage("กำลังโหลดข้อมูลผู้ใช้ โปรดลองอีกครั้งในภายหลัง.");
-    setIsAlertModalOpen(true);
-    return closeNavbarOnMobile();
-  }
+    if (isLoadingUserType) {
+      setAlertMessage("กำลังโหลดข้อมูลผู้ใช้ โปรดลองอีกครั้งในภายหลัง.");
+      setIsAlertModalOpen(true);
+      return closeNavbarOnMobile();
+    }
 
-  const userType = Data_UsersType?.trim().toLowerCase() || "";
+    const userType = Data_UsersType?.trim().toLowerCase() || "";
 
-  const allowedPaths = ["/main", "/dashboard", "/activity", "/application", "/name-register", "/staff-management"];
-  if (!allowedPaths.includes(path)) {
-    setAlertMessage("หน้าที่คุณเข้าถึงไม่ถูกต้อง.");
-    setIsAlertModalOpen(true);
-    return closeNavbarOnMobile();
-  }
+    const allowedPaths = ["/main", "/dashboard", "/activity", "/application", "/name-register", "/staff-management"];
+    if (!allowedPaths.includes(path)) {
+      setAlertMessage("หน้าที่คุณเข้าถึงไม่ถูกต้อง.");
+      setIsAlertModalOpen(true);
+      return closeNavbarOnMobile();
+    }
 
-  if (userType === "staff") {
-    setActivePath(path);
-    navigate(path);
-    return closeNavbarOnMobile();
-  }
+    if (userType === "staff") {
+      setActivePath(path);
+      navigate(path);
+      return closeNavbarOnMobile();
+    }
 
-  const restrictedForTeacher = ["/activity", "/staff-management", "/application"];
-  if (userType === "teacher" && restrictedForTeacher.includes(path)) {
-    setAlertMessage("คุณไม่มีสิทธิ์เข้าถึงหน้านี้.");
-    setIsAlertModalOpen(true);
-    return closeNavbarOnMobile();
-  }
-
-
-  if (userType !== "teacher" && userType !== "staff") {
-    const allowedForOther = ["/main", "/dashboard", "/name-register"];
-    if (!allowedForOther.includes(path)) {
+    const restrictedForTeacher = ["/activity", "/staff-management", "/application"];
+    if (userType === "teacher" && restrictedForTeacher.includes(path)) {
       setAlertMessage("คุณไม่มีสิทธิ์เข้าถึงหน้านี้.");
       setIsAlertModalOpen(true);
       return closeNavbarOnMobile();
     }
-  }
 
-  setActivePath(path);
-  navigate(path);
-  closeNavbarOnMobile();
-};
+
+    if (userType !== "teacher" && userType !== "staff") {
+      const allowedForOther = ["/main", "/dashboard", "/name-register"];
+      if (!allowedForOther.includes(path)) {
+        setAlertMessage("คุณไม่มีสิทธิ์เข้าถึงหน้านี้.");
+        setIsAlertModalOpen(true);
+        return closeNavbarOnMobile();
+      }
+    }
+
+    setActivePath(path);
+    navigate(path);
+    closeNavbarOnMobile();
+  };
 
   const handleLogout = async () => {
     try {
+      const currentTimestamp = format(new Date(), 'dd/MM/yyyy HH:mm:ss');
+      const message = `Logout success use by ${Data_Email} at ${currentTimestamp} In Website.`;
+
+      await axios.post(
+        getApiUrl(process.env.REACT_APP_API_TIMESTAMP_WEBSITE_INSERT),
+        {
+          Timestamp_Name: message,
+          TimestampType_ID: 4
+        },
+        { withCredentials: true }
+      );
+
       await axios.post(getApiUrl(process.env.REACT_APP_API_LOGOUT_WEBSITE), {}, { withCredentials: true });
+
     } catch (err) {
       console.error(err);
     }
+
     setIsLogoutModalOpen(false);
     sessionStorage.removeItem("admin");
     sessionStorage.removeItem("UsersType");

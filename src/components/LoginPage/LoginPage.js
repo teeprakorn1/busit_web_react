@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { format } from 'date-fns';
 import styles from './LoginPage.module.css';
 import InputField from './InputField';
 import axios from "axios";
@@ -19,9 +20,7 @@ function LoginPage() {
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = 'auto';
-    };
+    return () => { document.body.style.overflow = 'auto'; };
   }, []);
 
   useEffect(() => {
@@ -36,43 +35,54 @@ function LoginPage() {
     setModalMessage(message);
     setIsLoginModalOpen(true);
   };
-
   const closeLoginModal = () => {
     setIsLoginModalOpen(false);
     setModalMessage("");
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (isLoading) return;
-
-    if (!Admin_Username || !Admin_Password) {
+  const loginUser = async (username, password, remember) => {
+    if (!username || !password) {
       openLoginModal("กรุณากรอกชื่อผู้ใช้และรหัสผ่านให้ครบถ้วน.");
-      return;
+      return false;
     }
 
     setIsLoading(true);
     try {
       const response = await axios.post(
         getApiUrl(process.env.REACT_APP_API_LOGIN_WEBSITE),
-        {
-          Users_Email: Admin_Username,
-          Users_Password: Admin_Password
-        },
+        { Users_Email: username, Users_Password: password },
         { withCredentials: true }
       );
 
       const result = response.data;
 
       if (result.status === true) {
-        if (rememberMe) {
-          localStorage.setItem("savedUsername", Admin_Username);
+        if (remember) {
+          localStorage.setItem("savedUsername", username);
         } else {
           localStorage.removeItem("savedUsername");
         }
-        window.location.href = '/';
+
+        try {
+          const currentTimestamp = format(new Date(), 'dd/MM/yyyy HH:mm:ss');
+          const message = `Login success use by ${Admin_Username} at ${currentTimestamp} In Website.`
+
+          await axios.post(
+            getApiUrl(process.env.REACT_APP_API_TIMESTAMP_WEBSITE_INSERT),
+            {
+              Timestamp_Name: message,
+              TimestampType_ID: 2
+            },
+            { withCredentials: true }
+          );
+        } catch (tsError) {
+          console.error("Failed to insert timestamp:", tsError);
+        }
+
+        return true;
       } else {
         openLoginModal(result.message || "รหัสผ่านหรือชื่อผู้ใช้ไม่ถูกต้อง.");
+        return false;
       }
     } catch (error) {
       if (error.response) {
@@ -82,8 +92,19 @@ function LoginPage() {
       } else {
         openLoginModal("มีบางอย่างผิดพลาด โปรดลองอีกครั้ง.");
       }
+      return false;
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (isLoading) return;
+
+    const success = await loginUser(Admin_Username, Admin_Password, rememberMe);
+    if (success) {
+      window.location.href = '/';
     }
   };
 
