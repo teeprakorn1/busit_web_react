@@ -17,7 +17,9 @@ function StudentNameAll() {
       lastName: "คนไทย",
       department: "วิทยาการคอมพิวเตอร์",
       academicYear: 2022,
+      regisTime: "2025-08-12 07:23:33",
       email: "shogun.kon@rmutto.ac.th",
+      isGraduated: true,
       isActive: true,
     },
     {
@@ -27,7 +29,9 @@ function StudentNameAll() {
       lastName: "คนทะเล",
       department: "วิทยาการคอมพิวเตอร์",
       academicYear: 2024,
+      regisTime: "2025-08-12 07:23:33",
       email: "millmuang.kon@rmutto.ac.th",
+      isGraduated: false,
       isActive: false,
     },
     {
@@ -37,7 +41,9 @@ function StudentNameAll() {
       lastName: "คนบ้านทุ่ง",
       department: "วิทยาการคอมพิวเตอร์",
       academicYear: 2024,
+      regisTime: "2025-08-12 07:23:33",
       email: "trotoey.kon@rmutto.ac.th",
+      isGraduated: false,
       isActive: true,
     },
   ];
@@ -162,45 +168,53 @@ function StudentNameAll() {
                   <th>สาขา</th>
                   <th>ปีการศึกษา</th>
                   <th>อีเมล</th>
-                  <th>สถานะ</th>
+                  <th>เวลาที่เพิ่มเข้ามาในระบบ</th>
+                  <th>สำเร็จการศึกษา</th>
+                  <th>สถานะไอดี</th>
                   <th>จัดการ</th>
                 </tr>
               </thead>
               <tbody>
                 {students
-                  .filter(st => 
+                  .filter(st =>
                     st.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                     st.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                     st.code.toLowerCase().includes(searchQuery.toLowerCase())
                   )
                   .map(student => (
-                  <tr key={student.id}>
-                    <td>{student.code}</td>
-                    <td>
-                      <div className={styles.studentName}>
-                        <div className={styles.avatar}>
-                          <User className={styles.userIcon} />
+                    <tr key={student.id}>
+                      <td>{student.code}</td>
+                      <td>
+                        <div className={styles.studentName}>
+                          <div className={styles.avatar}>
+                            <User className={styles.userIcon} />
+                          </div>
+                          <span>{student.firstName} {student.lastName}</span>
                         </div>
-                        <span>{student.firstName} {student.lastName}</span>
-                      </div>
-                    </td>
-                    <td>{student.department}</td>
-                    <td>{student.academicYear}</td>
-                    <td>{student.email}</td>
-                    <td>
-                      <span className={student.isActive ? styles.activeStatus : styles.inactiveStatus}>
-                        {student.isActive ? "ใช้งาน" : "ระงับ"}
-                      </span>
-                    </td>
-                    <td>
-                      <div className={styles.actions}>
-                        <button className={styles.viewBtn}><Eye className={styles.iconSmall} /></button>
-                        <button className={styles.editBtn}><Edit className={styles.iconSmall} /></button>
-                        <button className={styles.deleteBtn}><Trash2 className={styles.iconSmall} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td>{student.department}</td>
+                      <td>{student.academicYear}</td>
+                      <td>{student.email}</td>
+                      <td>{student.regisTime}</td>
+                      <td>
+                        <span className={student.isGraduated ? styles.graduatedStatus : styles.ingraduatedStatus}>
+                          {student.isGraduated ? "สำเร็จการศึกษา" : "ยังไม่สำเร็จการศึกษา"}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={student.isActive ? styles.activeStatus : styles.inactiveStatus}>
+                          {student.isActive ? "ใช้งาน" : "ระงับ"}
+                        </span>
+                      </td>
+                      <td>
+                        <div className={styles.actions}>
+                          <button className={styles.viewBtn}><Eye className={styles.iconSmall} /></button>
+                          <button className={styles.editBtn}><Edit className={styles.iconSmall} /></button>
+                          <button className={styles.deleteBtn}><Trash2 className={styles.iconSmall} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
 

@@ -52,90 +52,90 @@ const NavigationBar = () => {
   };
 
   const fetchAdminData = useCallback(async () => {
-  const sessionAdminRaw = sessionStorage.getItem("admin");
-  let sessionAdmin = null;
+    const sessionAdminRaw = sessionStorage.getItem("admin");
+    let sessionAdmin = null;
 
-  if (sessionAdminRaw) {
-    try {
-      sessionAdmin = JSON.parse(decryptValue(sessionAdminRaw));
-    } catch (err) {
-      console.error("Failed to decrypt session admin:", err);
-      sessionAdmin = null;
-      sessionStorage.removeItem("admin");
-    }
-  }
-
-  if (sessionAdmin) {
-    setAdmin(sessionAdmin);
-
-    const sessionUsersTypeRaw = sessionStorage.getItem("UsersType");
-    if (sessionUsersTypeRaw) {
+    if (sessionAdminRaw) {
       try {
-        const usersType = decryptValue(sessionUsersTypeRaw);
-        setUsersType(usersType);
+        sessionAdmin = JSON.parse(decryptValue(sessionAdminRaw));
       } catch (err) {
-        console.error("Failed to decrypt UsersType:", err);
-        sessionStorage.removeItem("UsersType");
+        console.error("Failed to decrypt session admin:", err);
+        sessionAdmin = null;
+        sessionStorage.removeItem("admin");
       }
     }
 
-    setIsLoadingUserType(false);
-    return;
-  }
+    if (sessionAdmin) {
+      setAdmin(sessionAdmin);
 
-  try {
-    const verifyResponse = await axios.post(
-      getApiUrl(process.env.REACT_APP_API_VERIFY),
-      {},
-      { withCredentials: true }
-    );
+      const sessionUsersTypeRaw = sessionStorage.getItem("UsersType");
+      if (sessionUsersTypeRaw) {
+        try {
+          const usersType = decryptValue(sessionUsersTypeRaw);
+          setUsersType(usersType);
+        } catch (err) {
+          console.error("Failed to decrypt UsersType:", err);
+          sessionStorage.removeItem("UsersType");
+        }
+      }
 
-    if (!verifyResponse.data.status) throw new Error("Invalid token");
+      setIsLoadingUserType(false);
+      return;
+    }
 
-    const { Users_Type, Users_Email } = verifyResponse.data;
-    setUsersType(Users_Type);
-    setEmail(Users_Email);
-    sessionStorage.setItem("UsersType", encryptValue(Users_Type));
+    try {
+      const verifyResponse = await axios.post(
+        getApiUrl(process.env.REACT_APP_API_VERIFY),
+        {},
+        { withCredentials: true }
+      );
 
-    const profileResponse = await axios.get(
-      getApiUrl(process.env.REACT_APP_API_ADMIN_GET_WEBSITE),
-      { withCredentials: true }
-    );
+      if (!verifyResponse.data.status) throw new Error("Invalid token");
 
-    if (profileResponse.data.status) {
-      const profile = profileResponse.data;
-      let firstName = "";
-      let lastName = "";
-      let typeName = "";
+      const { Users_Type, Users_Email } = verifyResponse.data;
+      setUsersType(Users_Type);
+      setEmail(Users_Email);
+      sessionStorage.setItem("UsersType", encryptValue(Users_Type));
 
-      if (profile.Users_Type_Table === "teacher") {
-        firstName = profile.Teacher_FirstName || "";
-        lastName = profile.Teacher_LastName || "";
-        typeName = "Teacher";
-      } else if (profile.Users_Type_Table === "staff") {
-        firstName = profile.Staff_FirstName || "";
-        lastName = profile.Staff_LastName || "";
-        typeName = "Staff";
+      const profileResponse = await axios.get(
+        getApiUrl(process.env.REACT_APP_API_ADMIN_GET_WEBSITE),
+        { withCredentials: true }
+      );
+
+      if (profileResponse.data.status) {
+        const profile = profileResponse.data;
+        let firstName = "";
+        let lastName = "";
+        let typeName = "";
+
+        if (profile.Users_Type_Table === "teacher") {
+          firstName = profile.Teacher_FirstName || "";
+          lastName = profile.Teacher_LastName || "";
+          typeName = "Teacher";
+        } else if (profile.Users_Type_Table === "staff") {
+          firstName = profile.Staff_FirstName || "";
+          lastName = profile.Staff_LastName || "";
+          typeName = "Staff";
+        } else {
+          firstName = profile.Staff_FirstName || profile.Teacher_FirstName || "Unknown";
+          lastName = profile.Staff_LastName || profile.Teacher_LastName || "Unknown";
+          typeName = profile.Users_Type_Table || "Unknown";
+        }
+
+        const adminData = { firstName, lastName, typeName };
+        setAdmin(adminData);
+
+        sessionStorage.setItem("admin", encryptValue(JSON.stringify(adminData)));
       } else {
-        firstName = profile.Staff_FirstName || profile.Teacher_FirstName || "Unknown";
-        lastName = profile.Staff_LastName || profile.Teacher_LastName || "Unknown";
-        typeName = profile.Users_Type_Table || "Unknown";
+        setAdmin({ firstName: "Unknown", lastName: "Unknown", typeName: "Unknown" });
       }
-
-      const adminData = { firstName, lastName, typeName };
-      setAdmin(adminData);
-
-      sessionStorage.setItem("admin", encryptValue(JSON.stringify(adminData)));
-    } else {
-      setAdmin({ firstName: "Unknown", lastName: "Unknown", typeName: "Unknown" });
+    } catch (err) {
+      console.error(err);
+      navigate("/login");
+    } finally {
+      setIsLoadingUserType(false);
     }
-  } catch (err) {
-    console.error(err);
-    navigate("/login");
-  } finally {
-    setIsLoadingUserType(false);
-  }
-}, [navigate]);
+  }, [navigate]);
 
   useEffect(() => {
     fetchAdminData();

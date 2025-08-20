@@ -100,7 +100,7 @@ function ApplicationAdmin() {
             <FiUserCheck  size={36} />
             <span>ประวัติการใช้งานรายบุคคล</span>
           </div>
-          <div className={`${styles.card} ${styles.card03}`} onClick={() => navigate("/edit-activity")}>
+          <div className={`${styles.card} ${styles.card03}`} onClick={() => navigate("/application/get-all-timestamp")}>
             <FiClipboard  size={36} />
             <span>ประวัติการใช้งานทั้งหมด</span>
           </div>
