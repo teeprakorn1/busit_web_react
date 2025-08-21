@@ -30,39 +30,6 @@ function GetAllTimestamp() {
 
   const rowsPerPage = 10;
 
-  const TimestampData = [
-    {
-      Timestamp_ID: 1,
-      Timestamp_RegisTime: "2025-08-20T13:56:30.000Z",
-      Timestamp_Name: "Login success use by student.admin at 20/08/2025 20:56:30 In Website.",
-      Timestamp_UserAgent: "Mozilla/5.0 ...",
-      Timestamp_IP_Address: "2405:9800:b870:553a:3d83:6dc2:357d:8665",
-      Users_Email: "student.admin@rmutto.ac.th",
-      Users_Type: "student",
-      TimestampType_Name: "timestamp_website_login"
-    },
-    {
-      Timestamp_ID: 2,
-      Timestamp_RegisTime: "2025-08-21T09:30:00.000Z",
-      Timestamp_Name: "Login success use by teacher.admin at 21/08/2025 16:30:00 In Website.",
-      Timestamp_UserAgent: "Mozilla/5.0 ...",
-      Timestamp_IP_Address: "2405:9800:b870:553a:6dc2:357d:8665",
-      Users_Email: "teacher.admin@rmutto.ac.th",
-      Users_Type: "teacher",
-      TimestampType_Name: "timestamp_application_logout"
-    },
-    {
-      Timestamp_ID: 3,
-      Timestamp_RegisTime: "2025-08-22T15:45:00.000Z",
-      Timestamp_Name: "Login success use by staff.admin at 22/08/2025 22:45:00 In Website.",
-      Timestamp_UserAgent: "Mozilla/5.0 ...",
-      Timestamp_IP_Address: "2405:9800:b870:553a:6dc2:357d:8665",
-      Users_Email: "staff.admin@rmutto.ac.th",
-      Users_Type: "staff",
-      TimestampType_Name: "timestamp_website_logout"
-    },
-  ];
-
   const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
 
   const fetchTimestamps = useCallback(async () => {
