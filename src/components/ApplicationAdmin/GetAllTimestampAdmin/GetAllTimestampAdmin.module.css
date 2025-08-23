@@ -63,32 +63,7 @@
   justify-content: flex-end;
 }
 
-.searchContainer {
-  width: 300px;
-  position: relative;
-}
-
-.searchContainer input {
-  width: 100%;
-  padding: 10px 16px;
-  border-radius: 12px;
-  border: 1px solid #d1d5db;
-  font-size: 15px;
-  color: var(--text-dark);
-  background-color: #fff;
-  transition: all 0.2s ease;
-}
-
-.searchContainer input::placeholder {
-  color: var(--text-muted);
-}
-
-.searchContainer input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
-}
-
+/* Notify */
 .notifyWrapper {
   position: relative;
 }
@@ -98,9 +73,9 @@
   border: none;
   cursor: pointer;
   position: relative;
+  padding: 0;
   display: flex;
   align-items: center;
-  padding: 0;
 }
 
 .notifyButton svg {
@@ -616,20 +591,20 @@
     padding: 15px 20px;
   }
 
-  .searchContainer {
-    width: 100%;
-    max-width: 90%;
-    margin-top: 10px;
-  }
-
   .headerBar {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
   }
 
   .headerRight {
-    width: 100%;
-    justify-content: space-between;
+    width: auto;
+    justify-content: flex-end;
+  }
+
+  .heading {
+    padding-left: 50px;
+    font-size: 22px;
   }
 
   .timestampTable th,
@@ -656,12 +631,10 @@
   }
 
   .timestampTable {
-    display: none;
+    display: table;
   }
   .timestampTableWrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    display: block;
   }
   .timestampCard {
     background: white;

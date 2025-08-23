@@ -5,6 +5,7 @@ import styles from './GetAllTimestampAdmin.module.css';
 import { Calendar, Upload, Eye, X } from 'lucide-react';
 import { utils, writeFileXLSX } from 'xlsx';
 import DatePicker, { registerLocale } from 'react-datepicker';
+import { FiBell } from 'react-icons/fi';
 import th from 'date-fns/locale/th';
 import 'react-datepicker/dist/react-datepicker.css';
 import axios from 'axios';
@@ -160,18 +161,26 @@ function GetAllTimestamp() {
       >
         {/* Header */}
         <div className={styles.headerBar}>
-          <h1 className={styles.heading}>ประวัติการใช้งานทั้งหมด</h1>
+          <h1 className={styles.heading}>ประวัติการใช้งาน</h1>
           <div className={styles.headerRight}>
             <div className={styles.notifyWrapper}>
-              <button className={styles.notifyButton} onClick={() => setNotifyOpen(!notifyOpen)}>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405..." />
-                </svg>
-                {notifications.length > 0 && <span className={styles.badge}>{notifications.length}</span>}
+              <button
+                className={styles.notifyButton}
+                onClick={() => setNotifyOpen(!notifyOpen)}
+              >
+                <FiBell size={24} color="currentColor" />
+                {notifications.length > 0 && (
+                  <span className={styles.badge}>{notifications.length}</span>
+                )}
               </button>
+
               {notifyOpen && (
                 <div className={styles.notifyDropdown}>
-                  {notifications.map((n, i) => <div key={i} className={styles.notifyItem}>{n}</div>)}
+                  {notifications.map((n, i) => (
+                    <div key={i} className={styles.notifyItem}>
+                      {n}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -200,7 +209,7 @@ function GetAllTimestamp() {
                 dateFormat="dd/MM/yyyy"
                 placeholderText="เลือกวัน"
                 className={styles.timeButton}
-                locale="th" // ใช้ locale ภาษาไทย
+                locale="th"
                 customInput={
                   <button className={styles.timeButton}>
                     <Calendar className={styles.icon} style={{ marginRight: '5px' }} />
@@ -334,26 +343,6 @@ function GetAllTimestamp() {
               </div>
             )}
           </div>
-
-          {/* Mobile */}
-          {isMobile && currentRows.length > 0 && (
-            <div className={styles.timestampTableWrapper}>
-              {currentRows.map(ts => (
-                <div key={ts.Timestamp_ID} className={styles.timestampCard}>
-                  <p><strong>ID:</strong> {ts.Timestamp_ID}</p>
-                  <p><strong>อีเมล:</strong> {ts.Users_Email}</p>
-                  <p>
-                    <strong>ผู้ใช้:</strong>
-                    {ts.Users_Type === 'student' ? 'นักเรียน/นักศึกษา' :
-                      ts.Users_Type === 'teacher' ? 'ครู/อาจารย์' : 'เจ้าหน้าที่'}
-                  </p>
-                  <p><strong>เหตุการณ์:</strong> {ts.TimestampType_Name.replace("timestamp_", "").replace(/_/g, " ")}</p>
-                  <p><strong>IP:</strong> {ts.Timestamp_IP_Address}</p>
-                  <p><strong>วันที่ / เวลา:</strong> {new Date(ts.Timestamp_RegisTime).toLocaleString()}</p>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Modal */}
