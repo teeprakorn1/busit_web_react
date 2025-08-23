@@ -78,11 +78,11 @@ function ApplicationAdmin() {
             <FiAirplay size={36} />
             <span>จัดการประชาสัมพันธ์</span>
           </div>
-          <div className={`${styles.card} ${styles.card02}`} onClick={() => navigate("/application/get-timestamp")}>
+          <div className={`${styles.card} ${styles.card02}`} onClick={() => navigate("/application/get-person-timestamp")}>
             <FiUserCheck  size={36} />
             <span>ประวัติการใช้งานรายบุคคล</span>
           </div>
-          <div className={`${styles.card} ${styles.card03}`} onClick={() => navigate("/application/get-all-timestamp")}>
+          <div className={`${styles.card} ${styles.card03}`} onClick={() => navigate("/application/get-timestamp")}>
             <FiClipboard  size={36} />
             <span>ประวัติการใช้งานทั้งหมด</span>
           </div>

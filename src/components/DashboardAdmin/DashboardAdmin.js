@@ -3,15 +3,7 @@ import Navbar from '../NavigationBar/NavigationBar';
 import styles from './DashboardAdmin.module.css';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import {
-  FiBell,
-  FiActivity,
-  FiUsers,
-  FiClipboard,
-  FiBarChart2,
-  FiClock,
-  FiEdit
-} from 'react-icons/fi';
+import { FiBell, FiActivity, FiUsers, FiClipboard, FiBarChart2, FiClock, FiEdit } from 'react-icons/fi';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
