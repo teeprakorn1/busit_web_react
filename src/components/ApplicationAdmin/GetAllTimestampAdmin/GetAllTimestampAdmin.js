@@ -4,9 +4,12 @@ import Navbar from '../../NavigationBar/NavigationBar';
 import styles from './GetAllTimestampAdmin.module.css';
 import { Calendar, Upload, Eye, X } from 'lucide-react';
 import { utils, writeFileXLSX } from 'xlsx';
-import DatePicker from 'react-datepicker';
+import DatePicker, { registerLocale } from 'react-datepicker';
+import th from 'date-fns/locale/th';
 import 'react-datepicker/dist/react-datepicker.css';
 import axios from 'axios';
+
+registerLocale('th', th);
 
 const getApiUrl = (endpoint) => {
   return `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}${endpoint}`;
@@ -197,10 +200,15 @@ function GetAllTimestamp() {
                 dateFormat="dd/MM/yyyy"
                 placeholderText="เลือกวัน"
                 className={styles.timeButton}
+                locale="th" // ใช้ locale ภาษาไทย
                 customInput={
                   <button className={styles.timeButton}>
                     <Calendar className={styles.icon} style={{ marginRight: '5px' }} />
-                    {dateFilter ? dateFilter.toLocaleDateString() : 'เลือกวัน'}
+                    {dateFilter
+                      ? `${dateFilter.getDate().toString().padStart(2, '0')}/` +
+                      `${(dateFilter.getMonth() + 1).toString().padStart(2, '0')}/` +
+                      `${dateFilter.getFullYear() + 543}`
+                      : 'เลือกวัน'}
                   </button>
                 }
               />
@@ -223,9 +231,12 @@ function GetAllTimestamp() {
               onChange={(e) => { setEventTypeFilter(e.target.value); setCurrentPage(1); }}
             >
               <option value="">ประเภทเหตุการณ์</option>
-              <option value="timestamp_website_login">Website Login</option>
-              <option value="timestamp_application_logout">Application Logout</option>
-              <option value="timestamp_website_logout">Website Logout</option>
+              {Array.from(new Set(timestamps.map(ts => ts.TimestampType_Name))).map((eventName, idx) => {
+                const formattedName = eventName.replace(/^timestamp_/, '').replace(/_/g, ' ');
+                return (
+                  <option key={idx} value={eventName}>{formattedName}</option>
+                );
+              })}
             </select>
 
             {(searchQuery || userTypeFilter || eventTypeFilter || dateFilter) && (
@@ -323,6 +334,26 @@ function GetAllTimestamp() {
               </div>
             )}
           </div>
+
+          {/* Mobile */}
+          {isMobile && currentRows.length > 0 && (
+            <div className={styles.timestampTableWrapper}>
+              {currentRows.map(ts => (
+                <div key={ts.Timestamp_ID} className={styles.timestampCard}>
+                  <p><strong>ID:</strong> {ts.Timestamp_ID}</p>
+                  <p><strong>อีเมล:</strong> {ts.Users_Email}</p>
+                  <p>
+                    <strong>ผู้ใช้:</strong>
+                    {ts.Users_Type === 'student' ? 'นักเรียน/นักศึกษา' :
+                      ts.Users_Type === 'teacher' ? 'ครู/อาจารย์' : 'เจ้าหน้าที่'}
+                  </p>
+                  <p><strong>เหตุการณ์:</strong> {ts.TimestampType_Name.replace("timestamp_", "").replace(/_/g, " ")}</p>
+                  <p><strong>IP:</strong> {ts.Timestamp_IP_Address}</p>
+                  <p><strong>วันที่ / เวลา:</strong> {new Date(ts.Timestamp_RegisTime).toLocaleString()}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Modal */}
