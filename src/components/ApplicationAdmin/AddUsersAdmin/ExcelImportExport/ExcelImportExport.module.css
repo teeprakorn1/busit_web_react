@@ -1,0 +1,13 @@
+.wrapper {
+  margin-bottom: 15px;
+}
+
+.wrapper button {
+  padding: 6px 12px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 4px;
+  background-color: #2563eb;
+  color: #fff;
+  cursor: pointer;
+}

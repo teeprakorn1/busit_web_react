@@ -1,0 +1,18 @@
+.selector {
+  margin-bottom: 15px;
+}
+
+.selector button {
+  padding: 8px 15px;
+  margin-right: 10px;
+  border: 1px solid #2563eb;
+  border-radius: 5px;
+  background-color: #fff;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.selector button.active {
+  background-color: #2563eb;
+  color: #fff;
+}

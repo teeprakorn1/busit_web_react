@@ -328,8 +328,8 @@ function GetTimestamp() {
                 )}
               </tbody>
             </table>
-
-            {/* Pagination */}
+          </div>
+          {/* Pagination */}
             {totalPages > 1 && (
               <div className={styles.pagination}>
                 <button
@@ -355,7 +355,6 @@ function GetTimestamp() {
                 </button>
               </div>
             )}
-          </div>
         </div>
 
         {/* Modal */}

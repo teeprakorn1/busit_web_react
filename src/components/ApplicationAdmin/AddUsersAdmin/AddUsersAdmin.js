@@ -1,16 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../NavigationBar/NavigationBar';
-import styles from './ApplicationAdmin.module.css';
-import { useNavigate } from "react-router-dom";
-import { FiBell, FiAirplay, FiUserCheck, FiClipboard, FiUserPlus, FiUserX } from "react-icons/fi";
+import Navbar from '../../NavigationBar/NavigationBar';
+import AccountInfoForm from './forms/AccountInfoForm';
+import PersonalInfoForm from './forms/PersonalInfoForm';
+import AcademicInfoForm from './forms/AcademicInfoForm';
+import UserTypeSelector from './UserTypeSelector/UserTypeSelector';
+import ExcelImportExport from './ExcelImportExport/ExcelImportExport';
+import ImportDataModal from './ImportDataModal/ImportDataModal';
+import styles from './AddUsersAdmin.module.css';
+import { FiBell } from 'react-icons/fi';
 
-function ApplicationAdmin() {
+function AddUsersAdmin() {
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({ email: '', username: '', password: '' });
+  const [modalOpen, setModalOpen] = useState(false);
+
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [notifyOpen, setNotifyOpen] = useState(false);
-  const navigate = useNavigate();
 
-  const notifications = ["มีผู้ใช้งานเข้ารวมกิจกรรม"];
+  const notifications = [
+    "มีผู้ใช้งานเข้ารวมกิจกรรม",
+  ];
 
   useEffect(() => {
     const handleResize = () => {
@@ -44,9 +54,8 @@ function ApplicationAdmin() {
           ${isMobile ? styles.mobileContent : ""} 
           ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}
       >
-        {/* Header */}
         <div className={styles.headerBar}>
-          <h1 className={styles.heading}>จัดการแอปพลิเคชัน</h1>
+          <h1 className={styles.heading}>หน้าหลัก</h1>
           <div className={styles.headerRight}>
             <div className={styles.notifyWrapper}>
               <button
@@ -71,34 +80,23 @@ function ApplicationAdmin() {
             </div>
           </div>
         </div>
+        <UserTypeSelector />
+        <ExcelImportExport setModalOpen={setModalOpen} />
 
-        {/* Menu Section */}
-        <div className={styles.dashboardSection}>
-          <div className={`${styles.card} ${styles.card01}`} onClick={() => navigate("/create-activity")}>
-            <FiAirplay size={36} />
-            <span>จัดการประชาสัมพันธ์</span>
-          </div>
-          <div className={`${styles.card} ${styles.card02}`} onClick={() => navigate("/application/get-person-timestamp")}>
-            <FiUserCheck  size={36} />
-            <span>ประวัติการใช้งานรายบุคคล</span>
-          </div>
-          <div className={`${styles.card} ${styles.card03}`} onClick={() => navigate("/application/get-timestamp")}>
-            <FiClipboard  size={36} />
-            <span>ประวัติการใช้งานทั้งหมด</span>
-          </div>
-          <div className={`${styles.card} ${styles.card04}`} onClick={() => navigate("/application/add-user")}>
-            <FiUserPlus  size={36} />
-            <span>เพิ่มบัญชีผู้ใช้งาน</span>
-          </div>
-          <div className={`${styles.card} ${styles.card05}`} onClick={() => navigate("/all-activities")}>
-            <FiUserX  size={36} />
-            <span>ลบบัญชีผู้ใช้งาน</span>
-          </div>
-        </div>
+        <AccountInfoForm
+          formData={formData}
+          setFormData={setFormData}
+          showPassword={showPassword}
+          setShowPassword={setShowPassword}
+        />
+
+        <PersonalInfoForm />
+        <AcademicInfoForm />
+
+        <ImportDataModal open={modalOpen} setOpen={setModalOpen} />
       </main>
     </div>
   );
 }
 
-export default ApplicationAdmin;
-
+export default AddUsersAdmin;

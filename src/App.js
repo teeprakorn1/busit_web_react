@@ -13,6 +13,8 @@ import StaffManagementAdmin from './components/StaffManagementAdmin/StaffManagem
 
 import GetPersonTimestampAdmin from './components/ApplicationAdmin/GetPersonTimestampAdmin/GetPersonTimestampAdmin';
 import GetTimestampAdmin from './components/ApplicationAdmin/GetTimestampAdmin/GetTimestampAdmin';
+import AddUsersAdmin from './components/ApplicationAdmin/AddUsersAdmin/AddUsersAdmin';
+
 import StudentNameAll from './components/NameRegisterAdmin/StudentNameAll/StudentNameAll';
 
 const ProtectedRoute = ({ children }) => {
@@ -39,6 +41,7 @@ function App() {
         {/* Application Redirects */}
         <Route path='/application/get-person-timestamp' element={<ProtectedRoute><GetPersonTimestampAdmin /></ProtectedRoute>} />
         <Route path='/application/get-timestamp' element={<ProtectedRoute><GetTimestampAdmin /></ProtectedRoute>} />
+        <Route path='/application/add-user' element={<ProtectedRoute><AddUsersAdmin /></ProtectedRoute>} />
 
         {/* Name Register Redirects */}
         <Route path='/name-register/student-name' element={<ProtectedRoute><StudentNameAll /></ProtectedRoute>} />
