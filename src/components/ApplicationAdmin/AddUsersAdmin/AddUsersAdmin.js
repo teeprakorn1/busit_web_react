@@ -1,3 +1,4 @@
+// AddUsersAdmin.js
 import React, { useState, useEffect } from 'react';
 import Navbar from '../../NavigationBar/NavigationBar';
 import AccountInfoForm from './forms/AccountInfoForm';
@@ -10,17 +11,31 @@ import styles from './AddUsersAdmin.module.css';
 import { FiBell } from 'react-icons/fi';
 
 function AddUsersAdmin() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({ email: '', username: '', password: '' });
-  const [modalOpen, setModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    username: '',
+    password: '',
+    confirmPassword: '',
+    studentId: '',
+    firstName: '',
+    lastName: '',
+    phoneNumber: '',
+    birthDate: '',
+    religion: '',
+    medicalInfo: '',
+    faculty: '',
+    major: '',
+    academicYear: '',
+    advisor: '',
+    gpa: ''
+  });
 
+  const [modalOpen, setModalOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [notifyOpen, setNotifyOpen] = useState(false);
 
-  const notifications = [
-    "มีผู้ใช้งานเข้ารวมกิจกรรม",
-  ];
+  const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
 
   useEffect(() => {
     const handleResize = () => {
@@ -41,6 +56,11 @@ function AddUsersAdmin() {
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
+
+  const handleConfirm = () => {
+    console.log("ข้อมูลฟอร์ม:", formData);
+    alert("บันทึกข้อมูลเรียบร้อย! (ดู console)");
+  };
 
   return (
     <div className={styles.container}>
@@ -80,19 +100,25 @@ function AddUsersAdmin() {
             </div>
           </div>
         </div>
+
+        {/* User Type Selector */}
         <UserTypeSelector />
+
+        {/* Excel Import / Export */}
         <ExcelImportExport setModalOpen={setModalOpen} />
 
-        <AccountInfoForm
-          formData={formData}
-          setFormData={setFormData}
-          showPassword={showPassword}
-          setShowPassword={setShowPassword}
-        />
+        {/* Forms */}
+        <AccountInfoForm formData={formData} setFormData={setFormData} />
+        <PersonalInfoForm formData={formData} setFormData={setFormData} />
+        <AcademicInfoForm formData={formData} setFormData={setFormData} />
 
-        <PersonalInfoForm />
-        <AcademicInfoForm />
+        <div className={styles.buttonWrapper}>
+          <button className={styles.confirmButton} onClick={handleConfirm}>
+            ยืนยัน
+          </button>
+        </div>
 
+        {/* Import Data Modal */}
         <ImportDataModal open={modalOpen} setOpen={setModalOpen} />
       </main>
     </div>
