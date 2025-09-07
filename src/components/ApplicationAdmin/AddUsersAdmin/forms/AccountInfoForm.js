@@ -74,7 +74,7 @@ function AccountInfoForm({ formData, setFormData, errors = {} }) {
             value={formData?.email || ''}
             onChange={handleChange}
             className={`${styles.inputField} ${errors.email ? styles.error : ''}`}
-            placeholder="example@university.ac.th"
+            placeholder="example@rmutto.ac.th"
             required
           />
           {formData?.email && (
@@ -88,25 +88,6 @@ function AccountInfoForm({ formData, setFormData, errors = {} }) {
         </div>
         {errors.email && <span className={styles.errorText}>{errors.email}</span>}
       </div>
-
-      <div className={styles.fieldGroup}>
-        <label htmlFor="username" className={styles.label}>
-          ชื่อผู้ใช้ <span className={styles.required}>*</span>
-        </label>
-        <input
-          type="text"
-          id="username"
-          name="username"
-          value={formData?.username || ''}
-          onChange={handleChange}
-          className={`${styles.inputField} ${errors.username ? styles.error : ''}`}
-          placeholder="กรอกชื่อผู้ใช้ (อย่างน้อย 4 ตัวอักษร)"
-          minLength="4"
-          required
-        />
-        {errors.username && <span className={styles.errorText}>{errors.username}</span>}
-      </div>
-
       <div className={styles.fieldGroup}>
         <label htmlFor="password" className={styles.label}>
           รหัสผ่าน <span className={styles.required}>*</span>

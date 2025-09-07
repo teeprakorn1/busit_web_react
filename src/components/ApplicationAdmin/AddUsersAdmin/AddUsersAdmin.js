@@ -113,7 +113,7 @@ function AddUsersAdmin() {
         <AcademicInfoForm formData={formData} setFormData={setFormData} />
 
         <div className={styles.buttonWrapper}>
-          <button className={styles.confirmButton} onClick={handleConfirm}>
+          <button className={styles.formButton} onClick={handleConfirm}>
             ยืนยัน
           </button>
         </div>
