@@ -58,7 +58,6 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
         return emailRegex.test(email);
     };
 
-    // ข้อมูลคณะและสาขา
     const faculties = [
         'บริหารธุรกิจและเทคโนโลยีสารสนเทศ',
         'วิศวกรรมศาสตร์',
@@ -68,12 +67,12 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
 
     const departments = {
         student: [
-            'วิทยาการคอมพิวเตอร์', 
-            'เทคโนโลยีสารสนเทศ', 
-            'การจัดการธุรกิจดิจิทัล', 
-            'การตลาดดิจิทัล', 
-            'การจัดการทรัพยากรมนุษย์', 
-            'การเงินและการลงทุน', 
+            'วิทยาการคอมพิวเตอร์',
+            'เทคโนโลยีสารสนเทศ',
+            'การจัดการธุรกิจดิจิทัล',
+            'การตลาดดิจิทัล',
+            'การจัดการทรัพยากรมนุษย์',
+            'การเงินและการลงทุน',
             'บัญชี'
         ],
         teacher: [
@@ -85,7 +84,7 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
     };
 
     const teacherAdvisors = [
-        'อาจารย์ คนดี เมืองทอง', 
+        'อาจารย์ คนดี เมืองทอง',
         'อาจารย์ ดาวแดนท์ ทองมี',
         'อาจารย์ สมชาย ใจดี',
         'อาจารย์ สมหญิง เก่งมาก'
@@ -93,7 +92,7 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
 
     return (
         <>
-            {/* ข้อมูลบัญชีผู้ใช้ */}
+            {/* Users Information */}
             <div className={styles.formContainer}>
                 <h3 className={styles.formTitle}>ข้อมูลบัญชีผู้ใช้</h3>
 
@@ -212,7 +211,7 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
                 </div>
             </div>
 
-            {/* ข้อมูลส่วนตัว */}
+            {/* Data Information */}
             <div className={styles.formContainer}>
                 <h3 className={styles.formTitle}>ข้อมูลส่วนตัว</h3>
 
@@ -327,7 +326,7 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
                 </div>
             </div>
 
-            {/* ข้อมูลการศึกษา/การทำงาน */}
+            {/* Education Information */}
             <div className={styles.formContainer}>
                 <h3 className={styles.formTitle}>
                     {userType === 'student' ? 'ข้อมูลการศึกษา' : 'ข้อมูลการทำงาน'}
@@ -373,7 +372,7 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
                     {errors.department && <span className={styles.errorText}>{errors.department}</span>}
                 </div>
 
-                {/* ฟิลด์สำหรับนักศึกษา */}
+                {/* Student Information */}
                 {userType === 'student' && (
                     <>
                         <div className={styles.fieldGroup}>
@@ -415,7 +414,7 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
                     </>
                 )}
 
-                {/* ฟิลด์สำหรับอาจารย์ */}
+                {/* Teacher Information */}
                 {userType === 'teacher' && (
                     <div className={styles.fieldGroup}>
                         <label className={styles.label}>

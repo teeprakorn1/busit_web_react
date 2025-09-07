@@ -96,7 +96,7 @@ function ExcelImportExport({ setModalOpen, onDataImport, userType = 'student' })
       templateData = [
         'student001@rmutto.ac.th',
         'password12345',
-        '11111111111-1',
+        '111111111111-1',
         'สมหมู',
         'เมืองไทย',
         '0812345678',
@@ -105,7 +105,7 @@ function ExcelImportExport({ setModalOpen, onDataImport, userType = 'student' })
         '',
         'บริหารธุรกิจและเทคโนโลยีสารสนเทศ',
         'วิทยาการคอมพิวเตอร์',
-        '22222222222-2',
+        '222222222222-2',
         '2567'
       ];
       filename = 'student_template.csv';
@@ -127,7 +127,7 @@ function ExcelImportExport({ setModalOpen, onDataImport, userType = 'student' })
       templateData = [
         'teacher001@rmutto.ac.th',
         'password12345',
-        '00000000000-0',
+        '000000000000-0',
         'สมหมี',
         'เมืองเล',
         '0823456789',
@@ -142,7 +142,6 @@ function ExcelImportExport({ setModalOpen, onDataImport, userType = 'student' })
     }
 
     const csvContent = [headers.join(','), templateData.join(',')].join('\n');
-
     const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);

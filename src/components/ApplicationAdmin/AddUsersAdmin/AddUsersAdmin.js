@@ -5,20 +5,9 @@ import UserTypeSelector from './UserTypeSelector/UserTypeSelector';
 import ExcelImportExport from './ExcelImportExport/ExcelImportExport';
 import ImportDataModal from './ImportDataModal/ImportDataModal';
 import CustomModal from '../../../services/CustomModal/CustomModal';
+import { validateUserForm } from './../../../utils/formValidator';
 import styles from './AddUsersAdmin.module.css';
 import { FiBell } from 'react-icons/fi';
-
-const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-const isStrongPassword = (password) => /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(password);
-const isValidPhone = (phone) => /^0[0-9]{9}$/.test(phone);
-const isValidDate = (date) => {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
-
-  const parsedDate = new Date(date);
-  const today = new Date();
-
-  return parsedDate.toString() !== "Invalid Date" && parsedDate <= today;
-};
 
 function AddUsersAdmin() {
   const [selectedUserType, setSelectedUserType] = useState('student');
@@ -79,6 +68,8 @@ function AddUsersAdmin() {
   const handleConfirmImport = (validData) => {
     console.log("ข้อมูลที่นำเข้า:", validData);
     console.log("ประเภทผู้ใช้:", selectedUserType);
+    setAlertMessage(`นำเข้าข้อมูลสำเร็จ จำนวน ${validData.length} รายการ`);
+    setIsAlertModalOpen(true);
   };
 
   const handleUserTypeChange = (type) => {
@@ -104,62 +95,9 @@ function AddUsersAdmin() {
   };
 
   const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.email) {
-      newErrors.email = "กรุณากรอกอีเมล";
-    } else if (!isValidEmail(formData.email)) {
-      newErrors.email = "รูปแบบอีเมลไม่ถูกต้อง";
-    }
-
-    if (!formData.password) {
-      newErrors.password = "กรุณากรอกรหัสผ่าน";
-    } else if (!isStrongPassword(formData.password)) {
-      newErrors.password = "รหัสผ่านต้องมีอย่างน้อย 8 ตัว และมีทั้งตัวอักษรและตัวเลข";
-    }
-
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "กรุณายืนยันรหัสผ่าน";
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "รหัสผ่านไม่ตรงกัน";
-    }
-    if (!formData.code) {
-      newErrors.code =
-        selectedUserType === "student"
-          ? "กรุณากรอกรหัสนักศึกษา"
-          : "กรุณากรอกรหัสอาจารย์";
-    }
-
-    if (!formData.firstName) newErrors.firstName = "กรุณากรอกชื่อจริง";
-    if (!formData.lastName) newErrors.lastName = "กรุณากรอกนามสกุล";
-
-    if (formData.phone && !isValidPhone(formData.phone)) {
-      newErrors.phone = "เบอร์โทรศัพท์ไม่ถูกต้อง (ต้องมี 10 หลัก)";
-    }
-
-    if (formData.birthDate && !isValidDate(formData.birthDate)) {
-      newErrors.birthDate = "วันเกิดไม่ถูกต้อง (รูปแบบ YYYY-MM-DD)";
-    }
-
-    if (formData.birthDate && !isValidDate(formData.birthDate)) {
-      newErrors.birthDate = "วันเกิดไม่ถูกต้อง (YYYY-MM-DD) หรืออยู่ในอนาคตไม่ได้";
-    }
-
-    if (!formData.faculty) newErrors.faculty = "กรุณาเลือกคณะ";
-    if (!formData.department) {
-      newErrors.department =
-        selectedUserType === "student"
-          ? "กรุณาเลือกสาขาวิชา"
-          : "กรุณาเลือกภาควิชา";
-    }
-
-    if (selectedUserType === "student") {
-      if (!formData.academicYear) newErrors.academicYear = "กรุณากรอกปีการศึกษา";
-      if (!formData.teacherAdvisor) newErrors.teacherAdvisor = "กรุณาเลือกอาจารย์ที่ปรึกษา";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const validationErrors = validateUserForm(formData, selectedUserType);
+    setErrors(validationErrors);
+    return Object.keys(validationErrors).length === 0;
   };
 
   const handleConfirm = () => {
