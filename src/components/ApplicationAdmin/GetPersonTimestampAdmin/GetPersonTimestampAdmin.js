@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../../NavigationBar/NavigationBar';
 import styles from './GetPersonTimestampAdmin.module.css';
 import { FiBell, FiSearch, FiInfo, FiArrowRight } from 'react-icons/fi';
-import CustomModal from '../../../services/CustomModal';
+import CustomModal from '../../../services/CustomModal/CustomModal';
 
 function GetPersonTimestamp() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);

@@ -1,14 +1,313 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import styles from './ExcelImportExport.module.css';
+import { FiUpload, FiDownload, FiFile, FiX } from 'react-icons/fi';
+import CustomModal from '../../../../services/CustomModal/CustomModal';
+import { parseCSV } from './csvParser';
 
-function ExcelImportExport({ setModalOpen }) {
+function ExcelImportExport({ setModalOpen, onDataImport, userType = 'student' }) {
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [parseError, setParseError] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const validTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',
+        'text/csv',
+        'application/csv'
+      ];
+
+      const validExtensions = ['.xlsx', '.xls', '.csv'];
+      const fileExtension = file.name.toLowerCase();
+
+      if (validTypes.includes(file.type) || validExtensions.some(ext => fileExtension.endsWith(ext))) {
+        setSelectedFile(file);
+        setParseError(null);
+      } else {
+        setAlertMessage('กรุณาเลือกไฟล์ Excel (.xlsx, .xls) หรือ CSV (.csv) เท่านั้น');
+        setIsAlertModalOpen(true);
+        event.target.value = '';
+      }
+    }
+  };
+
+  const handleImport = async () => {
+    if (!selectedFile) {
+      setAlertMessage('กรุณาเลือกไฟล์ก่อน');
+      setIsAlertModalOpen(true);
+      return;
+    }
+
+    setIsUploading(true);
+    setParseError(null);
+
+    try {
+      let parsedData;
+
+      if (selectedFile.name.toLowerCase().endsWith('.csv')) {
+        parsedData = await parseCSV(selectedFile);
+      } else {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        throw new Error('การ import Excel ยังไม่ได้ implement กรุณาใช้ไฟล์ CSV');
+      }
+
+      console.log('ข้อมูลที่ parse ได้:', parsedData);
+
+      if (setModalOpen && onDataImport) {
+        onDataImport(parsedData);
+        setModalOpen(true);
+      }
+
+    } catch (error) {
+      console.error('เกิดข้อผิดพลาดในการ import:', error);
+      setParseError(error.message);
+      setAlertMessage('เกิดข้อผิดพลาดในการอ่านไฟล์: ' + error.message);
+      setIsAlertModalOpen(true);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDownloadTemplate = () => {
+    let headers, templateData, filename;
+
+    if (userType === 'student') {
+      headers = [
+        'Users_Email',
+        'Users_Password',
+        'Student_Code',
+        'Student_FirstName',
+        'Student_LastName',
+        'Student_Phone',
+        'Student_Birthdate',
+        'Student_Religion',
+        'Student_MedicalProblem',
+        'Faculty_Name',
+        'Department_Name',
+        'Teacher_Code',
+        'Student_AcademicYear'
+      ];
+      templateData = [
+        'student001@rmutto.ac.th',
+        'password12345',
+        '11111111111-1',
+        'สมหมู',
+        'เมืองไทย',
+        '0812345678',
+        '15-01-2545',
+        'พุทธ',
+        '',
+        'บริหารธุรกิจและเทคโนโลยีสารสนเทศ',
+        'วิทยาการคอมพิวเตอร์',
+        '22222222222-2',
+        '2567'
+      ];
+      filename = 'student_template.csv';
+    } else {
+      headers = [
+        'Users_Email',
+        'Users_Password',
+        'Teacher_Code',
+        'Teacher_FirstName',
+        'Teacher_LastName',
+        'Teacher_Phone',
+        'Teacher_Birthdate',
+        'Teacher_Religion',
+        'Teacher_MedicalProblem',
+        'Faculty_Name',
+        'Department_Name',
+        'Teacher_IsDean'
+      ];
+      templateData = [
+        'teacher001@rmutto.ac.th',
+        'password12345',
+        '00000000000-0',
+        'สมหมี',
+        'เมืองเล',
+        '0823456789',
+        '20-05-2523',
+        'พุทธ',
+        '',
+        'บริหารธุรกิจและเทคโนโลยีสารสนเทศ',
+        'เทคโนโลยีสารสนเทศ',
+        'false'
+      ];
+      filename = 'teacher_template.csv';
+    }
+
+    const csvContent = [headers.join(','), templateData.join(',')].join('\n');
+
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const clearFile = () => {
+    setSelectedFile(null);
+    setParseError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
-    <div className={styles.wrapper}>
-      <button onClick={() => setModalOpen(true)}>Import Excel</button>
-      <button>Download Template</button>
-      <button>Export Data</button>
-    </div>
+    <>
+      <div className={styles.wrapper}>
+        <div className={styles.container}>
+          <h3 className={styles.title}>
+            นำเข้าข้อมูล{userType === 'student' ? 'นักศึกษา' : 'อาจารย์'}จาก CSV
+          </h3>
+
+          <div className={styles.uploadSection}>
+            <div className={styles.fileInputWrapper}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={handleFileSelect}
+                className={styles.fileInput}
+                id="csv-file"
+              />
+              <label htmlFor="csv-file" className={styles.fileInputLabel}>
+                <FiUpload className={styles.icon} />
+                {selectedFile ? 'เปลี่ยนไฟล์' : 'เลือกไฟล์ CSV'}
+              </label>
+            </div>
+
+            {selectedFile && (
+              <div className={styles.selectedFile}>
+                <div className={styles.fileInfo}>
+                  <FiFile className={styles.fileIcon} />
+                  <span className={styles.fileName}>{selectedFile.name}</span>
+                  <span className={styles.fileSize}>
+                    ({(selectedFile.size / 1024).toFixed(1)} KB)
+                  </span>
+                </div>
+                <button
+                  onClick={clearFile}
+                  className={styles.clearButton}
+                  type="button"
+                >
+                  <FiX />
+                </button>
+              </div>
+            )}
+
+            {parseError && (
+              <div className={styles.errorMessage}>
+                <FiX className={styles.errorIcon} />
+                <span>{parseError}</span>
+              </div>
+            )}
+          </div>
+
+          <div className={styles.actionButtons}>
+            <button
+              onClick={handleImport}
+              disabled={!selectedFile || isUploading}
+              className={`${styles.importButton} ${!selectedFile ? styles.disabled : ''}`}
+            >
+              {isUploading ? (
+                <>
+                  <div className={styles.spinner}></div>
+                  กำลังประมวลผล...
+                </>
+              ) : (
+                <>
+                  <FiUpload className={styles.buttonIcon} />
+                  นำเข้าข้อมูล
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={handleDownloadTemplate}
+              className={styles.templateButton}
+              type="button"
+            >
+              <FiDownload className={styles.buttonIcon} />
+              ดาวน์โหลดแม่แบบ CSV
+            </button>
+          </div>
+
+          <div className={styles.instructions}>
+            <h4>คำแนะนำ:</h4>
+            <ul>
+              <li>ดาวน์โหลดไฟล์แม่แบบ CSV ก่อนเพื่อดูรูปแบบข้อมูลที่ถูกต้อง</li>
+              <li>กรอกข้อมูลในไฟล์ CSV ตามรูปแบบที่กำหนด</li>
+              <li>ชื่อ columns ต้องตรงกับแม่แบบที่กำหนด (ตาม Database Schema)</li>
+              <li><strong>วันที่ใช้รูปแบบ dd-mm-yyyy (พ.ศ.) เช่น 15-01-2545</strong></li>
+              <li>Teacher_IsDean ใช้ true/false เท่านั้น</li>
+              <li>รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร</li>
+              <li>ห้ามมีแถวว่างในไฟล์ CSV</li>
+              <li>อัปโหลดไฟล์ที่กรอกข้อมูลเรียบร้อยแล้ว</li>
+              <li>ตรวจสอบข้อมูลในหน้า Preview ก่อนบันทึก</li>
+            </ul>
+          </div>
+
+          <div className={styles.schemaInfo}>
+            <h4>ข้อมูล Columns ที่ต้องการ:</h4>
+            {userType === 'student' ? (
+              <div className={styles.schemaTable}>
+                <strong>สำหรับนักศึกษา:</strong>
+                <ul>
+                  <li><code>Users_Email</code> - อีเมล (จำเป็น)</li>
+                  <li><code>Users_Password</code> - รหัสผ่าน อย่างน้อย 8 ตัว (จำเป็น)</li>
+                  <li><code>Student_Code</code> - รหัสนักศึกษา (จำเป็น)</li>
+                  <li><code>Student_FirstName</code> - ชื่อจริง (จำเป็น)</li>
+                  <li><code>Student_LastName</code> - นามสกุล (จำเป็น)</li>
+                  <li><code>Student_Phone</code> - เบอร์โทรศัพท์</li>
+                  <li><code>Student_Birthdate</code> - วันเกิด (dd-mm-yyyy พ.ศ.)</li>
+                  <li><code>Student_Religion</code> - ศาสนา</li>
+                  <li><code>Student_MedicalProblem</code> - ข้อมูลทางการแพทย์</li>
+                  <li><code>Faculty_Name</code> - ชื่อคณะ (จำเป็น)</li>
+                  <li><code>Department_Name</code> - ชื่อสาขาวิชา (จำเป็น)</li>
+                  <li><code>Teacher_Code</code> - รหัสอาจารย์ที่ปรึกษา (จำเป็น)</li>
+                  <li><code>Student_AcademicYear</code> - ปีการศึกษา (จำเป็น)</li>
+                </ul>
+              </div>
+            ) : (
+              <div className={styles.schemaTable}>
+                <strong>สำหรับอาจารย์:</strong>
+                <ul>
+                  <li><code>Users_Email</code> - อีเมล (จำเป็น)</li>
+                  <li><code>Users_Password</code> - รหัสผ่าน อย่างน้อย 8 ตัว (จำเป็น)</li>
+                  <li><code>Teacher_Code</code> - รหัสอาจารย์ (จำเป็น)</li>
+                  <li><code>Teacher_FirstName</code> - ชื่อจริง (จำเป็น)</li>
+                  <li><code>Teacher_LastName</code> - นามสกุล (จำเป็น)</li>
+                  <li><code>Teacher_Phone</code> - เบอร์โทรศัพท์</li>
+                  <li><code>Teacher_Birthdate</code> - วันเกิด (dd-mm-yyyy พ.ศ.)</li>
+                  <li><code>Teacher_Religion</code> - ศาสนา</li>
+                  <li><code>Teacher_MedicalProblem</code> - ข้อมูลทางการแพทย์</li>
+                  <li><code>Faculty_Name</code> - ชื่อคณะ (จำเป็น)</li>
+                  <li><code>Department_Name</code> - ชื่อภาควิชา (จำเป็น)</li>
+                  <li><code>Teacher_IsDean</code> - เป็นคณบดี (true/false)</li>
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <CustomModal
+        isOpen={isAlertModalOpen}
+        message={alertMessage}
+        onClose={() => setIsAlertModalOpen(false)}
+      />
+    </>
   );
 }
 
-export default ExcelImportExport; 
+export default ExcelImportExport;

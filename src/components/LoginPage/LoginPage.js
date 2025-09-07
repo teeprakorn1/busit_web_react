@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import styles from './LoginPage.module.css';
 import InputField from './InputField';
 import axios from "axios";
-import CustomModal from '../../services/CustomModal';
+import CustomModal from '../../services/CustomModal/CustomModal';
 import Logo from '../../assets/logo/busitplus_logo.png';
 
 const getApiUrl = (endpoint) => {

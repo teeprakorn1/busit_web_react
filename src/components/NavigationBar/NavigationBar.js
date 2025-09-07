@@ -12,7 +12,7 @@ import { ReactComponent as NameRegisterIcon } from "../../assets/icons/name_regi
 import { ReactComponent as StaffManagementIcon } from "../../assets/icons/staff_management_icon.svg";
 import { ReactComponent as LogoutIcon } from "../../assets/icons/logout_icon.svg";
 import { ReactComponent as MenuIcon } from "../../assets/icons/menu_icon.svg";
-import CustomModal from "../../services/CustomModal";
+import CustomModal from "../../services/CustomModal/CustomModal";
 import axios from "axios";
 
 const getApiUrl = (endpoint) => {
