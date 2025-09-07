@@ -1,14 +1,132 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 import styles from './FormFields.module.css';
 import { FiEye, FiEyeOff, FiCheck, FiX } from 'react-icons/fi';
+
+const getApiUrl = (endpoint) => {
+  return `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}${endpoint}`;
+};
 
 function InfoForms({ formData, setFormData, userType = 'student', errors = {} }) {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [passwordStrength, setPasswordStrength] = useState(0);
+    const [faculties, setFaculties] = useState([]);
+    const [departments, setDepartments] = useState([]);
+    const [teachers, setTeachers] = useState([]);
+    const [loading, setLoading] = useState({
+        faculties: false,
+        departments: false,
+        teachers: false
+    });
+    const [apiErrors, setApiErrors] = useState({});
+
+    const fetchFaculties = useCallback(async () => {
+        setLoading(prev => ({ ...prev, faculties: true }));
+        try {
+            const response = await axios.get(getApiUrl(process.env.REACT_APP_API_ADMIN_FACULTIES_GET), { withCredentials: true });
+
+            if (response.data.status) {
+                setFaculties(response.data.data);
+            } else {
+                setApiErrors(prev => ({ ...prev, faculties: response.data.message }));
+            }
+        } catch (error) {
+            console.error('Error fetching faculties:', error);
+            setApiErrors(prev => ({ 
+                ...prev, 
+                faculties: error.response?.data?.message || 'เกิดข้อผิดพลาดในการดึงข้อมูลคณะ' 
+            }));
+        } finally {
+            setLoading(prev => ({ ...prev, faculties: false }));
+        }
+    }, []);
+
+    const fetchDepartmentsByFaculty = useCallback(async (facultyId) => {
+        setLoading(prev => ({ ...prev, departments: true }));
+        try {
+            const response = await axios.get(getApiUrl(`${process.env.REACT_APP_API_ADMIN_FACULTIES_GET}${facultyId}${process.env.REACT_APP_API_ADMIN_DEPARTMENTS}`),
+             { withCredentials: true });
+
+            if (response.data.status) {
+                setDepartments(response.data.data);
+            } else {
+                setApiErrors(prev => ({ ...prev, departments: response.data.message }));
+            }
+        } catch (error) {
+            console.error('Error fetching departments:', error);
+            setApiErrors(prev => ({ 
+                ...prev, 
+                departments: error.response?.data?.message || 'เกิดข้อผิดพลาดในการดึงข้อมูลภาควิชา' 
+            }));
+        } finally {
+            setLoading(prev => ({ ...prev, departments: false }));
+        }
+    }, []);
+
+    const fetchTeachersByDepartment = useCallback(async (departmentId) => {
+        setLoading(prev => ({ ...prev, teachers: true }));
+        try {
+            const response = await axios.get(getApiUrl(`${process.env.REACT_APP_API_ADMIN_DEPARTMENTS_GET}${departmentId}${process.env.REACT_APP_API_ADMIN_TEACHERS}`),
+             { withCredentials: true });
+
+            if (response.data.status) {
+                setTeachers(response.data.data);
+            } else {
+                setApiErrors(prev => ({ ...prev, teachers: response.data.message }));
+            }
+        } catch (error) {
+            console.error('Error fetching teachers:', error);
+            setApiErrors(prev => ({ 
+                ...prev, 
+                teachers: error.response?.data?.message || 'เกิดข้อผิดพลาดในการดึงข้อมูลอาจารย์' 
+            }));
+        } finally {
+            setLoading(prev => ({ ...prev, teachers: false }));
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchFaculties();
+    }, [fetchFaculties]);
+
+    useEffect(() => {
+        if (formData?.facultyId) {
+            fetchDepartmentsByFaculty(formData.facultyId);
+        } else {
+            setDepartments([]);
+            setFormData(prev => ({ ...prev, departmentId: '' }));
+        }
+    }, [formData?.facultyId, fetchDepartmentsByFaculty, setFormData]);
+
+    useEffect(() => {
+        if (userType === 'student' && formData?.departmentId) {
+            fetchTeachersByDepartment(formData.departmentId);
+        }
+    }, [formData?.departmentId, userType, fetchTeachersByDepartment]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
+
+        if (name === 'facultyId') {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value,
+                departmentId: '',
+                teacherId: ''
+            }));
+            return;
+        }
+
+        if (name === 'departmentId') {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value,
+                teacherId: ''
+            }));
+            return;
+        }
+
         setFormData(prev => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value
@@ -58,38 +176,6 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
         return emailRegex.test(email);
     };
 
-    const faculties = [
-        'บริหารธุรกิจและเทคโนโลยีสารสนเทศ',
-        'วิศวกรรมศาสตร์',
-        'เทคโนโลยีการเกษตร',
-        'อุตสาหกรรมเกษตร'
-    ];
-
-    const departments = {
-        student: [
-            'วิทยาการคอมพิวเตอร์',
-            'เทคโนโลยีสารสนเทศ',
-            'การจัดการธุรกิจดิจิทัล',
-            'การตลาดดิจิทัล',
-            'การจัดการทรัพยากรมนุษย์',
-            'การเงินและการลงทุน',
-            'บัญชี'
-        ],
-        teacher: [
-            'ภาควิชาเทคโนโลยีสารสนเทศ',
-            'ภาควิชาการจัดการธุรกิจ',
-            'ภาควิชาการบัญชีและการเงิน',
-            'ภาควิชาการตลาด'
-        ]
-    };
-
-    const teacherAdvisors = [
-        'อาจารย์ คนดี เมืองทอง',
-        'อาจารย์ ดาวแดนท์ ทองมี',
-        'อาจารย์ สมชาย ใจดี',
-        'อาจารย์ สมหญิง เก่งมาก'
-    ];
-
     return (
         <>
             {/* Users Information */}
@@ -121,6 +207,9 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
                         )}
                     </div>
                     {errors.email && <span className={styles.errorText}>{errors.email}</span>}
+                    <small className={styles.helpText}>
+                        ชื่อผู้ใช้จะถูกสร้างอัตโนมัติจากส่วนหน้า @ ของอีเมล
+                    </small>
                 </div>
 
                 <div className={styles.fieldGroup}>
@@ -211,7 +300,7 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
                 </div>
             </div>
 
-            {/* Data Information */}
+            {/* Personal Information */}
             <div className={styles.formContainer}>
                 <h3 className={styles.formTitle}>ข้อมูลส่วนตัว</h3>
 
@@ -226,10 +315,17 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
                         value={formData?.code || ''}
                         onChange={handleChange}
                         className={`${styles.inputField} ${errors.code ? styles.error : ''}`}
-                        placeholder={userType === 'student' ? 'กรอกรหัสนักศึกษา' : 'กรอกรหัสอาจารย์'}
+                        placeholder={
+                            userType === 'student' 
+                                ? 'เช่น 026530461001-6' 
+                                : 'เช่น 026530461001-6'
+                        }
                         required
                     />
                     {errors.code && <span className={styles.errorText}>{errors.code}</span>}
+                    <small className={styles.helpText}>
+                        รูปแบบ: 12 หลัก ตามด้วย - และเลข 1 หลัก
+                    </small>
                 </div>
 
                 <div className={styles.fieldGroup}>
@@ -277,8 +373,9 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
                         value={formData?.phone || ''}
                         onChange={handleChange}
                         className={styles.inputField}
-                        placeholder="กรอกเบอร์โทรศัพท์"
+                        placeholder="เช่น 0812345678"
                     />
+                    {errors.phone && <span className={styles.errorText}>{errors.phone}</span>}
                 </div>
 
                 <div className={styles.fieldGroup}>
@@ -286,13 +383,18 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
                         วันเกิด
                     </label>
                     <input
-                        type="date"
+                        type="text"
                         id="birthDate"
                         name="birthDate"
                         value={formData?.birthDate || ''}
                         onChange={handleChange}
                         className={styles.inputField}
+                        placeholder="เช่น 15-01-2545 (dd-mm-yyyy พ.ศ.)"
                     />
+                    {errors.birthDate && <span className={styles.errorText}>{errors.birthDate}</span>}
+                    <small className={styles.helpText}>
+                        รูปแบบ: dd-mm-yyyy (พ.ศ.) เช่น 15-01-2545
+                    </small>
                 </div>
 
                 <div className={styles.fieldGroup}>
@@ -306,7 +408,7 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
                         value={formData?.religion || ''}
                         onChange={handleChange}
                         className={styles.inputField}
-                        placeholder="กรอกศาสนา"
+                        placeholder="เช่น พุทธ"
                     />
                 </div>
 
@@ -326,73 +428,102 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
                 </div>
             </div>
 
-            {/* Education Information */}
+            {/* Education/Work Information */}
             <div className={styles.formContainer}>
                 <h3 className={styles.formTitle}>
                     {userType === 'student' ? 'ข้อมูลการศึกษา' : 'ข้อมูลการทำงาน'}
                 </h3>
 
                 <div className={styles.fieldGroup}>
-                    <label htmlFor="faculty" className={styles.label}>
+                    <label htmlFor="facultyId" className={styles.label}>
                         คณะ <span className={styles.required}>*</span>
                     </label>
                     <select
-                        id="faculty"
-                        name="faculty"
-                        value={formData?.faculty || ''}
+                        id="facultyId"
+                        name="facultyId"
+                        value={formData?.facultyId || ''}
                         onChange={handleChange}
-                        className={`${styles.selectField} ${errors.faculty ? styles.error : ''}`}
+                        className={`${styles.selectField} ${errors.facultyId ? styles.error : ''}`}
                         required
+                        disabled={loading.faculties}
                     >
-                        <option value="">เลือกคณะ</option>
-                        {faculties.map((faculty, index) => (
-                            <option key={index} value={faculty}>{faculty}</option>
+                        <option value="">
+                            {loading.faculties ? 'กำลังโหลด...' : 'เลือกคณะ'}
+                        </option>
+                        {faculties.map((faculty) => (
+                            <option key={faculty.Faculty_ID} value={faculty.Faculty_ID}>
+                                {faculty.Faculty_Name}
+                            </option>
                         ))}
                     </select>
-                    {errors.faculty && <span className={styles.errorText}>{errors.faculty}</span>}
+                    {errors.facultyId && <span className={styles.errorText}>{errors.facultyId}</span>}
+                    {apiErrors.faculties && <span className={styles.errorText}>{apiErrors.faculties}</span>}
                 </div>
 
                 <div className={styles.fieldGroup}>
-                    <label htmlFor="department" className={styles.label}>
+                    <label htmlFor="departmentId" className={styles.label}>
                         {userType === 'student' ? 'สาขาวิชา' : 'ภาควิชา'} <span className={styles.required}>*</span>
                     </label>
                     <select
-                        id="department"
-                        name="department"
-                        value={formData?.department || ''}
+                        id="departmentId"
+                        name="departmentId"
+                        value={formData?.departmentId || ''}
                         onChange={handleChange}
-                        className={`${styles.selectField} ${errors.department ? styles.error : ''}`}
+                        className={`${styles.selectField} ${errors.departmentId ? styles.error : ''}`}
                         required
+                        disabled={loading.departments || !formData?.facultyId}
                     >
-                        <option value="">{userType === 'student' ? 'เลือกสาขาวิชา' : 'เลือกภาควิชา'}</option>
-                        {departments[userType].map((dept, index) => (
-                            <option key={index} value={dept}>{dept}</option>
+                        <option value="">
+                            {loading.departments 
+                                ? 'กำลังโหลด...' 
+                                : !formData?.facultyId 
+                                    ? 'เลือกคณะก่อน'
+                                    : userType === 'student' ? 'เลือกสาขาวิชา' : 'เลือกภาควิชา'
+                            }
+                        </option>
+                        {departments.map((dept) => (
+                            <option key={dept.Department_ID} value={dept.Department_ID}>
+                                {dept.Department_Name}
+                            </option>
                         ))}
                     </select>
-                    {errors.department && <span className={styles.errorText}>{errors.department}</span>}
+                    {errors.departmentId && <span className={styles.errorText}>{errors.departmentId}</span>}
+                    {apiErrors.departments && <span className={styles.errorText}>{apiErrors.departments}</span>}
                 </div>
 
                 {/* Student Information */}
                 {userType === 'student' && (
                     <>
                         <div className={styles.fieldGroup}>
-                            <label htmlFor="teacherAdvisor" className={styles.label}>
+                            <label htmlFor="teacherId" className={styles.label}>
                                 อาจารย์ที่ปรึกษา <span className={styles.required}>*</span>
                             </label>
                             <select
-                                id="teacherAdvisor"
-                                name="teacherAdvisor"
-                                value={formData?.teacherAdvisor || ''}
+                                id="teacherId"
+                                name="teacherId"
+                                value={formData?.teacherId || ''}
                                 onChange={handleChange}
-                                className={`${styles.selectField} ${errors.teacherAdvisor ? styles.error : ''}`}
+                                className={`${styles.selectField} ${errors.teacherId ? styles.error : ''}`}
                                 required
+                                disabled={loading.teachers || !formData?.departmentId}
                             >
-                                <option value="">เลือกอาจารย์ที่ปรึกษา</option>
-                                {teacherAdvisors.map((advisor, index) => (
-                                    <option key={index} value={advisor}>{advisor}</option>
+                                <option value="">
+                                    {loading.teachers 
+                                        ? 'กำลังโหลด...' 
+                                        : !formData?.departmentId 
+                                            ? 'เลือกภาควิชาก่อน'
+                                            : 'เลือกอาจารย์ที่ปรึกษา'
+                                    }
+                                </option>
+                                {teachers.map((teacher) => (
+                                    <option key={teacher.Teacher_ID} value={teacher.Teacher_ID}>
+                                        {teacher.Teacher_FullName}
+                                        {teacher.Teacher_IsDean && ' (คณบดี)'}
+                                    </option>
                                 ))}
                             </select>
-                            {errors.teacherAdvisor && <span className={styles.errorText}>{errors.teacherAdvisor}</span>}
+                            {errors.teacherId && <span className={styles.errorText}>{errors.teacherId}</span>}
+                            {apiErrors.teachers && <span className={styles.errorText}>{apiErrors.teachers}</span>}
                         </div>
 
                         <div className={styles.fieldGroup}>
@@ -410,6 +541,9 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
                                 required
                             />
                             {errors.academicYear && <span className={styles.errorText}>{errors.academicYear}</span>}
+                            <small className={styles.helpText}>
+                                รองรับทั้ง พ.ศ. (2567) และ ค.ศ. (2024)
+                            </small>
                         </div>
                     </>
                 )}
@@ -427,6 +561,9 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
                             />
                             เป็นคณบดี
                         </label>
+                        <small className={styles.helpText}>
+                            หากเลือก จะต้องไม่มีคณบดีอื่นในคณะเดียวกัน
+                        </small>
                     </div>
                 )}
             </div>

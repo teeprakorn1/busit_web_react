@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import Navbar from '../../NavigationBar/NavigationBar';
 import InfoForm from './InfoForms/InfoForms';
 import UserTypeSelector from './UserTypeSelector/UserTypeSelector';
@@ -9,6 +10,10 @@ import { validateUserForm } from './../../../utils/formValidator';
 import styles from './AddUsersAdmin.module.css';
 import { FiBell } from 'react-icons/fi';
 
+const getApiUrl = (endpoint) => {
+  return `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}${endpoint}`;
+};
+// (TODO: แก้ Timestamp ให้เพิ่มหลังทุกอย่างสำเร็จ, ไม่เพิ่มให้เพิ่ม users ที่สำกัน ,ทดสอบ add csv ,แก้ console.log)
 function AddUsersAdmin() {
   const [selectedUserType, setSelectedUserType] = useState('student');
   const [formData, setFormData] = useState({
@@ -22,10 +27,10 @@ function AddUsersAdmin() {
     birthDate: '',
     religion: '',
     medicalProblem: '',
-    faculty: '',
-    department: '',
+    facultyId: '',
+    departmentId: '',
     academicYear: '',
-    teacherAdvisor: '',
+    teacherId: '',
     isDean: false
   });
 
@@ -38,8 +43,36 @@ function AddUsersAdmin() {
 
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
+  const insertTimestamp = async (timestampName, timestampTypeId) => {
+    try {
+      await axios.post(getApiUrl(process.env.REACT_APP_API_TIMESTAMP_WEBSITE_INSERT), {
+        Timestamp_Name: timestampName,
+        TimestampType_ID: timestampTypeId
+      }, { withCredentials: true });
+    } catch (error) {
+      console.error('Error inserting timestamp:', error);
+    }
+  };
+  const generateTimestampName = (action, userType, method = 'form') => {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('th-TH', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+    const timeStr = now.toLocaleTimeString('th-TH', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+    
+    const username = formData.email ? formData.email.split('@')[0] : 'anonymous';
+    
+    return `${action} ${userType} ${method === 'csv' ? 'via CSV import' : 'via form'} by ${username} at ${dateStr} ${timeStr} in Website.`;
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -65,11 +98,106 @@ function AddUsersAdmin() {
     setImportedData(file);
   };
 
-  const handleConfirmImport = (validData) => {
+  const handleConfirmImport = async (validData) => {
     console.log("ข้อมูลที่นำเข้า:", validData);
     console.log("ประเภทผู้ใช้:", selectedUserType);
-    setAlertMessage(`นำเข้าข้อมูลสำเร็จ จำนวน ${validData.length} รายการ`);
-    setIsAlertModalOpen(true);
+    
+    setIsLoading(true);
+    
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+      const errors = [];
+
+      const csvTimestampName = generateTimestampName('Start CSV import', selectedUserType, 'csv');
+      const csvTimestampTypeId = selectedUserType === 'student' ? 16 : 17;
+      await insertTimestamp(csvTimestampName, csvTimestampTypeId);
+
+      for (let i = 0; i < validData.length; i++) {
+        const record = validData[i];
+        
+        try {
+          const apiData = transformCSVToAPI(record, selectedUserType);
+          const endpoint = selectedUserType === 'student' 
+            ? process.env.REACT_APP_API_ADMIN_STUDENT_ADD_BULK
+            : process.env.REACT_APP_API_ADMIN_TEACHER_ADD_BULK
+
+          const response = await axios.post(getApiUrl(endpoint), apiData, { withCredentials: true });
+
+          if (response.data.status) {
+            successCount++;
+          } else {
+            errorCount++;
+            errors.push(`แถวที่ ${i + 1}: ${response.data.message}`);
+          }
+        } catch (error) {
+          errorCount++;
+          const errorMessage = error.response?.data?.message || error.message;
+          errors.push(`แถวที่ ${i + 1}: ${errorMessage}`);
+        }
+      }
+      const completeCsvTimestampName = generateTimestampName(
+        `Complete CSV import - Success: ${successCount}, Failed: ${errorCount}`, 
+        selectedUserType, 
+        'csv'
+      );
+      await insertTimestamp(completeCsvTimestampName, csvTimestampTypeId);
+
+      let message = `นำเข้าข้อมูลเสร็จสิ้น\nสำเร็จ: ${successCount} รายการ`;
+      if (errorCount > 0) {
+        message += `\nล้มเหลว: ${errorCount} รายการ`;
+        if (errors.length > 0) {
+          message += `\n\nรายละเอียดข้อผิดพลาด:\n${errors.slice(0, 5).join('\n')}`;
+          if (errors.length > 5) {
+            message += `\n... และอีก ${errors.length - 5} ข้อผิดพลาด`;
+          }
+        }
+      }
+      
+      setAlertMessage(message);
+      
+    } catch (error) {
+      console.error('Error importing data:', error);
+      setAlertMessage('เกิดข้อผิดพลาดในการนำเข้าข้อมูล: ' + error.message);
+    } finally {
+      setIsLoading(false);
+      setIsAlertModalOpen(true);
+    }
+  };
+
+  const transformCSVToAPI = (csvRecord, userType) => {
+    if (userType === 'student') {
+      return {
+        Users_Email: csvRecord.Users_Email,
+        Users_Password: csvRecord.Users_Password,
+        Student_Code: csvRecord.Student_Code,
+        Student_FirstName: csvRecord.Student_FirstName,
+        Student_LastName: csvRecord.Student_LastName,
+        Student_Phone: csvRecord.Student_Phone || null,
+        Student_Birthdate: csvRecord.Student_Birthdate || null,
+        Student_Religion: csvRecord.Student_Religion || null,
+        Student_MedicalProblem: csvRecord.Student_MedicalProblem || null,
+        Student_AcademicYear: csvRecord.Student_AcademicYear,
+        Faculty_Name: csvRecord.Faculty_Name,
+        Department_Name: csvRecord.Department_Name,
+        Teacher_Code: csvRecord.Teacher_Code,
+      };
+    } else {
+      return {
+        Users_Email: csvRecord.Users_Email,
+        Users_Password: csvRecord.Users_Password,
+        Teacher_Code: csvRecord.Teacher_Code,
+        Teacher_FirstName: csvRecord.Teacher_FirstName,
+        Teacher_LastName: csvRecord.Teacher_LastName,
+        Teacher_Phone: csvRecord.Teacher_Phone || null,
+        Teacher_Birthdate: csvRecord.Teacher_Birthdate || null,
+        Teacher_Religion: csvRecord.Teacher_Religion || null,
+        Teacher_MedicalProblem: csvRecord.Teacher_MedicalProblem || null,
+        Teacher_IsDean: csvRecord.Teacher_IsDean === 'true' || csvRecord.Teacher_IsDean === true,
+        Faculty_Name: csvRecord.Faculty_Name,
+        Department_Name: csvRecord.Department_Name,
+      };
+    }
   };
 
   const handleUserTypeChange = (type) => {
@@ -85,31 +213,147 @@ function AddUsersAdmin() {
       birthDate: '',
       religion: '',
       medicalProblem: '',
-      faculty: '',
-      department: '',
+      facultyId: '',
+      departmentId: '',
       academicYear: '',
-      teacherAdvisor: '',
+      teacherId: '',
       isDean: false
     });
     setErrors({});
   };
 
   const validateForm = () => {
-    const validationErrors = validateUserForm(formData, selectedUserType);
-    setErrors(validationErrors);
+    const validatorData = {
+      ...formData,
+      faculty: formData.facultyId,
+      department: formData.departmentId,
+      teacherAdvisor: formData.teacherId
+    };
+    
+    const validationErrors = validateUserForm(validatorData, selectedUserType);
+    const mappedErrors = {};
+    Object.keys(validationErrors).forEach(key => {
+      if (key === 'faculty') {
+        mappedErrors.facultyId = validationErrors[key];
+      } else if (key === 'department') {
+        mappedErrors.departmentId = validationErrors[key];
+      } else if (key === 'teacherAdvisor') {
+        mappedErrors.teacherId = validationErrors[key];
+      } else {
+        mappedErrors[key] = validationErrors[key];
+      }
+    });
+    
+    setErrors(mappedErrors);
     return Object.keys(validationErrors).length === 0;
   };
 
-  const handleConfirm = () => {
-    if (validateForm()) {
-      console.log("ประเภทผู้ใช้:", selectedUserType);
-      console.log("ข้อมูลฟอร์ม:", formData);
-      setAlertMessage("บันทึกข้อมูลเรียบร้อย!");
-      setIsAlertModalOpen(true);
+  const prepareApiData = () => {
+    const baseData = {
+      Users_Email: formData.email,
+      Users_Password: formData.password,
+      [selectedUserType === 'student' ? 'Student_Code' : 'Teacher_Code']: formData.code,
+      [selectedUserType === 'student' ? 'Student_FirstName' : 'Teacher_FirstName']: formData.firstName,
+      [selectedUserType === 'student' ? 'Student_LastName' : 'Teacher_LastName']: formData.lastName,
+      [selectedUserType === 'student' ? 'Student_Phone' : 'Teacher_Phone']: formData.phone || null,
+      [selectedUserType === 'student' ? 'Student_Birthdate' : 'Teacher_Birthdate']: formData.birthDate || null,
+      [selectedUserType === 'student' ? 'Student_Religion' : 'Teacher_Religion']: formData.religion || null,
+      [selectedUserType === 'student' ? 'Student_MedicalProblem' : 'Teacher_MedicalProblem']: formData.medicalProblem || null,
+      Department_ID: parseInt(formData.departmentId)
+    };
+
+    if (selectedUserType === 'student') {
+      baseData.Student_AcademicYear = formData.academicYear;
+      baseData.Teacher_ID = parseInt(formData.teacherId);
     } else {
-      setAlertMessage("กรุณาตรวจสอบข้อมูลให้ครบถ้วน");
+      baseData.Teacher_IsDean = formData.isDean;
+    }
+
+    return baseData;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      setAlertMessage("กรุณาตรวจสอบข้อมูลให้ครบถ้วนและถูกต้อง");
+      setIsAlertModalOpen(true);
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const apiData = prepareApiData();
+      const endpoint = selectedUserType === 'student' 
+        ? process.env.REACT_APP_API_ADMIN_STUDENT_ADD
+        : process.env.REACT_APP_API_ADMIN_TEACHER_ADD;
+
+      console.log('ส่งข้อมูลไปยัง API:', apiData);
+      const startTimestampName = generateTimestampName('Start adding', selectedUserType, 'form');
+      const timestampTypeId = selectedUserType === 'student' ? 14 : 15;
+      await insertTimestamp(startTimestampName, timestampTypeId);
+
+      const response = await axios.post(getApiUrl(endpoint), apiData, { withCredentials: true });
+
+      if (response.data.status) {
+        const successTimestampName = generateTimestampName('Successfully added', selectedUserType, 'form');
+        await insertTimestamp(successTimestampName, timestampTypeId);
+
+        setAlertMessage(`เพิ่ม${selectedUserType === 'student' ? 'นักศึกษา' : 'อาจารย์'}สำเร็จ!`);
+        setFormData({
+          email: '',
+          password: '',
+          confirmPassword: '',
+          code: '',
+          firstName: '',
+          lastName: '',
+          phone: '',
+          birthDate: '',
+          religion: '',
+          medicalProblem: '',
+          facultyId: '',
+          departmentId: '',
+          academicYear: '',
+          teacherId: '',
+          isDean: false
+        });
+        setErrors({});
+        
+        console.log('ผลลัพธ์จาก API:', response.data);
+      } else {
+        const failTimestampName = generateTimestampName('Failed to add', selectedUserType, 'form');
+        await insertTimestamp(failTimestampName, timestampTypeId);
+
+        setAlertMessage(response.data.message || 'เกิดข้อผิดพลาดในการเพิ่มข้อมูล');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      const errorTimestampName = generateTimestampName('Error adding', selectedUserType, 'form');
+      const timestampTypeId = selectedUserType === 'student' ? 14 : 15;
+      await insertTimestamp(errorTimestampName, timestampTypeId);
+      
+      let errorMessage = 'เกิดข้อผิดพลาดในการเพิ่มข้อมูล';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 403) {
+        errorMessage = 'ไม่มีสิทธิ์ในการดำเนินการนี้';
+      } else if (error.response?.status === 409) {
+        errorMessage = 'อีเมลหรือรหัสมีผู้ใช้แล้ว';
+      } else if (error.response?.status === 401) {
+        errorMessage = 'กรุณาเข้าสู่ระบบใหม่';
+      } else if (error.code === 'NETWORK_ERROR') {
+        errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้';
+      }
+      
+      setAlertMessage(errorMessage);
+    } finally {
+      setIsLoading(false);
       setIsAlertModalOpen(true);
     }
+  };
+
+  const handleConfirm = () => {
+    handleSubmit();
   };
 
   return (
@@ -174,8 +418,12 @@ function AddUsersAdmin() {
           />
 
           <div className={styles.buttonWrapper}>
-            <button className={styles.formButton} onClick={handleConfirm}>
-              ยืนยัน
+            <button 
+              className={`${styles.formButton} ${isLoading ? styles.loading : ''}`}
+              onClick={handleConfirm}
+              disabled={isLoading}
+            >
+              {isLoading ? 'กำลังบันทึก...' : 'ยืนยัน'}
             </button>
           </div>
 
