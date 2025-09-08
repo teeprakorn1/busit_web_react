@@ -50,8 +50,6 @@ function ImportDataModal({ open, setOpen, importedData, userType = 'student', on
     if (onConfirmImport) {
       onConfirmImport(validData);
     }
-
-    console.log('ข้อมูลที่จะนำเข้า:', validData);
     setAlertMessage(`นำเข้าข้อมูลสำเร็จ จำนวน ${validData.length} รายการ`);
     setIsAlertModalOpen(true);
     setOpen(false);

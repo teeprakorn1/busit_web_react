@@ -4,7 +4,7 @@ import styles from './FormFields.module.css';
 import { FiEye, FiEyeOff, FiCheck, FiX } from 'react-icons/fi';
 
 const getApiUrl = (endpoint) => {
-  return `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}${endpoint}`;
+    return `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}${endpoint}`;
 };
 
 function InfoForms({ formData, setFormData, userType = 'student', errors = {} }) {
@@ -33,9 +33,9 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
             }
         } catch (error) {
             console.error('Error fetching faculties:', error);
-            setApiErrors(prev => ({ 
-                ...prev, 
-                faculties: error.response?.data?.message || 'เกิดข้อผิดพลาดในการดึงข้อมูลคณะ' 
+            setApiErrors(prev => ({
+                ...prev,
+                faculties: error.response?.data?.message || 'เกิดข้อผิดพลาดในการดึงข้อมูลคณะ'
             }));
         } finally {
             setLoading(prev => ({ ...prev, faculties: false }));
@@ -46,7 +46,7 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
         setLoading(prev => ({ ...prev, departments: true }));
         try {
             const response = await axios.get(getApiUrl(`${process.env.REACT_APP_API_ADMIN_FACULTIES_GET}${facultyId}${process.env.REACT_APP_API_ADMIN_DEPARTMENTS}`),
-             { withCredentials: true });
+                { withCredentials: true });
 
             if (response.data.status) {
                 setDepartments(response.data.data);
@@ -55,9 +55,9 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
             }
         } catch (error) {
             console.error('Error fetching departments:', error);
-            setApiErrors(prev => ({ 
-                ...prev, 
-                departments: error.response?.data?.message || 'เกิดข้อผิดพลาดในการดึงข้อมูลภาควิชา' 
+            setApiErrors(prev => ({
+                ...prev,
+                departments: error.response?.data?.message || 'เกิดข้อผิดพลาดในการดึงข้อมูลภาควิชา'
             }));
         } finally {
             setLoading(prev => ({ ...prev, departments: false }));
@@ -68,7 +68,7 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
         setLoading(prev => ({ ...prev, teachers: true }));
         try {
             const response = await axios.get(getApiUrl(`${process.env.REACT_APP_API_ADMIN_DEPARTMENTS_GET}${departmentId}${process.env.REACT_APP_API_ADMIN_TEACHERS}`),
-             { withCredentials: true });
+                { withCredentials: true });
 
             if (response.data.status) {
                 setTeachers(response.data.data);
@@ -77,9 +77,9 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
             }
         } catch (error) {
             console.error('Error fetching teachers:', error);
-            setApiErrors(prev => ({ 
-                ...prev, 
-                teachers: error.response?.data?.message || 'เกิดข้อผิดพลาดในการดึงข้อมูลอาจารย์' 
+            setApiErrors(prev => ({
+                ...prev,
+                teachers: error.response?.data?.message || 'เกิดข้อผิดพลาดในการดึงข้อมูลอาจารย์'
             }));
         } finally {
             setLoading(prev => ({ ...prev, teachers: false }));
@@ -316,8 +316,8 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
                         onChange={handleChange}
                         className={`${styles.inputField} ${errors.code ? styles.error : ''}`}
                         placeholder={
-                            userType === 'student' 
-                                ? 'เช่น 026530461001-6' 
+                            userType === 'student'
+                                ? 'เช่น 026530461001-6'
                                 : 'เช่น 026530461001-6'
                         }
                         required
@@ -474,9 +474,9 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
                         disabled={loading.departments || !formData?.facultyId}
                     >
                         <option value="">
-                            {loading.departments 
-                                ? 'กำลังโหลด...' 
-                                : !formData?.facultyId 
+                            {loading.departments
+                                ? 'กำลังโหลด...'
+                                : !formData?.facultyId
                                     ? 'เลือกคณะก่อน'
                                     : userType === 'student' ? 'เลือกสาขาวิชา' : 'เลือกภาควิชา'
                             }
@@ -508,19 +508,19 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
                                 disabled={loading.teachers || !formData?.departmentId}
                             >
                                 <option value="">
-                                    {loading.teachers 
-                                        ? 'กำลังโหลด...' 
-                                        : !formData?.departmentId 
+                                    {loading.teachers
+                                        ? 'กำลังโหลด...'
+                                        : !formData?.departmentId
                                             ? 'เลือกภาควิชาก่อน'
                                             : 'เลือกอาจารย์ที่ปรึกษา'
                                     }
                                 </option>
-                                {teachers.map((teacher) => (
-                                    <option key={teacher.Teacher_ID} value={teacher.Teacher_ID}>
-                                        {teacher.Teacher_FullName}
-                                        {teacher.Teacher_IsDean && ' (คณบดี)'}
+                                {teachers.map((t) => (
+                                    <option key={t.Teacher_ID} value={t.Teacher_ID}>
+                                        {t.Teacher_FullName}{t.Teacher_IsDean === 1 ? ' (คณบดี)' : ' (อาจารย์)'}
                                     </option>
                                 ))}
+
                             </select>
                             {errors.teacherId && <span className={styles.errorText}>{errors.teacherId}</span>}
                             {apiErrors.teachers && <span className={styles.errorText}>{apiErrors.teachers}</span>}

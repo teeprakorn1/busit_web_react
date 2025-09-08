@@ -13,7 +13,7 @@ import { FiBell } from 'react-icons/fi';
 const getApiUrl = (endpoint) => {
   return `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}${endpoint}`;
 };
-// (TODO: แก้ Timestamp ให้เพิ่มหลังทุกอย่างสำเร็จ, ไม่เพิ่มให้เพิ่ม users ที่สำกัน ,ทดสอบ add csv ,แก้ console.log)
+
 function AddUsersAdmin() {
   const [selectedUserType, setSelectedUserType] = useState('student');
   const [formData, setFormData] = useState({
@@ -68,9 +68,9 @@ function AddUsersAdmin() {
       minute: '2-digit',
       second: '2-digit'
     });
-    
+
     const username = formData.email ? formData.email.split('@')[0] : 'anonymous';
-    
+
     return `${action} ${userType} ${method === 'csv' ? 'via CSV import' : 'via form'} by ${username} at ${dateStr} ${timeStr} in Website.`;
   };
 
@@ -99,26 +99,19 @@ function AddUsersAdmin() {
   };
 
   const handleConfirmImport = async (validData) => {
-    console.log("ข้อมูลที่นำเข้า:", validData);
-    console.log("ประเภทผู้ใช้:", selectedUserType);
-    
     setIsLoading(true);
-    
+
     try {
       let successCount = 0;
       let errorCount = 0;
       const errors = [];
 
-      const csvTimestampName = generateTimestampName('Start CSV import', selectedUserType, 'csv');
-      const csvTimestampTypeId = selectedUserType === 'student' ? 16 : 17;
-      await insertTimestamp(csvTimestampName, csvTimestampTypeId);
-
       for (let i = 0; i < validData.length; i++) {
         const record = validData[i];
-        
+
         try {
           const apiData = transformCSVToAPI(record, selectedUserType);
-          const endpoint = selectedUserType === 'student' 
+          const endpoint = selectedUserType === 'student'
             ? process.env.REACT_APP_API_ADMIN_STUDENT_ADD_BULK
             : process.env.REACT_APP_API_ADMIN_TEACHER_ADD_BULK
 
@@ -136,12 +129,16 @@ function AddUsersAdmin() {
           errors.push(`แถวที่ ${i + 1}: ${errorMessage}`);
         }
       }
-      const completeCsvTimestampName = generateTimestampName(
-        `Complete CSV import - Success: ${successCount}, Failed: ${errorCount}`, 
-        selectedUserType, 
-        'csv'
-      );
-      await insertTimestamp(completeCsvTimestampName, csvTimestampTypeId);
+      const csvTimestampTypeId = selectedUserType === 'student' ? 16 : 17;
+
+      if (successCount > 0 || errorCount > 0) {
+        const completeCsvTimestampName = generateTimestampName(
+          `Complete CSV import - Success: ${successCount}, Failed: ${errorCount}`,
+          selectedUserType,
+          'csv'
+        );
+        await insertTimestamp(completeCsvTimestampName, csvTimestampTypeId);
+      }
 
       let message = `นำเข้าข้อมูลเสร็จสิ้น\nสำเร็จ: ${successCount} รายการ`;
       if (errorCount > 0) {
@@ -153,11 +150,19 @@ function AddUsersAdmin() {
           }
         }
       }
-      
+
       setAlertMessage(message);
-      
+
     } catch (error) {
       console.error('Error importing data:', error);
+      const csvTimestampTypeId = selectedUserType === 'student' ? 16 : 17;
+      const errorCsvTimestampName = generateTimestampName(
+        'Failed CSV import with critical error',
+        selectedUserType,
+        'csv'
+      );
+      await insertTimestamp(errorCsvTimestampName, csvTimestampTypeId);
+
       setAlertMessage('เกิดข้อผิดพลาดในการนำเข้าข้อมูล: ' + error.message);
     } finally {
       setIsLoading(false);
@@ -229,7 +234,7 @@ function AddUsersAdmin() {
       department: formData.departmentId,
       teacherAdvisor: formData.teacherId
     };
-    
+
     const validationErrors = validateUserForm(validatorData, selectedUserType);
     const mappedErrors = {};
     Object.keys(validationErrors).forEach(key => {
@@ -243,7 +248,7 @@ function AddUsersAdmin() {
         mappedErrors[key] = validationErrors[key];
       }
     });
-    
+
     setErrors(mappedErrors);
     return Object.keys(validationErrors).length === 0;
   };
@@ -280,22 +285,17 @@ function AddUsersAdmin() {
     }
 
     setIsLoading(true);
-    
+
     try {
       const apiData = prepareApiData();
-      const endpoint = selectedUserType === 'student' 
+      const endpoint = selectedUserType === 'student'
         ? process.env.REACT_APP_API_ADMIN_STUDENT_ADD
         : process.env.REACT_APP_API_ADMIN_TEACHER_ADD;
-
-      console.log('ส่งข้อมูลไปยัง API:', apiData);
-      const startTimestampName = generateTimestampName('Start adding', selectedUserType, 'form');
-      const timestampTypeId = selectedUserType === 'student' ? 14 : 15;
-      await insertTimestamp(startTimestampName, timestampTypeId);
-
       const response = await axios.post(getApiUrl(endpoint), apiData, { withCredentials: true });
 
       if (response.data.status) {
         const successTimestampName = generateTimestampName('Successfully added', selectedUserType, 'form');
+        const timestampTypeId = selectedUserType === 'student' ? 14 : 15;
         await insertTimestamp(successTimestampName, timestampTypeId);
 
         setAlertMessage(`เพิ่ม${selectedUserType === 'student' ? 'นักศึกษา' : 'อาจารย์'}สำเร็จ!`);
@@ -317,10 +317,9 @@ function AddUsersAdmin() {
           isDean: false
         });
         setErrors({});
-        
-        console.log('ผลลัพธ์จาก API:', response.data);
       } else {
         const failTimestampName = generateTimestampName('Failed to add', selectedUserType, 'form');
+        const timestampTypeId = selectedUserType === 'student' ? 14 : 15;
         await insertTimestamp(failTimestampName, timestampTypeId);
 
         setAlertMessage(response.data.message || 'เกิดข้อผิดพลาดในการเพิ่มข้อมูล');
@@ -330,9 +329,9 @@ function AddUsersAdmin() {
       const errorTimestampName = generateTimestampName('Error adding', selectedUserType, 'form');
       const timestampTypeId = selectedUserType === 'student' ? 14 : 15;
       await insertTimestamp(errorTimestampName, timestampTypeId);
-      
+
       let errorMessage = 'เกิดข้อผิดพลาดในการเพิ่มข้อมูล';
-      
+
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.status === 403) {
@@ -344,7 +343,7 @@ function AddUsersAdmin() {
       } else if (error.code === 'NETWORK_ERROR') {
         errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้';
       }
-      
+
       setAlertMessage(errorMessage);
     } finally {
       setIsLoading(false);
@@ -418,7 +417,7 @@ function AddUsersAdmin() {
           />
 
           <div className={styles.buttonWrapper}>
-            <button 
+            <button
               className={`${styles.formButton} ${isLoading ? styles.loading : ''}`}
               onClick={handleConfirm}
               disabled={isLoading}

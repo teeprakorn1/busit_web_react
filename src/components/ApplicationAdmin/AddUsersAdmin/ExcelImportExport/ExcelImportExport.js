@@ -57,8 +57,6 @@ function ExcelImportExport({ setModalOpen, onDataImport, userType = 'student' })
         throw new Error('การ import Excel ยังไม่ได้ implement กรุณาใช้ไฟล์ CSV');
       }
 
-      console.log('ข้อมูลที่ parse ได้:', parsedData);
-
       if (setModalOpen && onDataImport) {
         onDataImport(parsedData);
         setModalOpen(true);

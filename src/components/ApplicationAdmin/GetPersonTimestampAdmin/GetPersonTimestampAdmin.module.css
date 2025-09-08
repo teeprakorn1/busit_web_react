@@ -1,3 +1,4 @@
+/* GetPersonTimestampAdmin.module.css */
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap");
 
 :root {
@@ -139,43 +140,88 @@
   box-shadow: 0 25px 50px rgba(37, 99, 235, 0.2), 0 0 15px rgba(37, 99, 235, 0.05);
 }
 
-/* Tip Box */
+/* Enhanced Tip Box */
 .tipBox {
   width: 100%;
-  background: #e0f2fe;
-  color: #1e40af;
-  padding: 22px 26px;
+  background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+  border: 1px solid #bae6fd;
+  color: #0f172a;
+  padding: 24px 28px;
   border-radius: 16px;
-  font-size: 16px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  font-size: 15px;
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.12);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
   position: relative;
+  transition: all 0.3s ease;
 }
 
-.tipBox::before {
-  content: none;
+.tipBox:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(37, 99, 235, 0.18);
+}
+
+.tipHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.tipTitle {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1e40af;
+  margin: 0;
 }
 
 .tipIcon {
   color: #2563eb;
+  filter: drop-shadow(0 2px 4px rgba(37, 99, 235, 0.3));
 }
 
 .tipContent {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  margin-left: 8px;
 }
 
 .tipItem {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+  line-height: 1.5;
+}
+
+.tipItem svg {
+  color: #059669;
+  margin-top: 2px;
+  flex-shrink: 0;
 }
 
 .tipItem strong {
   color: #1e40af;
+  font-weight: 650;
+}
+
+.tipItemText {
+  color: #334155;
+  font-size: 14px;
+}
+
+/* Icon Sizes */
+.iconSmall {
+  width: 16px;
+  height: 16px;
+}
+
+.iconTiny {
+  width: 14px;
+  height: 14px;
+  margin-right: 5px;
 }
 
 /* Search Card */
@@ -223,6 +269,12 @@
   color: var(--text-muted);
 }
 
+.searchInput:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
 .searchButton {
   background: var(--primary-color);
   color: white;
@@ -244,6 +296,24 @@
   transform: scale(0.97);
 }
 
+.searchButton:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.searchButton:disabled:hover {
+  background-color: #9ca3af;
+  transform: none;
+}
+
+.searchHelp {
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 4px;
+  font-size: 13px;
+}
+
 /* Divider between search */
 .searchCard+.searchCard::before {
   content: "";
@@ -251,6 +321,288 @@
   height: 1px;
   background: #e5e7eb;
   margin: 20px 0;
+}
+
+/* Recent Searches Section */
+.recentSearchesSection {
+  width: 100%;
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.recentSearchesHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.recentSearchesHeader h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.clearAllButton {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.clearAllButton:hover {
+  background: #dc2626;
+}
+
+.recentSearchesList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recentSearchItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.recentSearchItem:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+}
+
+.recentSearchButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  flex: 1;
+  text-align: left;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+  color: var(--text-dark);
+  font-size: 14px;
+}
+
+.recentSearchButton:hover {
+  background: #f1f5f9;
+}
+
+.previewButton {
+  background: #f59e0b;
+  color: white;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 12px;
+}
+
+.previewButton:hover {
+  background: #d97706;
+  transform: scale(1.05);
+}
+
+.previewButton:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.removeSearchButton {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.removeSearchButton:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+/* Preview Modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease;
+}
+
+.previewModal {
+  background: white;
+  padding: 0;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 700px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.25s ease forwards;
+}
+
+.previewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+.previewHeader h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.modalClose {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.modalClose:hover {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+.previewContent {
+  padding: 24px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.previewContent p {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+.previewContent strong {
+  color: var(--primary-color);
+}
+
+.previewTable {
+  margin-top: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.previewTable table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.previewTable th,
+.previewTable td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 13px;
+}
+
+.previewTable th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.previewTable td {
+  color: var(--text-muted);
+}
+
+.previewActions {
+  padding: 20px 24px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  background: #f8fafc;
+}
+
+.viewFullButton {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.viewFullButton:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.cancelButton {
+  background: #6b7280;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.cancelButton:hover {
+  background: #4b5563;
+  transform: translateY(-1px);
+}
+
+/* Animations */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Responsive */
@@ -291,5 +643,38 @@
   .heading {
     padding-left: 50px;
     font-size: 22px;
+  }
+
+  .recentSearchesSection {
+    padding: 16px;
+  }
+  
+  .recentSearchItem {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .recentSearchButton {
+    justify-content: center;
+  }
+  
+  .previewModal {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .previewContent {
+    padding: 16px;
+  }
+  
+  .previewActions {
+    padding: 16px;
+    flex-direction: column;
+  }
+  
+  .viewFullButton,
+  .cancelButton {
+    width: 100%;
   }
 }

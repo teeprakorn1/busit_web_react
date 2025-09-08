@@ -19,6 +19,8 @@ const getApiUrl = (endpoint) => {
   return `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}${endpoint}`;
 };
 
+const CACHE_DURATION = 5 * 60 * 1000;
+
 const NavigationBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,6 +38,9 @@ const NavigationBar = () => {
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
 
+  const [profileCache, setProfileCache] = useState(null);
+  const [lastProfileFetch, setLastProfileFetch] = useState(0);
+
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
@@ -47,42 +52,33 @@ const NavigationBar = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const closeNavbarOnMobile = () => {
+  const closeNavbarOnMobile = useCallback(() => {
     if (isMobile) setIsCollapsed(true);
-  };
+  }, [isMobile]);
 
-  const fetchAdminData = useCallback(async () => {
-    const sessionAdminRaw = sessionStorage.getItem("admin");
-    let sessionAdmin = null;
+  const parseProfileData = useCallback((profile) => {
+    let firstName = "";
+    let lastName = "";
+    let typeName = "";
 
-    if (sessionAdminRaw) {
-      try {
-        sessionAdmin = JSON.parse(decryptValue(sessionAdminRaw));
-      } catch (err) {
-        console.error("Failed to decrypt session admin:", err);
-        sessionAdmin = null;
-        sessionStorage.removeItem("admin");
-      }
+    if (profile.Users_Type_Table === "teacher") {
+      firstName = profile.Teacher_FirstName || "";
+      lastName = profile.Teacher_LastName || "";
+      typeName = "Teacher";
+    } else if (profile.Users_Type_Table === "staff") {
+      firstName = profile.Staff_FirstName || "";
+      lastName = profile.Staff_LastName || "";
+      typeName = "Staff";
+    } else {
+      firstName = profile.Staff_FirstName || profile.Teacher_FirstName || "Unknown";
+      lastName = profile.Staff_LastName || profile.Teacher_LastName || "Unknown";
+      typeName = profile.Users_Type_Table || "Unknown";
     }
 
-    if (sessionAdmin) {
-      setAdmin(sessionAdmin);
+    return { firstName, lastName, typeName };
+  }, []);
 
-      const sessionUsersTypeRaw = sessionStorage.getItem("UsersType");
-      if (sessionUsersTypeRaw) {
-        try {
-          const usersType = decryptValue(sessionUsersTypeRaw);
-          setUsersType(usersType);
-        } catch (err) {
-          console.error("Failed to decrypt UsersType:", err);
-          sessionStorage.removeItem("UsersType");
-        }
-      }
-
-      setIsLoadingUserType(false);
-      return;
-    }
-
+  const verifyUserToken = useCallback(async () => {
     try {
       const verifyResponse = await axios.post(
         getApiUrl(process.env.REACT_APP_API_VERIFY),
@@ -90,13 +86,32 @@ const NavigationBar = () => {
         { withCredentials: true }
       );
 
-      if (!verifyResponse.data.status) throw new Error("Invalid token");
+      if (!verifyResponse.data.status) {
+        throw new Error("Invalid token");
+      }
 
       const { Users_Type, Users_Email } = verifyResponse.data;
       setUsersType(Users_Type);
       setEmail(Users_Email);
-      sessionStorage.setItem("UsersType", encryptValue(Users_Type));
 
+      sessionStorage.setItem("UsersType", encryptValue(Users_Type));
+      sessionStorage.setItem("UsersEmail", encryptValue(Users_Email));
+
+      return { Users_Type, Users_Email };
+    } catch (error) {
+      console.error("Token verification failed:", error);
+      throw error;
+    }
+  }, []);
+
+  const getUserProfile = useCallback(async (useCache = true) => {
+    const now = Date.now();
+
+    if (useCache && profileCache && (now - lastProfileFetch) < CACHE_DURATION) {
+      return profileCache;
+    }
+
+    try {
       const profileResponse = await axios.get(
         getApiUrl(process.env.REACT_APP_API_ADMIN_GET_WEBSITE),
         { withCredentials: true }
@@ -104,38 +119,94 @@ const NavigationBar = () => {
 
       if (profileResponse.data.status) {
         const profile = profileResponse.data;
-        let firstName = "";
-        let lastName = "";
-        let typeName = "";
+        const profileData = parseProfileData(profile);
 
-        if (profile.Users_Type_Table === "teacher") {
-          firstName = profile.Teacher_FirstName || "";
-          lastName = profile.Teacher_LastName || "";
-          typeName = "Teacher";
-        } else if (profile.Users_Type_Table === "staff") {
-          firstName = profile.Staff_FirstName || "";
-          lastName = profile.Staff_LastName || "";
-          typeName = "Staff";
-        } else {
-          firstName = profile.Staff_FirstName || profile.Teacher_FirstName || "Unknown";
-          lastName = profile.Staff_LastName || profile.Teacher_LastName || "Unknown";
-          typeName = profile.Users_Type_Table || "Unknown";
-        }
+        setProfileCache(profileData);
+        setLastProfileFetch(now);
 
-        const adminData = { firstName, lastName, typeName };
-        setAdmin(adminData);
-
-        sessionStorage.setItem("admin", encryptValue(JSON.stringify(adminData)));
+        return profileData;
       } else {
-        setAdmin({ firstName: "Unknown", lastName: "Unknown", typeName: "Unknown" });
+        throw new Error("Failed to get profile");
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error("Profile fetch failed:", error);
+      return { firstName: "Unknown", lastName: "Unknown", typeName: "Unknown" };
+    }
+  }, [profileCache, lastProfileFetch, parseProfileData]);
+
+  const loadSessionData = useCallback(() => {
+    try {
+      const sessionAdminRaw = sessionStorage.getItem("admin");
+      const sessionUsersTypeRaw = sessionStorage.getItem("UsersType");
+      const sessionEmailRaw = sessionStorage.getItem("UsersEmail");
+
+      let sessionAdmin = null;
+      let sessionUsersType = null;
+      let sessionEmail = null;
+
+      if (sessionAdminRaw) {
+        try {
+          sessionAdmin = JSON.parse(decryptValue(sessionAdminRaw));
+        } catch (err) {
+          console.warn("Failed to decrypt session admin:", err);
+          sessionStorage.removeItem("admin");
+        }
+      }
+
+      if (sessionUsersTypeRaw) {
+        try {
+          sessionUsersType = decryptValue(sessionUsersTypeRaw);
+        } catch (err) {
+          console.warn("Failed to decrypt UsersType:", err);
+          sessionStorage.removeItem("UsersType");
+        }
+      }
+
+      if (sessionEmailRaw) {
+        try {
+          sessionEmail = decryptValue(sessionEmailRaw);
+        } catch (err) {
+          console.warn("Failed to decrypt UsersEmail:", err);
+          sessionStorage.removeItem("UsersEmail");
+        }
+      }
+
+      return { sessionAdmin, sessionUsersType, sessionEmail };
+    } catch (error) {
+      console.error("Error loading session data:", error);
+      return { sessionAdmin: null, sessionUsersType: null, sessionEmail: null };
+    }
+  }, []);
+
+  const fetchAdminData = useCallback(async () => {
+    setIsLoadingUserType(true);
+
+    try {
+      const { sessionAdmin, sessionUsersType, sessionEmail } = loadSessionData();
+      if (sessionAdmin && sessionUsersType && sessionEmail) {
+        setAdmin(sessionAdmin);
+        setUsersType(sessionUsersType);
+        setEmail(sessionEmail);
+        setIsLoadingUserType(false);
+        return;
+      }
+
+      await verifyUserToken();
+      const profileData = await getUserProfile(false);
+
+      setAdmin(profileData);
+      sessionStorage.setItem("admin", encryptValue(JSON.stringify(profileData)));
+
+    } catch (error) {
+      console.error("Failed to fetch admin data:", error);
+      sessionStorage.removeItem("admin");
+      sessionStorage.removeItem("UsersType");
+      sessionStorage.removeItem("UsersEmail");
       navigate("/login");
     } finally {
       setIsLoadingUserType(false);
     }
-  }, [navigate]);
+  }, [navigate, getUserProfile, verifyUserToken, loadSessionData]);
 
   useEffect(() => {
     fetchAdminData();
@@ -145,43 +216,49 @@ const NavigationBar = () => {
     setActivePath(location.pathname);
   }, [location.pathname]);
 
+  const checkPermission = (path, userType) => {
+    const allowedPaths = ["/main", "/dashboard", "/activity", "/application", "/name-register", "/staff-management"];
+
+    if (!allowedPaths.includes(path)) {
+      return { allowed: false, message: "หน้าที่คุณเข้าถึงไม่ถูกต้อง." };
+    }
+
+    const normalizedUserType = userType?.trim().toLowerCase() || "";
+    if (normalizedUserType === "staff") {
+      return { allowed: true };
+    }
+
+    if (normalizedUserType === "teacher") {
+      const restrictedForTeacher = ["/activity", "/staff-management", "/application"];
+      if (restrictedForTeacher.includes(path)) {
+        return { allowed: false, message: "คุณไม่มีสิทธิ์เข้าถึงหน้านี้." };
+      }
+      return { allowed: true };
+    }
+
+    const allowedForOther = ["/main", "/dashboard", "/name-register"];
+    if (!allowedForOther.includes(path)) {
+      return { allowed: false, message: "คุณไม่มีสิทธิ์เข้าถึงหน้านี้." };
+    }
+
+    return { allowed: true };
+  };
+
   const handleNavigation = (path) => {
     if (isLoadingUserType) {
       setAlertMessage("กำลังโหลดข้อมูลผู้ใช้ โปรดลองอีกครั้งในภายหลัง.");
       setIsAlertModalOpen(true);
-      return closeNavbarOnMobile();
+      closeNavbarOnMobile();
+      return;
     }
 
-    const userType = Data_UsersType?.trim().toLowerCase() || "";
+    const permission = checkPermission(path, Data_UsersType);
 
-    const allowedPaths = ["/main", "/dashboard", "/activity", "/application", "/name-register", "/staff-management"];
-    if (!allowedPaths.includes(path)) {
-      setAlertMessage("หน้าที่คุณเข้าถึงไม่ถูกต้อง.");
+    if (!permission.allowed) {
+      setAlertMessage(permission.message);
       setIsAlertModalOpen(true);
-      return closeNavbarOnMobile();
-    }
-
-    if (userType === "staff") {
-      setActivePath(path);
-      navigate(path);
-      return closeNavbarOnMobile();
-    }
-
-    const restrictedForTeacher = ["/activity", "/staff-management", "/application"];
-    if (userType === "teacher" && restrictedForTeacher.includes(path)) {
-      setAlertMessage("คุณไม่มีสิทธิ์เข้าถึงหน้านี้.");
-      setIsAlertModalOpen(true);
-      return closeNavbarOnMobile();
-    }
-
-
-    if (userType !== "teacher" && userType !== "staff") {
-      const allowedForOther = ["/main", "/dashboard", "/name-register"];
-      if (!allowedForOther.includes(path)) {
-        setAlertMessage("คุณไม่มีสิทธิ์เข้าถึงหน้านี้.");
-        setIsAlertModalOpen(true);
-        return closeNavbarOnMobile();
-      }
+      closeNavbarOnMobile();
+      return;
     }
 
     setActivePath(path);
@@ -189,10 +266,10 @@ const NavigationBar = () => {
     closeNavbarOnMobile();
   };
 
-  const handleLogout = async () => {
+  const insertLogoutTimestamp = useCallback(async () => {
     try {
       const currentTimestamp = format(new Date(), 'dd/MM/yyyy HH:mm:ss');
-      const message = `Logout success use by ${Data_Email} at ${currentTimestamp} In Website.`;
+      const message = `Logout success use by ${Data_Email.split('@')[0]} at ${currentTimestamp} In Website.`;
 
       await axios.post(
         getApiUrl(process.env.REACT_APP_API_TIMESTAMP_WEBSITE_INSERT),
@@ -202,19 +279,32 @@ const NavigationBar = () => {
         },
         { withCredentials: true }
       );
-
-      await axios.post(getApiUrl(process.env.REACT_APP_API_LOGOUT_WEBSITE), {}, { withCredentials: true });
-
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.warn("Failed to insert logout timestamp:", error);
     }
+  }, [Data_Email]);
 
-    setIsLogoutModalOpen(false);
-    sessionStorage.removeItem("admin");
-    sessionStorage.removeItem("UsersType");
-    sessionStorage.removeItem("userSession");
-    navigate("/login");
-    closeNavbarOnMobile();
+  const handleLogout = async () => {
+    try {
+      await Promise.all([
+        insertLogoutTimestamp(),
+        axios.post(getApiUrl(process.env.REACT_APP_API_LOGOUT_WEBSITE), {}, { withCredentials: true })
+      ]);
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setIsLogoutModalOpen(false);
+      sessionStorage.removeItem("admin");
+      sessionStorage.removeItem("UsersType");
+      sessionStorage.removeItem("UsersEmail");
+      sessionStorage.removeItem("userSession");
+
+      setProfileCache(null);
+      setLastProfileFetch(0);
+
+      navigate("/login");
+      closeNavbarOnMobile();
+    }
   };
 
   const handleLogoutClick = () => {

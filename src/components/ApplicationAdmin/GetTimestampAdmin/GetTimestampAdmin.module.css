@@ -1,3 +1,4 @@
+/* GetTimestampAdmin.module.css */
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap");
 
 :root {
@@ -45,6 +46,34 @@
   padding-bottom: 15px;
 }
 
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.backButton:hover {
+  background: #e5e7eb;
+  transform: translateX(-2px);
+}
+
 .heading {
   margin: 0;
   color: var(--text-dark);
@@ -52,6 +81,19 @@
   font-weight: 700;
   padding-left: 0;
   transition: padding-left 0.3s ease;
+}
+
+.searchInfo {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.searchValue {
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-left: 8px;
 }
 
 /* Header Right */
@@ -170,10 +212,27 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
+.exportButton:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Icons inside buttons */
 .icon {
   width: 18px;
   height: 18px;
+}
+
+.iconSmall {
+  width: 16px;
+  height: 16px;
+}
+
+.iconTiny {
+  width: 14px;
+  height: 14px;
+  margin-right: 5px;
 }
 
 /* Search Input & Select */
@@ -215,6 +274,45 @@
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+/* Reset Button */
+.resetButton {
+  display: flex;
+  align-items: center;
+  background-color: #e5e7eb;
+  color: #374151;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.2s;
+  margin-left: 8px;
+}
+
+.resetButton:hover {
+  background-color: #d1d5db;
+}
+
+/* Results Summary */
+.resultsSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 2px;
+  padding: 2px 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.searchSummary {
+  font-style: italic;
+  color: var(--primary-color);
 }
 
 /* Table */
@@ -273,7 +371,7 @@
   color: var(--text-muted);
 }
 
-/* isActive Status */
+/* Status Badges */
 .activeStatus {
   display: inline-block;
   padding: 4px 8px;
@@ -294,7 +392,6 @@
   color: #991b1b;
 }
 
-/*isGraduated Status */
 .graduatedStatus {
   display: inline-block;
   padding: 4px 8px;
@@ -355,30 +452,34 @@
   color: #9a3412;
 }
 
-.resetButton {
-  display: flex;
-  align-items: center;
-  background-color: #e5e7eb;
-  color: #374151;
-  border: none;
-  padding: 6px 10px;
+/* Event Tag */
+.eventTag {
+  background: #f3f4f6;
+  padding: 4px 10px;
   border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: 6px;
+}
+
+.viewBtn {
+  border: none;
+  background: none;
   cursor: pointer;
-  font-size: 13px;
-  transition: background-color 0.2s;
-  margin-left: 8px;
+  padding: 4px;
 }
 
-.resetButton:hover {
-  background-color: #d1d5db;
+.viewBtn svg {
+  color: #2563eb;
 }
 
-.iconSmall {
-  width: 14px;
-  height: 14px;
-  margin-right: 5px;
-}
-
+/* Pagination */
 .pagination {
   display: flex;
   justify-content: center;
@@ -418,7 +519,7 @@
   font-weight: bold;
 }
 
-
+/* Modal */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -515,36 +616,82 @@
   word-break: break-word;
 }
 
-/* Event Tag */
-.eventTag {
-  background: #f3f4f6;
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #374151;
-}
-
-/* Actions */
-.actions {
+/* Loading Container */
+.loadingContainer {
   display: flex;
-  gap: 6px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
+  color: var(--text-muted);
 }
 
-.viewBtn {
+.spinner {
+  animation: spin 1s linear infinite;
+  color: var(--primary-color);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Error Container */
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 20px;
+  text-align: center;
+  padding: 40px;
+}
+
+.errorIcon {
+  color: #ef4444;
+  width: 48px;
+  height: 48px;
+}
+
+.errorActions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.retryButton {
+  background: var(--primary-color);
+  color: white;
   border: none;
-  background: none;
+  padding: 10px 20px;
+  border-radius: 8px;
   cursor: pointer;
-  padding: 4px;
+  font-weight: 500;
+  transition: background 0.2s ease;
 }
 
-.viewBtn svg {
-  color: #2563eb;
+.retryButton:hover {
+  background: var(--primary-hover);
 }
 
-.iconSmall {
-  width: 16px;
-  height: 16px;
+/* Date Picker Wrapper */
+.datePickerWrapper {
+  position: relative;
+}
+
+.datePickerWrapper .react-datepicker-wrapper {
+  width: auto;
+}
+
+.datePickerWrapper .react-datepicker__input-container input {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  cursor: pointer;
+  width: 100%;
 }
 
 /* No Data */
