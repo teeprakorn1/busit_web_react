@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../NavigationBar/NavigationBar';
-import styles from './NameRegisterAdmin.module.css';
-import { useNavigate } from "react-router-dom";
-import { FiBell, FiLayers, FiUsers, FiUserCheck, FiAlertTriangle } from "react-icons/fi";
+import Navbar from '../../NavigationBar/NavigationBar';
+import styles from './AdminAllDepartments.module.css';
+import { FiBell } from 'react-icons/fi';
 
-function NameRegisterAdmin() {
+function AdminAllDepartments() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [notifyOpen, setNotifyOpen] = useState(false);
-  const navigate = useNavigate();
 
-  const notifications = ["มีผู้ใช้งานเข้ารวมกิจกรรม"];
+  const notifications = [
+    "มีผู้ใช้งานเข้ารวมกิจกรรม",
+  ];
 
   useEffect(() => {
     const handleResize = () => {
@@ -45,7 +45,7 @@ function NameRegisterAdmin() {
           ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}
       >
         <div className={styles.headerBar}>
-          <h1 className={styles.heading}>ทะเบียนรายชื่อ</h1>
+          <h1 className={styles.heading}>รายชื่อตามสาขา</h1>
           <div className={styles.headerRight}>
             <div className={styles.notifyWrapper}>
               <button
@@ -70,29 +70,9 @@ function NameRegisterAdmin() {
             </div>
           </div>
         </div>
-
-        {/* Menu Section */}
-        <div className={styles.dashboardSection}>
-          <div className={`${styles.card} ${styles.card01}`} onClick={() => navigate("/name-register/department-name")}>
-            <FiLayers size={36} />
-            <span>รายชื่อตามสาขา</span>
-          </div>
-          <div className={`${styles.card} ${styles.card02}`} onClick={() => navigate("/name-register/student-name")}>
-            <FiUsers size={36} />
-            <span>รายชื่อนักศึกษาทั้งหมด</span>
-          </div>
-          <div className={`${styles.card} ${styles.card03}`} onClick={() => navigate("/name-register/teacher-name")}>
-            <FiUserCheck size={36} />
-            <span>ชื่ออาจารทั้งหมด</span>
-          </div>
-          <div className={`${styles.card} ${styles.card04}`} onClick={() => navigate("/all-activities")}>
-            <FiAlertTriangle size={36} />
-            <span>นักศึกษาที่กิจกรรมไม่ครบ</span>
-          </div>
-        </div>
       </main>
     </div>
   );
 }
 
-export default NameRegisterAdmin;
+export default AdminAllDepartments;

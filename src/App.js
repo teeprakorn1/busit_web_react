@@ -15,7 +15,10 @@ import GetPersonTimestampAdmin from './components/ApplicationAdmin/GetPersonTime
 import GetTimestampAdmin from './components/ApplicationAdmin/GetTimestampAdmin/GetTimestampAdmin';
 import AddUsersAdmin from './components/ApplicationAdmin/AddUsersAdmin/AddUsersAdmin';
 
-import StudentNameAll from './components/NameRegisterAdmin/StudentNameAll/StudentNameAll';
+import AdminAllStudents from './components/NameRegisterAdmin/AdminAllStudents/AdminAllStudents';
+import AdminAllTeachers from './components/NameRegisterAdmin/AdminAllTeachers/AdminAllTeachers';
+import AdminAllDepartments from './components/NameRegisterAdmin/AdminAllDepartments/AdminAllDepartments';
+import AdminUsersDetail from './components/NameRegisterAdmin/AdminUsersDetail/AdminUsersDetail';
 
 const ProtectedRoute = ({ children }) => {
   const isLoggedIn = sessionStorage.getItem("userSession");
@@ -44,7 +47,10 @@ function App() {
         <Route path='/application/add-user' element={<ProtectedRoute><AddUsersAdmin /></ProtectedRoute>} />
 
         {/* Name Register Redirects */}
-        <Route path='/name-register/student-name' element={<ProtectedRoute><StudentNameAll /></ProtectedRoute>} />
+        <Route path='/name-register/student-name' element={<ProtectedRoute><AdminAllStudents /></ProtectedRoute>} />
+        <Route path='/name-register/teacher-name' element={<ProtectedRoute><AdminAllTeachers /></ProtectedRoute>} />
+        <Route path='/name-register/department-name' element={<ProtectedRoute><AdminAllDepartments /></ProtectedRoute>} />
+        <Route path='/name-register/users-detail' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
 
         {/* 404 Page */}
         <Route path="*" element={<NotFoundPage />} />
