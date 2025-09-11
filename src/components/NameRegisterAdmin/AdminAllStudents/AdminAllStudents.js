@@ -2,10 +2,13 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Navbar from '../../NavigationBar/NavigationBar';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './AdminAllStudents.module.css';
-import { Plus, Upload, User, Eye, Edit, Ban, X, AlertCircle, Loader } from 'lucide-react';
-import { utils, writeFileXLSX } from 'xlsx';
+import { AlertCircle, Loader, Calendar, GraduationCap, User, Eye, Edit, Ban } from 'lucide-react';
 import { FiBell } from 'react-icons/fi';
 import axios from 'axios';
+
+import StudentFiltersForm from './StudentFiltersForm/StudentFiltersForm';
+import { academicYearUtils } from './utils/academicYearUtils';
+import { exportFilteredStudentsToExcel } from './utils/excelExportUtils';
 
 const getApiUrl = (endpoint) => {
   return `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}${endpoint}`;
@@ -39,15 +42,18 @@ const getDepartmentDisplay = (department) => {
 function AdminAllStudents() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
-  const [searchQuery, setSearchQuery] = useState("");
   const [notifyOpen, setNotifyOpen] = useState(false);
 
+  const [searchQuery, setSearchQuery] = useState("");
   const [facultyFilter, setFacultyFilter] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [academicYearFilter, setAcademicYearFilter] = useState("");
+  const [yearRangeFilter, setYearRangeFilter] = useState("");
+  const [studentYearFilter, setStudentYearFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
+  const [showBuddhistYear, setShowBuddhistYear] = useState(true);
 
   const [students, setStudents] = useState([]);
   const [faculties, setFaculties] = useState([]);
@@ -61,6 +67,23 @@ function AdminAllStudents() {
   const rowsPerPage = 10;
 
   const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
+
+  const availableAcademicYears = useMemo(() => {
+    const years = Array.from(new Set(students.map(s => s.academicYear).filter(Boolean)))
+      .sort((a, b) => b - a);
+    return years;
+  }, [students]);
+
+  const availableStudentYears = useMemo(() => {
+    const years = Array.from(new Set(students.map(s =>
+      academicYearUtils.calculateStudentYear(s.academicYear)
+    ).filter(Boolean))).sort();
+    return years;
+  }, [students]);
+
+  const yearStatistics = useMemo(() => {
+    return academicYearUtils.generateYearStatistics(students);
+  }, [students]);
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -123,7 +146,9 @@ function AdminAllStudents() {
           username: student.Users.Users_Username,
           userRegisTime: student.Users.Users_RegisTime,
           imageFile: student.Users.Users_ImageFile,
-          isActive: student.Users.Users_IsActive
+          isActive: student.Users.Users_IsActive,
+          studentYear: academicYearUtils.calculateStudentYear(student.Student_AcademicYear),
+          academicYearBuddhist: academicYearUtils.convertToBuddhistYear(student.Student_AcademicYear)
         }));
 
         setStudents(transformedStudents);
@@ -185,38 +210,14 @@ function AdminAllStudents() {
     }
   }, []);
 
-  useEffect(() => {
-    loadFacultiesAndDepartments();
-  }, [loadFacultiesAndDepartments]);
-
-  useEffect(() => {
-    fetchStudents();
-  }, [fetchStudents]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth <= 768;
-      setIsMobile(mobile);
-      setSidebarOpen(!mobile);
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!e.target.closest(`.${styles.notifyWrapper}`)) {
-        setNotifyOpen(false);
-      }
-    };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
-
   const filteredStudents = useMemo(() => {
     if (!Array.isArray(students)) return [];
 
-    return students.filter(student => {
+    return academicYearUtils.filterByYearCriteria(students, {
+      academicYear: academicYearFilter,
+      studentYear: studentYearFilter,
+      yearRange: yearRangeFilter
+    }).filter(student => {
       if (!student) return false;
 
       const query = searchQuery.toLowerCase().trim();
@@ -225,14 +226,15 @@ function AdminAllStudents() {
         student.lastName,
         student.code,
         student.email,
-        student.department
+        student.department,
+        student.academicYear?.toString(),
+        student.studentYear
       ].some(field =>
         field && field.toString().toLowerCase().includes(query)
       );
 
       const matchesFaculty = !facultyFilter || student.faculty === facultyFilter;
       const matchesDepartment = !departmentFilter || student.department === departmentFilter;
-      const matchesAcademicYear = !academicYearFilter || student.academicYear.toString() === academicYearFilter;
 
       let matchesStatus = true;
       if (statusFilter === 'active') {
@@ -245,9 +247,10 @@ function AdminAllStudents() {
         matchesStatus = !student.isGraduated;
       }
 
-      return matchesSearch && matchesFaculty && matchesDepartment && matchesAcademicYear && matchesStatus;
+      return matchesSearch && matchesFaculty && matchesDepartment && matchesStatus;
     });
-  }, [students, searchQuery, facultyFilter, departmentFilter, academicYearFilter, statusFilter]);
+  }, [students, searchQuery, facultyFilter, departmentFilter, academicYearFilter,
+    studentYearFilter, yearRangeFilter, statusFilter]);
 
   const sortedStudents = useMemo(() => {
     if (!sortBy) return filteredStudents;
@@ -269,8 +272,18 @@ function AdminAllStudents() {
           bValue = b.email.toLowerCase();
           break;
         case 'academicYear':
-          aValue = a.academicYear;
-          bValue = b.academicYear;
+          aValue = parseInt(a.academicYear);
+          bValue = parseInt(b.academicYear);
+          break;
+        case 'studentYear':
+          const getYearNumber = (yearStr) => {
+            if (yearStr === 'ยังไม่เริ่มเรียน') return -1;
+            if (yearStr === 'มากกว่าปี 4') return 5;
+            const match = yearStr.match(/ปี (\d+)/);
+            return match ? parseInt(match[1]) : 0;
+          };
+          aValue = getYearNumber(a.studentYear);
+          bValue = getYearNumber(b.studentYear);
           break;
         case 'department':
           aValue = a.department.toLowerCase();
@@ -303,63 +316,28 @@ function AdminAllStudents() {
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
   const currentRows = sortedStudents.slice(indexOfFirstRow, indexOfLastRow);
 
-  const exportToExcel = useCallback(() => {
-    try {
-      if (!sortedStudents || sortedStudents.length === 0) {
-        alert("ไม่มีข้อมูลสำหรับการ export");
-        return;
-      }
+  const handleExportToExcel = useCallback(() => {
+    const filterInfo = {
+      คณะ: facultyFilter,
+      สาขา: departmentFilter,
+      ปีการศึกษา: academicYearFilter,
+      ชั้นปี: studentYearFilter,
+      ช่วงปี: yearRangeFilter,
+      สถานะ: statusFilter,
+      คำค้นหา: searchQuery
+    };
 
-      const data = sortedStudents.map((student, index) => ({
-        "ลำดับ": index + 1,
-        "รหัสนักศึกษา": student.code || 'N/A',
-        "ชื่อ": student.firstName || 'N/A',
-        "นามสกุล": student.lastName || 'N/A',
-        "คณะ": student.faculty || 'N/A',
-        "สาขา": student.department || 'N/A',
-        "ปีการศึกษา": student.academicYear || 'N/A',
-        "อีเมล": student.email || 'N/A',
-        "วันที่เพิ่มในระบบ": student.regisTime ? formatDate(student.regisTime) : 'N/A',
-        "สำเร็จการศึกษา": student.isGraduated ? "สำเร็จการศึกษา" : "ยังไม่สำเร็จการศึกษา",
-        "สถานะ": student.isActive ? "ใช้งาน" : "ระงับ"
-      }));
-
-      const ws = utils.json_to_sheet(data);
-      const colWidths = [
-        { wch: 8 },
-        { wch: 20 },
-        { wch: 15 },
-        { wch: 15 },
-        { wch: 35 },
-        { wch: 25 },
-        { wch: 12 },
-        { wch: 30 },
-        { wch: 20 },
-        { wch: 20 },
-        { wch: 12 }
-      ];
-      ws['!cols'] = colWidths;
-
-      const wb = { SheetNames: [], Sheets: {} };
-      wb.SheetNames.push("Students");
-      wb.Sheets["Students"] = ws;
-
-      const now = new Date();
-      const timestamp = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
-
-      const filename = `Students_${timestamp}.xlsx`;
-      writeFileXLSX(wb, filename);
-    } catch (err) {
-      console.error('Export error:', err);
-      alert('เกิดข้อผิดพลาดในการ export ไฟล์');
-    }
-  }, [sortedStudents]);
+    return exportFilteredStudentsToExcel(sortedStudents, filterInfo, yearStatistics);
+  }, [sortedStudents, facultyFilter, departmentFilter, academicYearFilter,
+    studentYearFilter, yearRangeFilter, statusFilter, searchQuery, yearStatistics]);
 
   const resetFilters = useCallback(() => {
     setSearchQuery("");
     setFacultyFilter("");
     setDepartmentFilter("");
     setAcademicYearFilter("");
+    setYearRangeFilter("");
+    setStudentYearFilter("");
     setStatusFilter("");
     setSortBy("");
     setSortOrder("asc");
@@ -370,10 +348,37 @@ function AdminAllStudents() {
     });
   }, [navigate, location.pathname]);
 
-  const pageNumbers = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pageNumbers.push(i);
-  }
+  const handleAddStudent = useCallback(() => {
+    navigate('/admin/students/add');
+  }, [navigate]);
+
+  useEffect(() => {
+    loadFacultiesAndDepartments();
+  }, [loadFacultiesAndDepartments]);
+
+  useEffect(() => {
+    fetchStudents();
+  }, [fetchStudents]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      setSidebarOpen(!mobile);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(`.${styles.notifyWrapper}`)) {
+        setNotifyOpen(false);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
   if (loading) {
     return (
@@ -435,28 +440,53 @@ function AdminAllStudents() {
           <div className={styles.headerLeft}>
             <div>
               <h1 className={styles.heading}>รายชื่อนักศึกษาทั้งหมด</h1>
+              <div className={styles.summaryStats}>
+                <span className={styles.statItem}>
+                  <GraduationCap className={styles.iconSmall} />
+                  ทั้งหมด: {students.length} คน
+                </span>
+                <span className={styles.statItem}>
+                  <Calendar className={styles.iconSmall} />
+                  ปีการศึกษา: {availableAcademicYears.length} ปี
+                </span>
+              </div>
             </div>
           </div>
           <div className={styles.headerRight}>
+            <div className={styles.yearToggle}>
+              <button
+                className={`${styles.toggleBtn} ${showBuddhistYear ? styles.active : ''}`}
+                onClick={() => setShowBuddhistYear(true)}
+                title="แสดงปี พ.ศ."
+              >
+                พ.ศ.
+              </button>
+              <button
+                className={`${styles.toggleBtn} ${!showBuddhistYear ? styles.active : ''}`}
+                onClick={() => setShowBuddhistYear(false)}
+                title="แสดงปี ค.ศ."
+              >
+                ค.ศ.
+              </button>
+            </div>
+
             <div className={styles.notifyWrapper}>
               <button
                 className={styles.notifyButton}
                 onClick={() => setNotifyOpen(!notifyOpen)}
-                aria-label="แจ้งเตือน"
-                aria-expanded={notifyOpen}
               >
-                <FiBell size={24} color="currentColor" />
+                <FiBell size={24} />
                 {notifications.length > 0 && (
-                  <span className={styles.badge} aria-label={`${notifications.length} การแจ้งเตือน`}>
+                  <span className={styles.badge}>
                     {notifications.length}
                   </span>
                 )}
               </button>
 
               {notifyOpen && (
-                <div className={styles.notifyDropdown} role="menu">
+                <div className={styles.notifyDropdown}>
                   {notifications.map((n, i) => (
-                    <div key={i} className={styles.notifyItem} role="menuitem">
+                    <div key={i} className={styles.notifyItem}>
                       {n}
                     </div>
                   ))}
@@ -466,146 +496,87 @@ function AdminAllStudents() {
           </div>
         </div>
 
-        {/* Filter & Table */}
-        <div className={styles.studentsSection}>
-          <div className={styles.studentsFilter}>
-            <button className={styles.addButton}>
-              <Plus className={styles.icon} />
-              เพิ่มนักศึกษา
-            </button>
-
-            <button
-              className={styles.exportButton}
-              onClick={exportToExcel}
-              disabled={sortedStudents.length === 0}
-              aria-label="ส่งออกข้อมูลเป็น Excel"
-            >
-              <Upload className={styles.icon} /> Export Excel
-            </button>
-
-            <input
-              type="text"
-              placeholder="ค้นหา ชื่อ, รหัส, อีเมล, สาขา..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              className={styles.studentsSearch}
-              aria-label="ค้นหาข้อมูล"
-            />
-
-            <select
-              className={styles.studentsSelect}
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              aria-label="เรียงลำดับตาม"
-            >
-              <option value="">เรียงลำดับตาม</option>
-              <option value="name">ชื่อ-นามสกุล</option>
-              <option value="code">รหัสนักศึกษา</option>
-              <option value="email">อีเมล</option>
-              <option value="academicYear">ปีการศึกษา</option>
-              <option value="department">สาขา</option>
-              <option value="faculty">คณะ</option>
-              <option value="regisTime">วันที่เพิ่มในระบบ</option>
-            </select>
-
-            {sortBy && (
-              <select
-                className={styles.studentsSelect}
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
-                aria-label="ลำดับการเรียง"
-              >
-                <option value="asc">น้อยไปมาก (A-Z)</option>
-                <option value="desc">มากไปน้อย (Z-A)</option>
-              </select>
-            )}
-
-            <select
-              className={styles.studentsSelect}
-              value={facultyFilter}
-              onChange={(e) => {
-                setFacultyFilter(e.target.value);
-                setDepartmentFilter("");
-                setCurrentPage(1);
-              }}
-              aria-label="กรองตามคณะ"
-            >
-              <option value="">ทุกคณะ</option>
-              {faculties.map((faculty) => (
-                <option key={faculty.Faculty_ID} value={faculty.Faculty_Name}>
-                  {faculty.Faculty_Name}
-                </option>
-              ))}
-            </select>
-
-            <select
-              className={styles.studentsSelect}
-              value={departmentFilter}
-              onChange={(e) => {
-                setDepartmentFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              aria-label="กรองตามสาขา"
-            >
-              <option value="">ทุกสาขา</option>
-              {departments
-                .filter(dept => !facultyFilter ||
-                  dept.Faculty_Name === facultyFilter
-                )
-                .map((dept) => (
-                  <option key={dept.Department_ID} value={dept.Department_Name}>
-                    {dept.Department_Name}
-                  </option>
+        {/* Statistics Cards */}
+        {Object.keys(yearStatistics).length > 0 && (
+          <div className={styles.yearStatsSection}>
+            <h3 className={styles.statsTitle}>สถิติตามปีการศึกษา</h3>
+            <div className={styles.statsCards}>
+              {Object.entries(yearStatistics)
+                .sort(([a], [b]) => parseInt(b) - parseInt(a))
+                .slice(0, 6)
+                .map(([year, stats]) => (
+                  <div key={year} className={styles.statCard}>
+                    <div className={styles.statCardHeader}>
+                      <span className={styles.statYear}>
+                        {showBuddhistYear
+                          ? `${academicYearUtils.convertToBuddhistYear(year)} (${year})`
+                          : `${year} (${academicYearUtils.convertToBuddhistYear(year)})`
+                        }
+                      </span>
+                      <span className={styles.statYearLevel}>{stats.yearLevel}</span>
+                    </div>
+                    <div className={styles.statCardBody}>
+                      <div className={styles.statRow}>
+                        <span>ทั้งหมด:</span>
+                        <span className={styles.statNumber}>{stats.total}</span>
+                      </div>
+                      <div className={styles.statRow}>
+                        <span>ใช้งาน:</span>
+                        <span className={styles.statNumber}>{stats.active}</span>
+                      </div>
+                      <div className={styles.statRow}>
+                        <span>จบการศึกษา:</span>
+                        <span className={styles.statNumber}>{stats.graduated}</span>
+                      </div>
+                      <div className={styles.statProgress}>
+                        <div
+                          className={styles.progressBar}
+                          style={{
+                            width: `${(stats.graduated / stats.total) * 100}%`,
+                            backgroundColor: stats.graduated / stats.total > 0.8 ? '#10b981' :
+                              stats.graduated / stats.total > 0.5 ? '#f59e0b' : '#ef4444'
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
                 ))}
-            </select>
-
-            <select
-              className={styles.studentsSelect}
-              value={academicYearFilter}
-              onChange={(e) => {
-                setAcademicYearFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              aria-label="กรองตามปีการศึกษา"
-            >
-              <option value="">ทุกปีการศึกษา</option>
-              {Array.from(new Set(students.map(s => s.academicYear).filter(Boolean))).sort().map((year, idx) => (
-                <option key={idx} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-
-            <select
-              className={styles.studentsSelect}
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              aria-label="กรองตามสถานะ"
-            >
-              <option value="">ทุกสถานะ</option>
-              <option value="active">ใช้งาน</option>
-              <option value="inactive">ระงับ</option>
-              <option value="graduated">สำเร็จการศึกษา</option>
-              <option value="not_graduated">ยังไม่สำเร็จการศึกษา</option>
-            </select>
-
-            {(searchQuery || facultyFilter || departmentFilter || academicYearFilter || statusFilter || sortBy) && (
-              <button
-                className={styles.resetButton}
-                onClick={resetFilters}
-                aria-label="ล้างฟิลเตอร์ทั้งหมด"
-              >
-                <X className={styles.iconSmall} style={{ marginRight: '5px' }} />
-                ล้างฟิลเตอร์
-              </button>
-            )}
+            </div>
           </div>
+        )}
+
+        {/* Filters and Table Section */}
+        <div className={styles.studentsSection}>
+          <StudentFiltersForm
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            facultyFilter={facultyFilter}
+            setFacultyFilter={setFacultyFilter}
+            departmentFilter={departmentFilter}
+            setDepartmentFilter={setDepartmentFilter}
+            academicYearFilter={academicYearFilter}
+            setAcademicYearFilter={setAcademicYearFilter}
+            yearRangeFilter={yearRangeFilter}
+            setYearRangeFilter={setYearRangeFilter}
+            studentYearFilter={studentYearFilter}
+            setStudentYearFilter={setStudentYearFilter}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            sortOrder={sortOrder}
+            setSortOrder={setSortOrder}
+            showBuddhistYear={showBuddhistYear}
+            faculties={faculties}
+            departments={departments}
+            availableAcademicYears={availableAcademicYears}
+            availableStudentYears={availableStudentYears}
+            sortedStudents={sortedStudents}
+            exportToExcel={handleExportToExcel}
+            resetFilters={resetFilters}
+            setCurrentPage={setCurrentPage}
+            onAddStudent={handleAddStudent}
+          />
 
           {/* Results Summary */}
           <div className={styles.resultsSummary}>
@@ -616,28 +587,43 @@ function AdminAllStudents() {
                   sortBy === 'code' ? 'รหัสนักศึกษา' :
                     sortBy === 'email' ? 'อีเมล' :
                       sortBy === 'academicYear' ? 'ปีการศึกษา' :
-                        sortBy === 'department' ? 'สาขา' :
-                          sortBy === 'faculty' ? 'คณะ' :
-                            sortBy === 'regisTime' ? 'วันที่เพิ่มในระบบ' : sortBy}
+                        sortBy === 'studentYear' ? 'ชั้นปี' :
+                          sortBy === 'department' ? 'สาขา' :
+                            sortBy === 'faculty' ? 'คณะ' :
+                              sortBy === 'regisTime' ? 'วันที่เพิ่มในระบบ' : sortBy}
                 ({sortOrder === 'asc' ? 'น้อยไปมาก' : 'มากไปน้อย'})
+              </span>
+            )}
+            {(academicYearFilter || studentYearFilter || yearRangeFilter) && (
+              <span className={styles.filterSummary}>
+                {academicYearFilter && `ปีการศึกษา: ${academicYearFilter} `}
+                {studentYearFilter && `ชั้นปี: ${studentYearFilter} `}
+                {yearRangeFilter && `ช่วง: ${yearRangeFilter === 'current' ? 'ปีปัจจุบัน' :
+                  yearRangeFilter === 'recent' ? '3 ปีล่าสุด' :
+                    yearRangeFilter === 'old' ? 'มากกว่า 3 ปี' :
+                      yearRangeFilter === 'graduated_eligible' ? 'ควรจบแล้ว' : ''
+                  }`}
               </span>
             )}
           </div>
 
+          {/* Students Table */}
           <div className={styles.studentsTableWrapper}>
-            <table className={styles.studentsTable} role="table">
+            <table className={styles.studentsTable}>
               <thead>
                 <tr>
-                  <th scope="col">รหัสนักศึกษา</th>
-                  <th scope="col">ชื่อ-นามสกุล</th>
-                  <th scope="col">คณะ</th>
-                  <th scope="col">สาขา</th>
-                  <th scope="col">ปีการศึกษา</th>
-                  <th scope="col">อีเมล</th>
-                  <th scope="col">วันที่เพิ่มในระบบ</th>
-                  <th scope="col">สำเร็จการศึกษา</th>
-                  <th scope="col">สถานะไอดี</th>
-                  <th scope="col">จัดการ</th>
+                  <th>รหัสนักศึกษา</th>
+                  <th>ชื่อ-นามสกุล</th>
+                  <th>คณะ</th>
+                  <th>สาขา</th>
+                  <th>
+                    ปีการศึกษา ({showBuddhistYear ? 'พ.ศ.' : 'ค.ศ.'})
+                  </th>
+                  <th>อีเมล</th>
+                  <th>วันที่เพิ่มในระบบ</th>
+                  <th>สำเร็จการศึกษา</th>
+                  <th>สถานะไอดี</th>
+                  <th>จัดการ</th>
                 </tr>
               </thead>
               <tbody>
@@ -654,7 +640,9 @@ function AdminAllStudents() {
                     </td>
                     <td>
                       <span className={styles.eventTag} title={student.faculty}>
-                        {student.faculty === "คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ" ? "บธ.สท." : "ศิลปศาสตร์"}
+                        {student.faculty === "คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ"
+                          ? "บธ.สท."
+                          : "ศิลปศาสตร์"}
                       </span>
                     </td>
                     <td>
@@ -662,16 +650,29 @@ function AdminAllStudents() {
                         {getDepartmentDisplay(student.department)}
                       </span>
                     </td>
-                    <td>{student.academicYear}</td>
+                    <td>
+                      <div className={styles.academicYearCell}>
+                        <span className={styles.primaryYear}>
+                          {showBuddhistYear ? student.academicYearBuddhist : student.academicYear}
+                        </span>
+                        <span className={styles.secondaryYear}>
+                          ({showBuddhistYear ? student.academicYear : student.academicYearBuddhist})
+                        </span>
+                      </div>
+                    </td>
                     <td title={student.email}>{student.email}</td>
                     <td>{formatDate(student.regisTime)}</td>
                     <td>
-                      <span className={`${styles.badgeType} ${student.isGraduated ? styles.graduated : styles.notGraduated}`}>
+                      <span
+                        className={`${styles.badgeType} ${student.isGraduated ? styles.graduated : styles.notGraduated}`}
+                      >
                         {student.isGraduated ? "สำเร็จการศึกษา" : "ยังไม่สำเร็จการศึกษา"}
                       </span>
                     </td>
                     <td>
-                      <span className={`${styles.badgeType} ${student.isActive ? styles.active : styles.inactive}`}>
+                      <span
+                        className={`${styles.badgeType} ${student.isActive ? styles.active : styles.inactive}`}
+                      >
                         {student.isActive ? "ใช้งาน" : "ระงับ"}
                       </span>
                     </td>
@@ -684,7 +685,6 @@ function AdminAllStudents() {
                               state: { student }
                             });
                           }}
-                          aria-label={`ดูรายละเอียดนักศึกษา ${student.code}`}
                         >
                           <Eye className={styles.iconSmall} />
                         </button>
@@ -700,7 +700,7 @@ function AdminAllStudents() {
                 ))}
                 {currentRows.length === 0 && (
                   <tr>
-                    <td colSpan="10" style={{ textAlign: "center", padding: "20px" }}>
+                    <td colSpan="11" style={{ textAlign: "center", padding: "20px" }}>
                       {sortedStudents.length === 0 && students.length > 0
                         ? "ไม่พบข้อมูลที่ตรงกับเงื่อนไขการค้นหา"
                         : "ไม่มีข้อมูลนักศึกษา"}
@@ -712,22 +712,19 @@ function AdminAllStudents() {
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className={styles.pagination} role="navigation" aria-label="การแบ่งหน้า">
+          {sortedStudents.length > rowsPerPage && (
+            <div className={styles.pagination}>
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => prev - 1)}
-                aria-label="หน้าก่อนหน้า"
               >
                 Previous
               </button>
-              {pageNumbers.map(number => (
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
                 <button
                   key={number}
                   className={currentPage === number ? styles.activePage : ""}
                   onClick={() => setCurrentPage(number)}
-                  aria-label={`หน้า ${number}`}
-                  aria-current={currentPage === number ? 'page' : undefined}
                 >
                   {number}
                 </button>
@@ -735,7 +732,6 @@ function AdminAllStudents() {
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => prev + 1)}
-                aria-label="หน้าถัดไป"
               >
                 Next
               </button>
