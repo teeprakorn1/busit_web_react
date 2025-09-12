@@ -1,0 +1,486 @@
+/* ProfileForms.module.css - Combined CSS for all profile forms */
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap");
+
+:root {
+  --primary-color: #2563eb;
+  --primary-hover: #1e4fd6;
+  --bg-light: #f9fafb;
+  --text-dark: #374151;
+  --text-muted: #6b7280;
+  --card-bg: #ffffff;
+  --shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+  --info-color: #3b82f6;
+  --border-color: #e2e8f0;
+  --staff-color: #86198f;
+}
+
+/* Profile Content */
+.profileContent {
+  padding: 32px;
+  font-family: 'Noto Sans', sans-serif;
+}
+
+/* Section Header */
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.sectionHeader h3 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  color: var(--text-dark);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: flex;
+  gap: 12px;
+}
+
+.editButton,
+.saveButton,
+.cancelButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.editButton {
+  background: var(--primary-color);
+  color: white;
+}
+
+.editButton:hover {
+  background: var(--primary-hover);
+}
+
+.saveButton {
+  background: var(--success-color);
+  color: white;
+}
+
+.saveButton:hover {
+  background: #059669;
+}
+
+.cancelButton {
+  background: #6b7280;
+  color: white;
+}
+
+.cancelButton:hover {
+  background: #4b5563;
+}
+
+/* Info Grid */
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+}
+
+/* Info Section */
+.infoSection h4 {
+  margin: 0 0 16px 0;
+  color: var(--text-dark);
+  font-size: 18px;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-radius: 8px 8px 0 0;
+  border-left: 4px solid var(--primary-color);
+}
+
+/* Student form - Blue theme */
+.infoSection h4 {
+  background: #f1f5f9;
+  border-left-color: var(--primary-color);
+}
+
+/* Teacher form - Green theme */
+.teacherSection h4 {
+  background: #f0fdf4;
+  border-left-color: var(--success-color);
+}
+
+/* Staff form - Purple theme */
+.staffSection h4 {
+  background: #fef7ff;
+  border-left-color: var(--staff-color);
+}
+
+.infoCard {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0 0 12px 12px;
+  padding: 20px;
+  margin-top: -1px;
+}
+
+/* Info Row */
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+  gap: 16px;
+  min-height: 48px;
+}
+
+.infoRow:last-child {
+  border-bottom: none;
+}
+
+.label {
+  font-weight: 600;
+  color: var(--text-dark);
+  min-width: 160px;
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.value {
+  color: var(--text-muted);
+  text-align: right;
+  word-break: break-word;
+  flex: 1;
+}
+
+/* Form Fields */
+.inputField,
+.selectField,
+.textareaField {
+  width: 100%;
+  max-width: 250px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.inputField:focus,
+.selectField:focus,
+.textareaField:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.textareaField {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.selectField {
+  cursor: pointer;
+}
+
+/* Checkbox */
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--text-dark);
+  font-size: 14px;
+}
+
+.checkboxField {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* Phone List */
+.phoneList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.phoneItemContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.phoneInputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.phoneNameInput,
+.phoneNumberInput {
+  padding: 6px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 13px;
+  background: #f8fafc;
+}
+
+.phoneNameInput {
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+.phoneNumberInput {
+  font-family: 'Courier New', monospace;
+}
+
+.phoneNameInput:focus,
+.phoneNumberInput:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: white;
+}
+
+/* Phone Display List */
+.phoneDisplayList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.phoneDisplay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.phoneName {
+  font-weight: 500;
+  color: var(--text-dark);
+  font-size: 13px;
+  min-width: 80px;
+}
+
+.phoneNumber {
+  color: var(--text-muted);
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+
+.deletePhone {
+  background: #fee2e2;
+  color: #dc2626;
+  border: none;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deletePhone:hover {
+  background: #fecaca;
+}
+
+.addPhone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px dashed;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Student form add phone button */
+.addPhone {
+  background: #dbeafe;
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.addPhone:hover {
+  background: #bfdbfe;
+}
+
+/* Teacher form add phone button */
+.teacherSection .addPhone {
+  background: #f0fdf4;
+  color: var(--success-color);
+  border-color: var(--success-color);
+}
+
+.teacherSection .addPhone:hover {
+  background: #dcfce7;
+}
+
+/* Staff form add phone button */
+.staffSection .addPhone {
+  background: #fef7ff;
+  color: var(--staff-color);
+  border-color: var(--staff-color);
+}
+
+.staffSection .addPhone:hover {
+  background: #fae8ff;
+}
+
+/* Status Badges */
+.statusBadge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.statusBadge.active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.statusBadge.inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.statusBadge.graduated {
+  background: #ddd6fe;
+  color: #5b21b6;
+}
+
+.statusBadge.studying {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .profileContent {
+    padding: 20px;
+  }
+
+  .sectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .actionButtons {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .infoGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .infoRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 16px 0;
+  }
+
+  .label {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .value {
+    text-align: left;
+    width: 100%;
+  }
+
+  .inputField,
+  .selectField,
+  .textareaField,
+  .phoneList {
+    max-width: 100%;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+  }
+
+  .editButton,
+  .saveButton,
+  .cancelButton {
+    justify-content: center;
+  }
+
+  .phoneItem {
+    padding: 8px;
+  }
+
+  .phoneInput {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profileContent {
+    padding: 16px;
+  }
+
+  .sectionHeader h3 {
+    font-size: 18px;
+  }
+
+  .infoSection h4 {
+    font-size: 16px;
+    padding: 10px 12px;
+  }
+
+  .infoCard {
+    padding: 16px;
+  }
+
+  .infoRow {
+    padding: 12px 0;
+  }
+}

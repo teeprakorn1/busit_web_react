@@ -1,4 +1,4 @@
-/* AdminAllStudents.module.css */
+/* AdminAllStudents.module.css - Cleaned Version */
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap");
 
 :root {
@@ -178,106 +178,6 @@
   border-radius: 6px;
 }
 
-/* Year Statistics Section */
-.yearStatsSection {
-  margin-bottom: 30px;
-  background: var(--card-bg);
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-}
-
-.statsTitle {
-  margin: 0 0 16px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-dark);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.statsCards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
-}
-
-.statCard {
-  background: #fafbfc;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 16px;
-  transition: all 0.3s ease;
-}
-
-.statCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-  border-color: var(--primary-color);
-}
-
-.statCardHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.statYear {
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text-dark);
-}
-
-.statYearLevel {
-  background: var(--primary-color);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.statCardBody {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.statRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-}
-
-.statRow span:first-child {
-  color: var(--text-muted);
-}
-
-.statNumber {
-  font-weight: 600;
-  color: var(--text-dark);
-}
-
-.statProgress {
-  width: 100%;
-  height: 6px;
-  background: #e5e7eb;
-  border-radius: 3px;
-  margin-top: 4px;
-  overflow: hidden;
-}
-
-.progressBar {
-  height: 100%;
-  transition: width 0.3s ease;
-  border-radius: 3px;
-}
-
 /* Students Section */
 .studentsSection {
   margin-top: 30px;
@@ -411,52 +311,6 @@
   white-space: nowrap;
 }
 
-/* Year Badges */
-.yearBadge {
-  padding: 3px 6px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  color: white;
-  text-align: center;
-  min-width: 50px;
-  max-width: 70px;
-  display: inline-block;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.year1 {
-  background-color: #10b981;
-}
-
-.year2 {
-  background-color: #3b82f6;
-}
-
-.year3 {
-  background-color: #f59e0b;
-}
-
-.year4 {
-  background-color: #ef4444;
-}
-
-.yearOver {
-  background-color: #8b5cf6;
-}
-
-.yearOther {
-  background-color: #6b7280;
-}
-
-.yearBadge:hover {
-  transform: scale(1.05);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
 /* Status Badges */
 .badgeType {
   padding: 4px 10px;
@@ -492,7 +346,7 @@
   background: #f3f4f6;
   padding: 4px 8px;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 500;
   color: #374151;
   display: inline-block;
@@ -645,12 +499,6 @@
 }
 
 /* Responsive Design */
-@media (max-width: 1200px) {
-  .statsCards {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  }
-}
-
 @media (max-width: 768px) {
   .mainContent {
     margin-left: 0;
@@ -668,14 +516,6 @@
 
   .statItem {
     font-size: 13px;
-  }
-
-  .yearStatsSection {
-    display: none;
-  }
-
-  .yearToggle {
-    order: -1;
   }
 
   .toggleBtn {

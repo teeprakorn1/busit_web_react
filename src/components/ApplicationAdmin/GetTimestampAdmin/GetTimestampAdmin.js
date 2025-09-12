@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Navbar from '../../NavigationBar/NavigationBar';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './GetTimestampAdmin.module.css';
-import { Calendar, Upload, Eye, X, AlertCircle, Loader, ArrowLeft } from 'lucide-react';
+import { Calendar, Upload, Eye, X, AlertCircle, Loader, ArrowLeft, Activity, Users } from 'lucide-react';
 import { utils, writeFileXLSX } from 'xlsx';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import { FiBell } from 'react-icons/fi';
@@ -90,6 +90,28 @@ function GetTimestamp() {
   const rowsPerPage = 10;
 
   const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
+
+  // สถิติสำหรับแสดงใน summary
+  const timestampStats = useMemo(() => {
+    if (!Array.isArray(timestamps)) return {};
+
+    const stats = {
+      total: timestamps.length,
+      uniqueUsers: new Set(timestamps.map(t => t.Users_Email).filter(Boolean)).size,
+      uniqueIPs: new Set(timestamps.map(t => t.Timestamp_IP_Address).filter(Boolean)).size,
+      eventTypes: new Set(timestamps.map(t => t.TimestampType_Name).filter(Boolean)).size,
+      userTypes: {}
+    };
+
+    // นับตามประเภทผู้ใช้
+    timestamps.forEach(t => {
+      if (t.Users_Type) {
+        stats.userTypes[t.Users_Type] = (stats.userTypes[t.Users_Type] || 0) + 1;
+      }
+    });
+
+    return stats;
+  }, [timestamps]);
 
   const loadSearchCriteria = useCallback(() => {
     try {
@@ -328,11 +350,6 @@ function GetTimestamp() {
     navigate('/application/get-person-timestamp');
   }, [navigate]);
 
-  const pageNumbers = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pageNumbers.push(i);
-  }
-
   if (loading) {
     return (
       <div className={styles.container}>
@@ -409,6 +426,20 @@ function GetTimestamp() {
               <h1 className={styles.heading}>
                 {isPersonSearch ? 'ผลการค้นหาประวัติการใช้งาน' : 'ประวัติการใช้งาน'}
               </h1>
+              <div className={styles.summaryStats}>
+                <span className={styles.statItem}>
+                  <Activity className={styles.iconSmall} />
+                  ทั้งหมด: {timestampStats.total} รายการ
+                </span>
+                <span className={styles.statItem}>
+                  <Users className={styles.iconSmall} />
+                  ผู้ใช้: {timestampStats.uniqueUsers} คน
+                </span>
+                <span className={styles.statItem}>
+                  <Calendar className={styles.iconSmall} />
+                  เหตุการณ์: {timestampStats.eventTypes} ประเภท
+                </span>
+              </div>
               {searchCriteria && (
                 <p className={styles.searchInfo}>
                   ค้นหาด้วย {searchCriteria.type === 'email' ? 'อีเมล' : 'IP Address'}:
@@ -422,21 +453,19 @@ function GetTimestamp() {
               <button
                 className={styles.notifyButton}
                 onClick={() => setNotifyOpen(!notifyOpen)}
-                aria-label="แจ้งเตือน"
-                aria-expanded={notifyOpen}
               >
-                <FiBell size={24} color="currentColor" />
+                <FiBell size={24} />
                 {notifications.length > 0 && (
-                  <span className={styles.badge} aria-label={`${notifications.length} การแจ้งเตือน`}>
+                  <span className={styles.badge}>
                     {notifications.length}
                   </span>
                 )}
               </button>
 
               {notifyOpen && (
-                <div className={styles.notifyDropdown} role="menu">
+                <div className={styles.notifyDropdown}>
                   {notifications.map((n, i) => (
-                    <div key={i} className={styles.notifyItem} role="menuitem">
+                    <div key={i} className={styles.notifyItem}>
                       {n}
                     </div>
                   ))}
@@ -545,16 +574,16 @@ function GetTimestamp() {
           </div>
 
           <div className={styles.timestampTableWrapper}>
-            <table className={styles.timestampTable} role="table">
+            <table className={styles.timestampTable}>
               <thead>
                 <tr>
-                  <th scope="col">รหัส</th>
-                  <th scope="col">อีเมล</th>
-                  <th scope="col">ประเภทผู้ใช้</th>
-                  <th scope="col">เหตุการณ์</th>
-                  <th scope="col">IP Address</th>
-                  <th scope="col">วันที่ / เวลา</th>
-                  <th scope="col">จัดการ</th>
+                  <th>รหัส</th>
+                  <th>อีเมล</th>
+                  <th>ประเภทผู้ใช้</th>
+                  <th>เหตุการณ์</th>
+                  <th>IP Address</th>
+                  <th>วันที่ / เวลา</th>
+                  <th>จัดการ</th>
                 </tr>
               </thead>
               <tbody>
@@ -609,21 +638,18 @@ function GetTimestamp() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className={styles.pagination} role="navigation" aria-label="การแบ่งหน้า">
+            <div className={styles.pagination}>
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => prev - 1)}
-                aria-label="หน้าก่อนหน้า"
               >
                 Previous
               </button>
-              {pageNumbers.map(number => (
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
                 <button
                   key={number}
                   className={currentPage === number ? styles.activePage : ""}
                   onClick={() => setCurrentPage(number)}
-                  aria-label={`หน้า ${number}`}
-                  aria-current={currentPage === number ? 'page' : undefined}
                 >
                   {number}
                 </button>
@@ -631,7 +657,6 @@ function GetTimestamp() {
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => prev + 1)}
-                aria-label="หน้าถัดไป"
               >
                 Next
               </button>
@@ -644,9 +669,6 @@ function GetTimestamp() {
           <div
             className={styles.modalOverlay}
             onClick={() => setModalOpen(false)}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modal-title"
           >
             <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
               <button
@@ -657,7 +679,7 @@ function GetTimestamp() {
                 ✕
               </button>
 
-              <h2 id="modal-title" className={styles.modalHeading}>
+              <h2 className={styles.modalHeading}>
                 รายละเอียด Timestamp ID: {selectedTimestamp.Timestamp_ID}
               </h2>
 

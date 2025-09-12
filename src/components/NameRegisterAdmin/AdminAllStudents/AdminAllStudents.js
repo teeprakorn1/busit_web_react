@@ -81,10 +81,6 @@ function AdminAllStudents() {
     return years;
   }, [students]);
 
-  const yearStatistics = useMemo(() => {
-    return academicYearUtils.generateYearStatistics(students);
-  }, [students]);
-
   const fetchStudents = useCallback(async () => {
     try {
       setLoading(true);
@@ -327,9 +323,9 @@ function AdminAllStudents() {
       คำค้นหา: searchQuery
     };
 
-    return exportFilteredStudentsToExcel(sortedStudents, filterInfo, yearStatistics);
+    return exportFilteredStudentsToExcel(sortedStudents, filterInfo);
   }, [sortedStudents, facultyFilter, departmentFilter, academicYearFilter,
-    studentYearFilter, yearRangeFilter, statusFilter, searchQuery, yearStatistics]);
+    studentYearFilter, yearRangeFilter, statusFilter, searchQuery]);
 
   const resetFilters = useCallback(() => {
     setSearchQuery("");
@@ -496,55 +492,6 @@ function AdminAllStudents() {
           </div>
         </div>
 
-        {/* Statistics Cards */}
-        {Object.keys(yearStatistics).length > 0 && (
-          <div className={styles.yearStatsSection}>
-            <h3 className={styles.statsTitle}>สถิติตามปีการศึกษา</h3>
-            <div className={styles.statsCards}>
-              {Object.entries(yearStatistics)
-                .sort(([a], [b]) => parseInt(b) - parseInt(a))
-                .slice(0, 6)
-                .map(([year, stats]) => (
-                  <div key={year} className={styles.statCard}>
-                    <div className={styles.statCardHeader}>
-                      <span className={styles.statYear}>
-                        {showBuddhistYear
-                          ? `${academicYearUtils.convertToBuddhistYear(year)} (${year})`
-                          : `${year} (${academicYearUtils.convertToBuddhistYear(year)})`
-                        }
-                      </span>
-                      <span className={styles.statYearLevel}>{stats.yearLevel}</span>
-                    </div>
-                    <div className={styles.statCardBody}>
-                      <div className={styles.statRow}>
-                        <span>ทั้งหมด:</span>
-                        <span className={styles.statNumber}>{stats.total}</span>
-                      </div>
-                      <div className={styles.statRow}>
-                        <span>ใช้งาน:</span>
-                        <span className={styles.statNumber}>{stats.active}</span>
-                      </div>
-                      <div className={styles.statRow}>
-                        <span>จบการศึกษา:</span>
-                        <span className={styles.statNumber}>{stats.graduated}</span>
-                      </div>
-                      <div className={styles.statProgress}>
-                        <div
-                          className={styles.progressBar}
-                          style={{
-                            width: `${(stats.graduated / stats.total) * 100}%`,
-                            backgroundColor: stats.graduated / stats.total > 0.8 ? '#10b981' :
-                              stats.graduated / stats.total > 0.5 ? '#f59e0b' : '#ef4444'
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        )}
-
         {/* Filters and Table Section */}
         <div className={styles.studentsSection}>
           <StudentFiltersForm
@@ -700,7 +647,7 @@ function AdminAllStudents() {
                 ))}
                 {currentRows.length === 0 && (
                   <tr>
-                    <td colSpan="11" style={{ textAlign: "center", padding: "20px" }}>
+                    <td colSpan="10" style={{ textAlign: "center", padding: "20px" }}>
                       {sortedStudents.length === 0 && students.length > 0
                         ? "ไม่พบข้อมูลที่ตรงกับเงื่อนไขการค้นหา"
                         : "ไม่มีข้อมูลนักศึกษา"}
