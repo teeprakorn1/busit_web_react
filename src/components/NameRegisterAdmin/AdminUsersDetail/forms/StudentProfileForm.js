@@ -1,24 +1,47 @@
-import React, { useState } from 'react';
-import { User, Edit, Save, X, Plus, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Edit, Save, X, Plus, Trash2, Loader } from 'lucide-react';
 import styles from './ProfileForms.module.css';
 
-const StudentProfileForm = ({ userData, onUpdate }) => {
+const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    code: userData.student?.code || '',
-    firstName: userData.student?.firstName || '',
-    lastName: userData.student?.lastName || '',
-    phone: userData.student?.phone || '',
-    otherPhones: userData.student?.otherPhones || [{ name: '', phone: '' }],
-    academicYear: userData.student?.academicYear || '',
-    birthdate: userData.student?.birthdate || '',
-    religion: userData.student?.religion || '',
-    medicalProblem: userData.student?.medicalProblem || '',
-    department: userData.student?.department || '',
-    faculty: userData.student?.faculty || '',
-    advisor: userData.student?.advisor || '',
-    isGraduated: userData.student?.isGraduated || false
+    code: '',
+    firstName: '',
+    lastName: '',
+    phone: '',
+    otherPhones: [{ name: '', phone: '' }],
+    academicYear: '',
+    birthdate: '',
+    religion: '',
+    medicalProblem: '',
+    department: '',
+    faculty: '',
+    advisor: '',
+    isGraduated: false
   });
+
+  // Update formData when userData changes
+  useEffect(() => {
+    if (userData?.student) {
+      setFormData({
+        code: userData.student.code || '',
+        firstName: userData.student.firstName || '',
+        lastName: userData.student.lastName || '',
+        phone: userData.student.phone || '',
+        otherPhones: userData.student.otherPhones && userData.student.otherPhones.length > 0 
+          ? userData.student.otherPhones 
+          : [{ name: '', phone: '' }],
+        academicYear: userData.student.academicYear || '',
+        birthdate: userData.student.birthdate || '',
+        religion: userData.student.religion || '',
+        medicalProblem: userData.student.medicalProblem || '',
+        department: userData.student.department || '',
+        faculty: userData.student.faculty || '',
+        advisor: userData.student.advisor || '',
+        isGraduated: userData.student.isGraduated || false
+      });
+    }
+  }, [userData]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -54,39 +77,69 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!onUpdate || loading) return;
+
+    // Filter out empty other phones but keep at least one empty entry for UI
     const filteredOtherPhones = formData.otherPhones.filter(item =>
       item.name.trim() !== '' || item.phone.trim() !== ''
     );
+
+    // If no valid phones, add empty entry
+    const updatedOtherPhones = filteredOtherPhones.length > 0 
+      ? filteredOtherPhones 
+      : [{ name: '', phone: '' }];
+
     const updatedData = {
-      ...formData,
-      otherPhones: filteredOtherPhones.length > 0 ? filteredOtherPhones : [{ name: '', phone: '' }]
+      student: {
+        ...formData,
+        otherPhones: updatedOtherPhones
+      }
     };
 
-    onUpdate({
-      student: updatedData
-    });
-    setIsEditing(false);
+    try {
+      await onUpdate(updatedData);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Update error:', error);
+      // Error handling is done in parent component
+    }
   };
 
   const handleCancel = () => {
-    setFormData({
-      code: userData.student?.code || '',
-      firstName: userData.student?.firstName || '',
-      lastName: userData.student?.lastName || '',
-      phone: userData.student?.phone || '',
-      otherPhones: userData.student?.otherPhones || [{ name: '', phone: '' }],
-      academicYear: userData.student?.academicYear || '',
-      birthdate: userData.student?.birthdate || '',
-      religion: userData.student?.religion || '',
-      medicalProblem: userData.student?.medicalProblem || '',
-      department: userData.student?.department || '',
-      faculty: userData.student?.faculty || '',
-      advisor: userData.student?.advisor || '',
-      isGraduated: userData.student?.isGraduated || false
-    });
+    // Reset form data to original values
+    if (userData?.student) {
+      setFormData({
+        code: userData.student.code || '',
+        firstName: userData.student.firstName || '',
+        lastName: userData.student.lastName || '',
+        phone: userData.student.phone || '',
+        otherPhones: userData.student.otherPhones && userData.student.otherPhones.length > 0 
+          ? userData.student.otherPhones 
+          : [{ name: '', phone: '' }],
+        academicYear: userData.student.academicYear || '',
+        birthdate: userData.student.birthdate || '',
+        religion: userData.student.religion || '',
+        medicalProblem: userData.student.medicalProblem || '',
+        department: userData.student.department || '',
+        faculty: userData.student.faculty || '',
+        advisor: userData.student.advisor || '',
+        isGraduated: userData.student.isGraduated || false
+      });
+    }
     setIsEditing(false);
   };
+
+  if (!userData) {
+    return (
+      <div className={styles.profileContent}>
+        <div className={styles.loadingContainer}>
+          <Loader className={styles.spinner} />
+          <p>กำลังโหลดข้อมูล...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.profileContent}>
@@ -98,15 +151,32 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
         <div className={styles.actionButtons}>
           {isEditing ? (
             <>
-              <button className={styles.saveButton} onClick={handleSave}>
-                <Save size={16} /> บันทึก
+              <button 
+                className={styles.saveButton} 
+                onClick={handleSave}
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader size={16} className={styles.spinningIcon} />
+                ) : (
+                  <Save size={16} />
+                )}
+                {loading ? 'กำลังบันทึก...' : 'บันทึก'}
               </button>
-              <button className={styles.cancelButton} onClick={handleCancel}>
+              <button 
+                className={styles.cancelButton} 
+                onClick={handleCancel}
+                disabled={loading}
+              >
                 <X size={16} /> ยกเลิก
               </button>
             </>
           ) : (
-            <button className={styles.editButton} onClick={() => setIsEditing(true)}>
+            <button 
+              className={styles.editButton} 
+              onClick={() => setIsEditing(true)}
+              disabled={loading}
+            >
               <Edit size={16} /> แก้ไข
             </button>
           )}
@@ -126,6 +196,7 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
                   value={formData.code}
                   onChange={handleChange}
                   className={styles.inputField}
+                  disabled={loading}
                 />
               ) : (
                 <span className={styles.value}>{userData.student?.code || '-'}</span>
@@ -140,6 +211,8 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
                   value={formData.firstName}
                   onChange={handleChange}
                   className={styles.inputField}
+                  disabled={loading}
+                  required
                 />
               ) : (
                 <span className={styles.value}>{userData.student?.firstName || '-'}</span>
@@ -154,6 +227,8 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
                   value={formData.lastName}
                   onChange={handleChange}
                   className={styles.inputField}
+                  disabled={loading}
+                  required
                 />
               ) : (
                 <span className={styles.value}>{userData.student?.lastName || '-'}</span>
@@ -168,6 +243,7 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
                   value={formData.phone}
                   onChange={handleChange}
                   className={styles.inputField}
+                  disabled={loading}
                 />
               ) : (
                 <span className={styles.value}>{userData.student?.phone || '-'}</span>
@@ -182,6 +258,7 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
                   value={formData.birthdate}
                   onChange={handleChange}
                   className={styles.inputField}
+                  disabled={loading}
                 />
               ) : (
                 <span className={styles.value}>
@@ -197,6 +274,7 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
                   value={formData.religion}
                   onChange={handleChange}
                   className={styles.selectField}
+                  disabled={loading}
                 >
                   <option value="">เลือกศาสนา</option>
                   <option value="พุทธ">พุทธ</option>
@@ -210,6 +288,7 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
             </div>
           </div>
         </div>
+        
         <div className={styles.infoSection}>
           <h4>ข้อมูลการศึกษา</h4>
           <div className={styles.infoCard}>
@@ -224,6 +303,7 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
                   className={styles.inputField}
                   min="2000"
                   max="2030"
+                  disabled={loading}
                 />
               ) : (
                 <span className={styles.value}>{userData.student?.academicYear || '-'}</span>
@@ -238,6 +318,9 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
                   value={formData.faculty}
                   onChange={handleChange}
                   className={styles.inputField}
+                  disabled={loading}
+                  readOnly
+                  title="ข้อมูลนี้ไม่สามารถแก้ไขได้"
                 />
               ) : (
                 <span className={styles.value}>{userData.student?.faculty || '-'}</span>
@@ -252,6 +335,9 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
                   value={formData.department}
                   onChange={handleChange}
                   className={styles.inputField}
+                  disabled={loading}
+                  readOnly
+                  title="ข้อมูลนี้ไม่สามารถแก้ไขได้"
                 />
               ) : (
                 <span className={styles.value}>{userData.student?.department || '-'}</span>
@@ -266,6 +352,9 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
                   value={formData.advisor}
                   onChange={handleChange}
                   className={styles.inputField}
+                  disabled={loading}
+                  readOnly
+                  title="ข้อมูลนี้ไม่สามารถแก้ไขได้"
                 />
               ) : (
                 <span className={styles.value}>{userData.student?.advisor || '-'}</span>
@@ -281,6 +370,7 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
                     checked={formData.isGraduated}
                     onChange={handleChange}
                     className={styles.checkboxField}
+                    disabled={loading}
                   />
                   จบการศึกษาแล้ว
                 </label>
@@ -292,6 +382,7 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
             </div>
           </div>
         </div>
+        
         <div className={styles.infoSection}>
           <h4>ข้อมูลระบบ</h4>
           <div className={styles.infoCard}>
@@ -323,6 +414,7 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
             </div>
           </div>
         </div>
+        
         <div className={styles.infoSection}>
           <h4>ข้อมูลติดต่อเพิ่มเติม</h4>
           <div className={styles.infoCard}>
@@ -339,6 +431,7 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
                           onChange={(e) => handleOtherPhoneChange(index, 'name', e.target.value)}
                           className={styles.phoneNameInput}
                           placeholder="ชื่อ (เช่น บ้าน, ที่ทำงาน)"
+                          disabled={loading}
                         />
                         <input
                           type="tel"
@@ -346,6 +439,7 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
                           onChange={(e) => handleOtherPhoneChange(index, 'phone', e.target.value)}
                           className={styles.phoneNumberInput}
                           placeholder="หมายเลขโทรศัพท์"
+                          disabled={loading}
                         />
                       </div>
                       {formData.otherPhones.length > 1 && (
@@ -353,6 +447,7 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
                           type="button"
                           onClick={() => removeOtherPhone(index)}
                           className={styles.deletePhone}
+                          disabled={loading}
                         >
                           <Trash2 size={14} />
                         </button>
@@ -363,6 +458,7 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
                     type="button"
                     onClick={addOtherPhone}
                     className={styles.addPhone}
+                    disabled={loading}
                   >
                     <Plus size={14} /> เพิ่มหมายเลข
                   </button>
@@ -382,6 +478,7 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
             </div>
           </div>
         </div>
+        
         <div className={styles.infoSection}>
           <h4>ข้อมูลสุขภาพ</h4>
           <div className={styles.infoCard}>
@@ -395,6 +492,7 @@ const StudentProfileForm = ({ userData, onUpdate }) => {
                   className={styles.textareaField}
                   rows={3}
                   placeholder="ระบุปัญหาสุขภาพหรือโรคประจำตัว (ถ้ามี)"
+                  disabled={loading}
                 />
               ) : (
                 <span className={styles.value}>{userData.student?.medicalProblem || 'ไม่มี'}</span>

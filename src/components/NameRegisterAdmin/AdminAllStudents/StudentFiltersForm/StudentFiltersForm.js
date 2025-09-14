@@ -1,6 +1,7 @@
 import React from 'react';
 import { Plus, Upload, X } from 'lucide-react';
 import { academicYearUtils } from '../utils/academicYearUtils';
+import { useUserPermissions } from '../hooks/useUserPermissions';
 import styles from './StudentFiltersForm.module.css';
 
 const StudentFiltersForm = ({
@@ -33,26 +34,45 @@ const StudentFiltersForm = ({
   setCurrentPage,
   onAddStudent
 }) => {
+  const permissions = useUserPermissions();
+
   return (
     <div className={styles.studentsFilter}>
       {/* Action Buttons */}
-      <button 
-        className={styles.addButton}
-        onClick={onAddStudent}
-      >
-        <Plus className={styles.icon} />
-        เพิ่มนักศึกษา
-      </button>
+      {permissions.canAddStudents && (
+        <button 
+          className={styles.addButton}
+          onClick={onAddStudent}
+        >
+          <Plus className={styles.icon} />
+          เพิ่มนักศึกษา
+        </button>
+      )}
 
-      <button
-        className={styles.exportButton}
-        onClick={exportToExcel}
-        disabled={sortedStudents.length === 0}
-        aria-label="ส่งออกข้อมูลเป็น Excel"
-      >
-        <Upload className={styles.icon} /> 
-        Export Excel
-      </button>
+      {permissions.canExportData && (
+        <button
+          className={styles.exportButton}
+          onClick={exportToExcel}
+          disabled={sortedStudents.length === 0}
+          aria-label="ส่งออกข้อมูลเป็น Excel"
+        >
+          <Upload className={styles.icon} /> 
+          Export Excel
+        </button>
+      )}
+
+      {/* Show permission info for different user types */}
+      {permissions.isTeacher && (
+        <div className={styles.permissionInfo}>
+          <span>ระดับการเข้าถึง: ครู (ดูข้อมูล/ส่งออกข้อมูล)</span>
+        </div>
+      )}
+      
+      {permissions.isStaff && (
+        <div className={styles.permissionInfo}>
+          <span>ระดับการเข้าถึง: เจ้าหน้าที่ (สิทธิ์เต็ม)</span>
+        </div>
+      )}
 
       {/* Search Input */}
       <input

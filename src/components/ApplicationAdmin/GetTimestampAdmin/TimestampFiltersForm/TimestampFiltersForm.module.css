@@ -1,25 +1,13 @@
-/* StudentFiltersForm.module.css */
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap");
-
+/* TimestampFiltersForm.module.css */
 :root {
   --primary-color: #2563eb;
-  --primary-hover: #1e4fd6;
-  --success-color: #10b981;
-  --success-hover: #15803d;
-  --warning-color: #f59e0b;
-  --danger-color: #ef4444;
-  --bg-light: #f9fafb;
   --text-dark: #374151;
   --text-muted: #6b7280;
-  --border-color: #d1d5db;
-  --border-focus: #2563eb;
   --card-bg: #ffffff;
   --shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-  --shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.1);
 }
 
-/* Filter Container */
-.studentsFilter {
+.timestampFilter {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -32,39 +20,31 @@
   border: 1px solid #e5e7eb;
 }
 
-/* Button Styles */
-.addButton,
+/* Buttons */
+.timeButton,
 .exportButton {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
   padding: 10px 18px;
   border-radius: 10px;
   border: none;
   font-weight: 600;
-  font-size: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: white;
+  color: #fff;
+  font-size: 14px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  min-width: 120px;
-  font-family: 'Noto Sans', sans-serif;
 }
 
-.addButton {
-  background: linear-gradient(135deg, var(--primary-color), #3b82f6);
+.timeButton {
+  background-color: #4338ca;
 }
 
-.addButton:hover {
-  background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
+.timeButton:hover {
+  background-color: #4338ca;
   transform: translateY(-2px);
-  box-shadow: var(--shadow-hover);
-}
-
-.addButton:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .exportButton {
@@ -83,12 +63,7 @@
   transform: none;
 }
 
-.exportButton:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Icons inside buttons */
+/* Icons */
 .icon {
   width: 18px;
   height: 18px;
@@ -99,8 +74,8 @@
   height: 16px;
 }
 
-/* Search Input & Select */
-.studentsSearch {
+/* Search Input */
+.timestampSearch {
   flex-grow: 1;
   min-width: 200px;
   padding: 10px 16px;
@@ -112,18 +87,18 @@
   background-color: #fff;
 }
 
-.studentsSearch::placeholder {
+.timestampSearch::placeholder {
   color: var(--text-muted);
 }
 
-.studentsSearch:focus {
+.timestampSearch:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
 }
 
 /* Select dropdowns */
-.studentsSelect {
+.timestampSelect {
   padding: 10px 14px;
   border-radius: 10px;
   border: 1px solid #d1d5db;
@@ -134,7 +109,7 @@
   transition: all 0.3s ease;
 }
 
-.studentsSelect:focus {
+.timestampSelect:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
@@ -159,39 +134,53 @@
   background-color: #d1d5db;
 }
 
-.permissionInfo {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  border-radius: 6px;
-  font-size: 13px;
-  color: #1e40af;
-  font-weight: 500;
-  margin-right: 8px;
+/* Date Picker Wrapper */
+.datePickerWrapper {
+  position: relative;
+  z-index: 100;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .studentsFilter {
-    gap: 8px;
-  }
+.datePickerWrapper .react-datepicker-wrapper {
+  width: auto;
 }
 
+.datePickerWrapper .react-datepicker__input-container input {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  cursor: pointer;
+  width: 100%;
+}
+
+/* DatePicker Popup z-index fix */
+.datePickerWrapper .react-datepicker {
+  z-index: 1050 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.datePickerWrapper .react-datepicker__triangle {
+  z-index: 1051 !important;
+}
+
+.datePickerWrapper .react-datepicker-popper {
+  z-index: 1050 !important;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
-  .studentsFilter {
+  .timestampFilter {
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
   }
 
-  .studentsSearch,
-  .studentsSelect {
+  .timestampSearch,
+  .timestampSelect {
     width: 100%;
   }
 
-  .addButton,
+  .timeButton,
   .exportButton {
     width: 100%;
     justify-content: center;

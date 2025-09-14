@@ -50,7 +50,10 @@ function App() {
         <Route path='/name-register/student-name' element={<ProtectedRoute><AdminAllStudents /></ProtectedRoute>} />
         <Route path='/name-register/teacher-name' element={<ProtectedRoute><AdminAllTeachers /></ProtectedRoute>} />
         <Route path='/name-register/department-name' element={<ProtectedRoute><AdminAllDepartments /></ProtectedRoute>} />
-        <Route path='/name-register/users-detail' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
+        <Route path='/name-register/users-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
+        <Route path='/name-register/student-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
+        <Route path='/name-register/teacher-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
+        <Route path='/name-register/staff-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
 
         {/* 404 Page */}
         <Route path="*" element={<NotFoundPage />} />
