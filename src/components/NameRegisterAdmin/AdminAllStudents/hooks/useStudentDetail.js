@@ -21,13 +21,11 @@ export const useStudentDetail = () => {
   const [error, setError] = useState(null);
 
   const fetchStudentDetail = useCallback(async (studentId) => {
-    // Validate studentId
     if (!studentId) {
       setError('Student ID is required');
       return;
     }
 
-    // Validate studentId is numeric
     const numericStudentId = parseInt(studentId);
     if (isNaN(numericStudentId) || numericStudentId <= 0) {
       setError('รหัสนักศึกษาไม่ถูกต้อง');
@@ -38,11 +36,8 @@ export const useStudentDetail = () => {
       setLoading(true);
       setError(null);
       setStudentDetail(null);
-
-      console.log('Fetching student detail for ID:', numericStudentId);
-
       const response = await axios.get(
-        getApiUrl(`/api/admin/students/${numericStudentId}`),
+        getApiUrl(`${process.env.REACT_APP_API_ADMIN_STUDENTS_GET}/${numericStudentId}`),
         {
           withCredentials: true,
           timeout: 15000,
@@ -51,25 +46,18 @@ export const useStudentDetail = () => {
             'X-Requested-With': 'XMLHttpRequest',
             'Content-Type': 'application/json'
           },
-          validateStatus: (status) => status >= 200 && status < 500 // Allow error status to be handled
+          validateStatus: (status) => status >= 200 && status < 500
         }
       );
 
-      console.log('API Response:', response.status, response.data);
-
-      // Check if response is successful
       if (response.status === 200 && response.data && response.data.status === true) {
         const data = response.data.data;
-        
-        // Validate required data structure
         if (!data || !data.student) {
           setError('ข้อมูลนักศึกษาไม่สมบูรณ์');
           return;
         }
         
-        // Transform data to match StudentModal structure
         const transformedStudent = {
-          // Basic user info
           id: data.id,
           email: data.email || '',
           username: data.username || '',
@@ -77,8 +65,6 @@ export const useStudentDetail = () => {
           isActive: Boolean(data.isActive),
           userRegisTime: data.regisTime,
           imageFile: data.imageFile,
-          
-          // Student specific info
           code: data.student.code || '',
           firstName: data.student.firstName || '',
           lastName: data.student.lastName || '',
@@ -107,16 +93,11 @@ export const useStudentDetail = () => {
           studentYear: data.student.academicYear 
             ? academicYearUtils.calculateStudentYear(data.student.academicYear)
             : '',
-          
-          // Department info (for additional reference if needed)
           departmentInfo: data.department || null
         };
-
-        console.log('Transformed student data:', transformedStudent);
         setStudentDetail(transformedStudent);
 
       } else {
-        // Handle API error responses
         const errorMessage = response.data?.message || 'ไม่สามารถดึงข้อมูลนักศึกษาได้';
         console.error('API Error Response:', response.status, errorMessage);
         setError(errorMessage);
@@ -131,7 +112,6 @@ export const useStudentDetail = () => {
         if (err.code === 'ECONNABORTED') {
           errorMessage = 'การเชื่อมต่อหมดเวลา กรุณาลองใหม่อีกครั้ง';
         } else if (err.response) {
-          // Server responded with error status
           const status = err.response.status;
           const serverMessage = err.response.data?.message;
           
@@ -141,7 +121,6 @@ export const useStudentDetail = () => {
               break;
             case 401:
               errorMessage = 'กรุณาเข้าสู่ระบบใหม่';
-              // Could redirect to login here
               break;
             case 403:
               errorMessage = 'ไม่มีสิทธิ์เข้าถึงข้อมูลนักศึกษานี้';
@@ -159,11 +138,9 @@ export const useStudentDetail = () => {
               errorMessage = serverMessage || `เกิดข้อผิดพลาด (รหัส: ${status})`;
           }
         } else if (err.request) {
-          // Network error
           errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต';
         }
       } else {
-        // Non-axios error
         errorMessage = err.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ';
       }
       

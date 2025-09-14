@@ -4,14 +4,12 @@ import styles from './AdminAllStudents.module.css';
 import { AlertCircle, Loader, Calendar, GraduationCap, Shield } from 'lucide-react';
 import { FiBell } from 'react-icons/fi';
 
-// Components
 import StudentFiltersForm from './StudentFiltersForm/StudentFiltersForm';
 import StudentTable from './StudentTable/StudentTable';
 import StudentModal from './StudentModal/StudentModal';
 import StudentPagination from './StudentPagination/StudentPagination';
 import CustomModal from '../../../services/CustomModal/CustomModal';
 
-// Custom Hooks
 import { useStudents } from './hooks/useStudents';
 import { useFilters } from './hooks/useFilters';
 import { useUIState } from './hooks/useUIState';
@@ -21,7 +19,6 @@ function AdminAllStudents() {
   const rowsPerPage = 10;
   const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
 
-  // Custom hooks
   const {
     students,
     faculties,
@@ -81,7 +78,7 @@ function AdminAllStudents() {
     modalMessage,
     modalButtons,
     studentModalOpen,
-    selectedStudentId, // เปลี่ยนจาก selectedStudent เป็น selectedStudentId
+    selectedStudentId,
     showModal,
     closeModal,
     openStudentModal,
@@ -105,24 +102,20 @@ function AdminAllStudents() {
     fetchStudents
   });
 
-  // Get filtered and sorted students
   const sortedStudents = useMemo(() => {
     return getFilteredAndSortedStudents(students);
   }, [getFilteredAndSortedStudents, students]);
 
-  // Pagination
   const totalPages = Math.ceil(sortedStudents.length / rowsPerPage);
   const indexOfLastRow = currentPage * rowsPerPage;
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
   const currentRows = sortedStudents.slice(indexOfFirstRow, indexOfLastRow);
 
-  // Handle export with filter info
   const handleExport = () => {
     const filterInfo = getFilterInfo();
     return handleExportToExcel(sortedStudents, filterInfo);
   };
 
-  // Effects
   useEffect(() => {
     loadFacultiesAndDepartments();
   }, [loadFacultiesAndDepartments]);
@@ -138,8 +131,6 @@ function AdminAllStudents() {
     };
     fetchStudents(params);
   }, [fetchStudents, currentPage, facultyFilter, departmentFilter, academicYearFilter, searchQuery]);
-
-  // Loading state
   if (loading) {
     return (
       <div className={styles.container}>
@@ -157,8 +148,6 @@ function AdminAllStudents() {
       </div>
     );
   }
-
-  // Error state
   if (error) {
     return (
       <div className={styles.container}>
@@ -217,15 +206,12 @@ function AdminAllStudents() {
           ${isMobile ? styles.mobileContent : ""} 
           ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}
       >
-        {/* Security Alert */}
         {securityAlert && (
           <div className={styles.securityBanner}>
             <Shield size={16} />
             <span>{securityAlert}</span>
           </div>
         )}
-
-        {/* Header */}
         <div className={styles.headerBar}>
           <div className={styles.headerLeft}>
             <div>
@@ -285,8 +271,6 @@ function AdminAllStudents() {
             </div>
           </div>
         </div>
-
-        {/* Filters and Table Section */}
         <div className={styles.studentsSection}>
           <StudentFiltersForm
             searchQuery={searchQuery}
@@ -318,8 +302,6 @@ function AdminAllStudents() {
             setCurrentPage={setCurrentPage}
             onAddStudent={handleAddStudent}
           />
-
-          {/* Results Summary */}
           <div className={styles.resultsSummary}>
             <span>พบ {sortedStudents.length} รายการ</span>
             {sortBy && (
@@ -347,8 +329,6 @@ function AdminAllStudents() {
               </span>
             )}
           </div>
-
-          {/* Students Table */}
           <StudentTable
             students={currentRows}
             showBuddhistYear={showBuddhistYear}
@@ -359,8 +339,6 @@ function AdminAllStudents() {
             sortConfig={sortConfig}
             onSort={handleSort}
           />
-
-          {/* Pagination */}
           <StudentPagination
             currentPage={currentPage}
             totalPages={totalPages}
@@ -369,8 +347,6 @@ function AdminAllStudents() {
             totalItems={sortedStudents.length}
           />
         </div>
-
-        {/* Action Loading Overlay */}
         {actionLoading && (
           <div className={styles.actionOverlay}>
             <div className={styles.actionSpinner}>
@@ -379,16 +355,12 @@ function AdminAllStudents() {
             </div>
           </div>
         )}
-
-        {/* Custom Modal */}
         <CustomModal
           isOpen={modalOpen}
           message={modalMessage}
           onClose={closeModal}
           buttons={modalButtons}
         />
-
-        {/* Student Detail Modal - เปลี่ยนจาก student prop เป็น studentId prop */}
         <StudentModal
           isOpen={studentModalOpen}
           onClose={closeStudentModal}

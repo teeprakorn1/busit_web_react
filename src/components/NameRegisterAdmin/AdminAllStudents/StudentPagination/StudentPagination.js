@@ -11,7 +11,7 @@ function StudentPagination({
   showInfo = true
 }) {
   const getVisiblePages = () => {
-    const delta = 2; // จำนวนหน้าที่แสดงรอบๆ หน้าปัจจุบัน
+    const delta = 2;
     const range = [];
     const rangeWithDots = [];
 
@@ -58,7 +58,6 @@ function StudentPagination({
       )}
       
       <div className={styles.pagination}>
-        {/* ปุ่มย้อนกลับ */}
         <button
           className={`${styles.pageButton} ${styles.navButton}`}
           disabled={currentPage === 1}
@@ -69,7 +68,6 @@ function StudentPagination({
           <span className={styles.navText}>Previous</span>
         </button>
 
-        {/* หมายเลขหน้า */}
         {getVisiblePages().map((page, index) => {
           if (page === '...') {
             return (
@@ -93,7 +91,6 @@ function StudentPagination({
           );
         })}
 
-        {/* ปุ่มไปหน้าถัดไป */}
         <button
           className={`${styles.pageButton} ${styles.navButton}`}
           disabled={currentPage === totalPages}
@@ -104,8 +101,7 @@ function StudentPagination({
           <ChevronRight className={styles.icon} />
         </button>
       </div>
-
-      {/* ข้อมูลเพิ่มเติมสำหรับ mobile */}
+      
       <div className={styles.mobileInfo}>
         หน้า {currentPage} จาก {totalPages}
       </div>

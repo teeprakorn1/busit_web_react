@@ -58,43 +58,43 @@ function StudentTable({
       <table className={styles.table}>
         <thead>
           <tr>
-            <th 
+            <th
               className={styles.sortable}
               onClick={() => handleSort('code')}
             >
               รหัสนักศึกษา {getSortIcon('code')}
             </th>
-            <th 
+            <th
               className={styles.sortable}
               onClick={() => handleSort('name')}
             >
               ชื่อ-นามสกุล {getSortIcon('name')}
             </th>
-            <th 
+            <th
               className={styles.sortable}
               onClick={() => handleSort('faculty')}
             >
               คณะ {getSortIcon('faculty')}
             </th>
-            <th 
+            <th
               className={styles.sortable}
               onClick={() => handleSort('department')}
             >
               สาขา {getSortIcon('department')}
             </th>
-            <th 
+            <th
               className={styles.sortable}
               onClick={() => handleSort('academicYear')}
             >
               ปีการศึกษา ({showBuddhistYear ? 'พ.ศ.' : 'ค.ศ.'}) {getSortIcon('academicYear')}
             </th>
-            <th 
+            <th
               className={styles.sortable}
               onClick={() => handleSort('email')}
             >
               อีเมล {getSortIcon('email')}
             </th>
-            <th 
+            <th
               className={styles.sortable}
               onClick={() => handleSort('regisTime')}
             >
@@ -113,8 +113,8 @@ function StudentTable({
                 <div className={styles.studentName}>
                   <div className={styles.avatar}>
                     {student.imageFile ? (
-                      <img 
-                        src={student.imageFile} 
+                      <img
+                        src={student.imageFile}
                         alt="Profile"
                         onError={(e) => {
                           e.target.style.display = 'none';
@@ -167,7 +167,6 @@ function StudentTable({
               </td>
               <td>
                 <div className={styles.actions}>
-                  {/* View Button - Available for all user types */}
                   {permissions.canViewStudentDetails && (
                     <button
                       className={styles.viewBtn}
@@ -178,10 +177,8 @@ function StudentTable({
                       <Eye className={styles.iconSmall} />
                     </button>
                   )}
-                  
-                  {/* Edit Button - Only for Admin and Staff */}
                   {permissions.canEditStudents && (
-                    <button 
+                    <button
                       className={styles.editBtn}
                       onClick={() => onEditStudent(student)}
                       title="แก้ไขข้อมูลโดยตรง"
@@ -190,10 +187,8 @@ function StudentTable({
                       <Edit className={styles.iconSmall} />
                     </button>
                   )}
-                  
-                  {/* Toggle Status Button - Only for Admin */}
                   {permissions.canToggleStudentStatus && (
-                    <button 
+                    <button
                       className={styles.deleteBtn}
                       onClick={() => onToggleStatus(student)}
                       title={student.isActive ? "ระงับการใช้งาน" : "เปิดการใช้งาน"}
@@ -202,8 +197,6 @@ function StudentTable({
                       <Ban className={styles.iconSmall} />
                     </button>
                   )}
-
-                  {/* Show message for limited permissions */}
                   {!permissions.canViewStudentDetails && (
                     <span className={styles.noPermission} title="ไม่มีสิทธิ์เข้าถึง">
                       ไม่มีสิทธิ์

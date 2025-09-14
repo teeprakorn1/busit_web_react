@@ -27,39 +27,35 @@ const calculateAge = (birthdate) => {
   const birth = new Date(birthdate);
   let age = today.getFullYear() - birth.getFullYear();
   const monthDiff = today.getMonth() - birth.getMonth();
-  
+
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
     age--;
   }
-  
+
   return age;
 };
 
-function StudentModal({ 
-  isOpen, 
-  onClose, 
-  studentId, 
-  showBuddhistYear = true 
+function StudentModal({
+  isOpen,
+  onClose,
+  studentId,
+  showBuddhistYear = true
 }) {
-  const { 
-    studentDetail, 
-    loading, 
-    error, 
-    fetchStudentDetail, 
-    clearStudentDetail 
+  const {
+    studentDetail,
+    loading,
+    error,
+    fetchStudentDetail,
+    clearStudentDetail
   } = useStudentDetail();
 
-  // Fetch student data when modal opens
   useEffect(() => {
     if (isOpen && studentId) {
       fetchStudentDetail(studentId);
     } else if (!isOpen) {
-      // Clear data when modal closes
       clearStudentDetail();
     }
   }, [isOpen, studentId, fetchStudentDetail, clearStudentDetail]);
-
-  // Don't render if modal is not open
   if (!isOpen) return null;
 
   const handleBackdropClick = (e) => {
@@ -68,7 +64,6 @@ function StudentModal({
     }
   };
 
-  // Loading state
   if (loading) {
     return (
       <div className={styles.modalOverlay} onClick={handleBackdropClick}>
@@ -92,7 +87,6 @@ function StudentModal({
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className={styles.modalOverlay} onClick={handleBackdropClick}>
@@ -109,8 +103,8 @@ function StudentModal({
             <div className={styles.errorContainer}>
               <AlertTriangle className={styles.errorIcon} />
               <p>{error}</p>
-              <button 
-                className={styles.retryButton} 
+              <button
+                className={styles.retryButton}
                 onClick={() => fetchStudentDetail(studentId)}
               >
                 ลองใหม่อีกครั้ง
@@ -127,7 +121,6 @@ function StudentModal({
     );
   }
 
-  // No student data state
   if (!studentDetail) {
     return (
       <div className={styles.modalOverlay} onClick={handleBackdropClick}>
@@ -161,13 +154,12 @@ function StudentModal({
   return (
     <div className={styles.modalOverlay} onClick={handleBackdropClick}>
       <div className={styles.modalContent}>
-        {/* Header */}
         <div className={styles.modalHeader}>
           <div className={styles.studentInfo}>
             <div className={styles.avatar}>
               {studentDetail.imageFile ? (
-                <img 
-                  src={studentDetail.imageFile} 
+                <img
+                  src={studentDetail.imageFile}
                   alt="Profile"
                   onError={(e) => {
                     e.target.style.display = 'none';
@@ -196,10 +188,7 @@ function StudentModal({
             <X size={24} />
           </button>
         </div>
-
-        {/* Content */}
         <div className={styles.modalBody}>
-          {/* Basic Information */}
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>
               <User size={18} />
@@ -227,17 +216,13 @@ function StudentModal({
                     <label>เบอร์โทรอื่น ๆ</label>
                     <div className={styles.otherPhonesList}>
                       {studentDetail.otherPhones.map((phone, index) => {
-                        // Debug log to see what we're getting
-                        console.log('Other phone data:', phone);
-                        
-                        // Handle different data structures
                         const phoneNumber = phone.phone || phone.OtherPhone_Phone || '';
                         const phoneName = phone.name || phone.OtherPhone_Name || '';
-                        
+
                         if (!phoneNumber || phoneNumber.trim() === '') {
                           return null;
                         }
-                        
+
                         return (
                           <div key={phone.id || phone.OtherPhone_ID || index} className={styles.otherPhoneItem}>
                             {phoneName && phoneName.trim() !== '' && (
@@ -274,8 +259,6 @@ function StudentModal({
               </div>
             </div>
           </div>
-
-          {/* Academic Information */}
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>
               <GraduationCap size={18} />
@@ -310,7 +293,7 @@ function StudentModal({
                 <div>
                   <label>ปีการศึกษา</label>
                   <span>
-                    {showBuddhistYear ? studentDetail.academicYearBuddhist : studentDetail.academicYear} 
+                    {showBuddhistYear ? studentDetail.academicYearBuddhist : studentDetail.academicYear}
                     <span className={styles.secondaryYear}>
                       ({showBuddhistYear ? studentDetail.academicYear : studentDetail.academicYearBuddhist})
                     </span>
@@ -326,8 +309,6 @@ function StudentModal({
               </div>
             </div>
           </div>
-
-          {/* Medical Information */}
           {studentDetail.medicalProblem && (
             <div className={styles.section}>
               <h3 className={styles.sectionTitle}>
@@ -345,8 +326,6 @@ function StudentModal({
               </div>
             </div>
           )}
-
-          {/* System Information */}
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>
               <Clock size={18} />
@@ -379,8 +358,6 @@ function StudentModal({
             </div>
           </div>
         </div>
-
-        {/* Footer */}
         <div className={styles.modalFooter}>
           <button className={styles.closeBtn} onClick={onClose}>
             ปิด

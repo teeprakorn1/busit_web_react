@@ -16,7 +16,6 @@ export const useStudentActions = ({
   const navigate = useNavigate();
   const permissions = useUserPermissions();
 
-  // Handle view student - แก้ไขส่วนนี้
   const handleViewStudent = useCallback((student) => {
     if (!permissions.canViewStudentDetails) {
       setSecurityAlert('ไม่มีสิทธิ์ในการดูรายละเอียดนักศึกษา');
@@ -28,12 +27,9 @@ export const useStudentActions = ({
       setSecurityAlert('ตรวจพบการพยายามเข้าถึงข้อมูลไม่ถูกต้อง');
       return;
     }
-    
-    // เปลี่ยนจากส่ง student object เป็นส่ง student.id
     openStudentModal(student.id);
   }, [permissions.canViewStudentDetails, validateId, setSecurityAlert, openStudentModal]);
 
-  // Handle edit student
   const handleEditStudent = useCallback((student) => {
     if (!permissions.canEditStudents) {
       setSecurityAlert('ไม่มีสิทธิ์ในการแก้ไขข้อมูลนักศึกษา');
@@ -48,7 +44,6 @@ export const useStudentActions = ({
     navigate(`/name-register/student-detail/${student.id}?tab=profile&edit=true`);
   }, [navigate, permissions.canEditStudents, validateId, setSecurityAlert]);
 
-  // Handle toggle status with confirmation
   const handleToggleStatus = useCallback((student) => {
     if (!permissions.canToggleStudentStatus) {
       setSecurityAlert('ไม่มีสิทธิ์ในการเปลี่ยนสถานะนักศึกษา - ต้องเป็น Staff เท่านั้น');
@@ -70,7 +65,6 @@ export const useStudentActions = ({
       {
         label: 'ยกเลิก',
         onClick: closeModal,
-        className: 'cancelButton'
       },
       {
         label: 'ยืนยัน',
@@ -84,12 +78,10 @@ export const useStudentActions = ({
             showModal(result.error);
           }
         },
-        className: 'confirmButton'
       }
     ]);
   }, [permissions.canToggleStudentStatus, validateId, sanitizeInput, setSecurityAlert, showModal, closeModal, toggleStudentStatus, fetchStudents]);
 
-  // Handle export to Excel
   const handleExportToExcel = useCallback((students, filterInfo) => {
     if (!permissions.canExportData) {
       setSecurityAlert('ไม่มีสิทธิ์ในการส่งออกข้อมูล');
@@ -98,13 +90,12 @@ export const useStudentActions = ({
     return exportFilteredStudentsToExcel(students, filterInfo);
   }, [permissions.canExportData, setSecurityAlert]);
 
-  // Handle add student
   const handleAddStudent = useCallback(() => {
     if (!permissions.canAddStudents) {
       setSecurityAlert('ไม่มีสิทธิ์ในการเพิ่มนักศึกษา - ต้องเป็น Staff เท่านั้น');
       return;
     }
-    navigate('/admin/students/add');
+    navigate('/application/add-user');
   }, [navigate, permissions.canAddStudents, setSecurityAlert]);
 
   return {

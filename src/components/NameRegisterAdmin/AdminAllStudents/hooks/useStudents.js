@@ -3,10 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { academicYearUtils } from '../utils/academicYearUtils';
 
-// Security utilities
 const sanitizeInput = (input) => {
   if (typeof input !== 'string') return input;
-  return input.replace(/[<>\"'&]/g, '').trim();
+  return input.replace(/[<>"'&]/g, '').trim();
 };
 
 const validateId = (id) => {
@@ -18,16 +17,15 @@ const getApiUrl = (endpoint) => {
   const protocol = process.env.REACT_APP_SERVER_PROTOCOL;
   const baseUrl = process.env.REACT_APP_SERVER_BASE_URL;
   const port = process.env.REACT_APP_SERVER_PORT;
-  
+
   if (!protocol || !baseUrl || !port) {
     throw new Error('Missing required environment variables');
   }
-  
+
   return `${protocol}${baseUrl}${port}${endpoint}`;
 };
 
 export const useStudents = () => {
-  // Data states
   const [students, setStudents] = useState([]);
   const [faculties, setFaculties] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -38,7 +36,6 @@ export const useStudents = () => {
 
   const navigate = useNavigate();
 
-  // Computed values
   const availableAcademicYears = useMemo(() => {
     const years = Array.from(new Set(students.map(s => s.academicYear).filter(Boolean)))
       .sort((a, b) => b - a);
@@ -52,7 +49,6 @@ export const useStudents = () => {
     return years;
   }, [students]);
 
-  // Enhanced fetch students with security
   const fetchStudents = useCallback(async (params = {}) => {
     try {
       setLoading(true);
@@ -65,7 +61,6 @@ export const useStudents = () => {
         includeGraduated: true
       };
 
-      // Add filter parameters
       if (params.facultyFilter && faculties.length > 0) {
         const sanitizedFaculty = sanitizeInput(params.facultyFilter);
         const selectedFaculty = faculties.find(f => f.Faculty_Name === sanitizedFaculty);
@@ -141,7 +136,7 @@ export const useStudents = () => {
       console.error('Fetch students error:', err);
 
       let errorMessage = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
-      
+
       if (axios.isAxiosError(err)) {
         if (err.code === 'ECONNABORTED') {
           errorMessage = 'การเชื่อมต่อหมดเวลา กรุณาลองใหม่อีกครั้ง';
@@ -176,7 +171,6 @@ export const useStudents = () => {
     }
   }, [faculties, departments, navigate]);
 
-  // Load faculties and departments
   const loadFacultiesAndDepartments = useCallback(async () => {
     try {
       const [facultiesRes, departmentsRes] = await Promise.all([
@@ -209,7 +203,6 @@ export const useStudents = () => {
     }
   }, []);
 
-  // Toggle student status
   const toggleStudentStatus = useCallback(async (student) => {
     if (!student?.id || !validateId(student.id)) {
       console.error('Invalid student ID for status toggle:', student?.id);
@@ -219,9 +212,9 @@ export const useStudents = () => {
 
     try {
       setActionLoading(true);
-      
+
       const response = await axios.patch(
-        getApiUrl(`/api/admin/students/${student.id}/status`),
+        getApiUrl(`${process.env.REACT_APP_API_ADMIN_STUDENTS_GET}/${student.id}${process.env.REACT_APP_API_ADMIN_STATUS}`),
         { isActive: !student.isActive },
         {
           withCredentials: true,
@@ -235,22 +228,31 @@ export const useStudents = () => {
       );
 
       if (response.data?.status) {
+        setStudents(prevStudents =>
+          prevStudents.map(s =>
+            s.id === student.id
+              ? { ...s, isActive: !s.isActive }
+              : s
+          )
+        );
+
         const action = student.isActive ? 'ระงับ' : 'เปิด';
-        return { 
-          success: true, 
-          message: `${action}การใช้งานเรียบร้อยแล้ว` 
+        return {
+          success: true,
+          message: `${action}การใช้งานเรียบร้อยแล้ว`,
+          updatedStudent: { ...student, isActive: !student.isActive }
         };
       } else {
-        return { 
-          success: false, 
-          error: 'ไม่สามารถเปลี่ยนสถานะได้: ' + (response.data?.message || 'Unknown error') 
+        return {
+          success: false,
+          error: 'ไม่สามารถเปลี่ยนสถานะได้: ' + (response.data?.message || 'Unknown error')
         };
       }
     } catch (error) {
       console.error('Toggle status error:', error);
-      
+
       let errorMessage = 'เกิดข้อผิดพลาดในการเปลี่ยนสถานะ';
-      
+
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 403) {
           errorMessage = 'ไม่มีสิทธิ์เปลี่ยนสถานะนักศึกษา';
@@ -260,14 +262,53 @@ export const useStudents = () => {
           errorMessage = error.response.data.message;
         }
       }
-      
+
       return { success: false, error: errorMessage };
     } finally {
       setActionLoading(false);
     }
   }, []);
 
-  // Security alert management
+  const refreshStudent = useCallback(async (studentId) => {
+    if (!validateId(studentId)) {
+      console.error('Invalid student ID for refresh:', studentId);
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        getApiUrl(`/api/admin/students/${studentId}`),
+        {
+          withCredentials: true,
+          timeout: 10000,
+          headers: {
+            'Cache-Control': 'no-cache',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        }
+      );
+
+      if (response.data?.status) {
+        const updatedStudentData = response.data.data;
+        setStudents(prevStudents =>
+          prevStudents.map(s =>
+            s.id === studentId
+              ? {
+                ...s,
+                isActive: Boolean(updatedStudentData.isActive),
+                firstName: sanitizeInput(updatedStudentData.student?.firstName || s.firstName),
+                lastName: sanitizeInput(updatedStudentData.student?.lastName || s.lastName),
+                email: sanitizeInput(updatedStudentData.email || s.email)
+              }
+              : s
+          )
+        );
+      }
+    } catch (error) {
+      console.warn('Failed to refresh student data:', error);
+    }
+  }, []);
+
   useEffect(() => {
     if (securityAlert) {
       const timer = setTimeout(() => {
@@ -278,25 +319,19 @@ export const useStudents = () => {
   }, [securityAlert]);
 
   return {
-    // Data
     students,
     faculties,
     departments,
     availableAcademicYears,
     availableStudentYears,
-    
-    // Loading states
     loading,
     error,
     actionLoading,
     securityAlert,
-    
-    // Actions
     fetchStudents,
     loadFacultiesAndDepartments,
     toggleStudentStatus,
-    
-    // Utilities
+    refreshStudent,
     setError,
     setSecurityAlert,
     sanitizeInput,

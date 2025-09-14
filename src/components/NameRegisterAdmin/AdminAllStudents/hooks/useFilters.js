@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { academicYearUtils } from '../utils/academicYearUtils';
 
 export const useFilters = () => {
-  // Filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [facultyFilter, setFacultyFilter] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
@@ -18,11 +17,8 @@ export const useFilters = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Filter and sort students
   const getFilteredAndSortedStudents = useCallback((students) => {
     if (!Array.isArray(students)) return [];
-
-    // Apply filters
     const filtered = academicYearUtils.filterByYearCriteria(students, {
       academicYear: academicYearFilter,
       studentYear: studentYearFilter,
@@ -60,9 +56,7 @@ export const useFilters = () => {
       return matchesSearch && matchesFaculty && matchesDepartment && matchesStatus;
     });
 
-    // Apply sorting
     if (!sortBy) return filtered;
-
     return [...filtered].sort((a, b) => {
       let aValue, bValue;
 
@@ -122,19 +116,16 @@ export const useFilters = () => {
     studentYearFilter, yearRangeFilter, statusFilter, sortBy, sortOrder
   ]);
 
-  // Sort configuration for table
   const sortConfig = useMemo(() => ({
     field: sortBy,
     direction: sortOrder
   }), [sortBy, sortOrder]);
 
-  // Handle sort
   const handleSort = useCallback((field, direction) => {
     setSortBy(field);
     setSortOrder(direction);
   }, []);
 
-  // Reset all filters
   const resetFilters = useCallback(() => {
     setSearchQuery("");
     setFacultyFilter("");
@@ -152,11 +143,10 @@ export const useFilters = () => {
     });
   }, [navigate, location.pathname]);
 
-  // Check if any filters are active
   const hasActiveFilters = useMemo(() => {
     return !!(
-      searchQuery || facultyFilter || departmentFilter || 
-      academicYearFilter || studentYearFilter || yearRangeFilter || 
+      searchQuery || facultyFilter || departmentFilter ||
+      academicYearFilter || studentYearFilter || yearRangeFilter ||
       statusFilter || sortBy
     );
   }, [
@@ -164,7 +154,6 @@ export const useFilters = () => {
     studentYearFilter, yearRangeFilter, statusFilter, sortBy
   ]);
 
-  // Get filter info for export
   const getFilterInfo = useCallback(() => ({
     คณะ: facultyFilter,
     สาขา: departmentFilter,
@@ -179,7 +168,6 @@ export const useFilters = () => {
   ]);
 
   return {
-    // Filter states
     searchQuery,
     setSearchQuery,
     facultyFilter,
@@ -200,12 +188,8 @@ export const useFilters = () => {
     setSortOrder,
     currentPage,
     setCurrentPage,
-
-    // Computed values
     sortConfig,
     hasActiveFilters,
-
-    // Functions
     getFilteredAndSortedStudents,
     handleSort,
     resetFilters,
