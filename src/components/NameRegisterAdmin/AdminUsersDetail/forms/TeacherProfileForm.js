@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { User, Edit, Save, X, Plus, Trash2 } from 'lucide-react';
+import { User, Edit, Save, X, Plus, Trash2, Crown } from 'lucide-react';
 import styles from './ProfileForms.module.css';
 
-const TeacherProfileForm = ({ userData, onUpdate }) => {
+const TeacherProfileForm = ({ userData, onUpdate, loading }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     code: userData.teacher?.code || '',
@@ -12,19 +12,19 @@ const TeacherProfileForm = ({ userData, onUpdate }) => {
     otherPhones: userData.teacher?.otherPhones || [{ name: '', phone: '' }],
     birthdate: userData.teacher?.birthdate || '',
     religion: userData.teacher?.religion || '',
-    position: userData.teacher?.position || '',
+    medicalProblem: userData.teacher?.medicalProblem || '',
+    position: userData.teacher?.position || (userData.teacher?.isDean ? 'คณบดี' : 'อาจารย์'),
     department: userData.teacher?.department || '',
     faculty: userData.teacher?.faculty || '',
-    specialization: userData.teacher?.specialization || '',
-    education: userData.teacher?.education || '',
-    startDate: userData.teacher?.startDate || ''
+    isDean: userData.teacher?.isDean || false,
+    isResigned: userData.teacher?.isResigned || false
   });
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
 
@@ -58,9 +58,11 @@ const TeacherProfileForm = ({ userData, onUpdate }) => {
     const filteredOtherPhones = formData.otherPhones.filter(item =>
       item.name.trim() !== '' || item.phone.trim() !== ''
     );
+    
     const updatedData = {
       ...formData,
-      otherPhones: filteredOtherPhones.length > 0 ? filteredOtherPhones : [{ name: '', phone: '' }]
+      otherPhones: filteredOtherPhones.length > 0 ? filteredOtherPhones : [{ name: '', phone: '' }],
+      isDean: formData.position === 'คณบดี'
     };
 
     onUpdate({
@@ -78,14 +80,29 @@ const TeacherProfileForm = ({ userData, onUpdate }) => {
       otherPhones: userData.teacher?.otherPhones || [{ name: '', phone: '' }],
       birthdate: userData.teacher?.birthdate || '',
       religion: userData.teacher?.religion || '',
-      position: userData.teacher?.position || '',
+      medicalProblem: userData.teacher?.medicalProblem || '',
+      position: userData.teacher?.position || (userData.teacher?.isDean ? 'คณบดี' : 'อาจารย์'),
       department: userData.teacher?.department || '',
       faculty: userData.teacher?.faculty || '',
-      specialization: userData.teacher?.specialization || '',
-      education: userData.teacher?.education || '',
-      startDate: userData.teacher?.startDate || ''
+      isDean: userData.teacher?.isDean || false,
+      isResigned: userData.teacher?.isResigned || false
     });
     setIsEditing(false);
+  };
+
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
+  };
+
+  const formatDateForDisplay = (dateString) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('th-TH', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
   return (
@@ -94,14 +111,25 @@ const TeacherProfileForm = ({ userData, onUpdate }) => {
         <h3>
           <User size={20} />
           ข้อมูลส่วนตัวอาจารย์
+          {userData.teacher?.isDean && (
+            <Crown className={styles.crownIcon} title="คณบดี" />
+          )}
         </h3>
         <div className={styles.actionButtons}>
           {isEditing ? (
             <>
-              <button className={styles.saveButton} onClick={handleSave}>
-                <Save size={16} /> บันทึก
+              <button 
+                className={styles.saveButton} 
+                onClick={handleSave}
+                disabled={loading}
+              >
+                <Save size={16} /> {loading ? 'กำลังบันทึก...' : 'บันทึก'}
               </button>
-              <button className={styles.cancelButton} onClick={handleCancel}>
+              <button 
+                className={styles.cancelButton} 
+                onClick={handleCancel}
+                disabled={loading}
+              >
                 <X size={16} /> ยกเลิก
               </button>
             </>
@@ -126,6 +154,7 @@ const TeacherProfileForm = ({ userData, onUpdate }) => {
                   value={formData.code}
                   onChange={handleChange}
                   className={styles.inputField}
+                  placeholder="รหัสอาจารย์"
                 />
               ) : (
                 <span className={styles.value}>{userData.teacher?.code || '-'}</span>
@@ -140,6 +169,8 @@ const TeacherProfileForm = ({ userData, onUpdate }) => {
                   value={formData.firstName}
                   onChange={handleChange}
                   className={styles.inputField}
+                  placeholder="ชื่อ"
+                  required
                 />
               ) : (
                 <span className={styles.value}>{userData.teacher?.firstName || '-'}</span>
@@ -154,6 +185,8 @@ const TeacherProfileForm = ({ userData, onUpdate }) => {
                   value={formData.lastName}
                   onChange={handleChange}
                   className={styles.inputField}
+                  placeholder="นามสกุล"
+                  required
                 />
               ) : (
                 <span className={styles.value}>{userData.teacher?.lastName || '-'}</span>
@@ -168,6 +201,7 @@ const TeacherProfileForm = ({ userData, onUpdate }) => {
                   value={formData.phone}
                   onChange={handleChange}
                   className={styles.inputField}
+                  placeholder="หมายเลขโทรศัพท์"
                 />
               ) : (
                 <span className={styles.value}>{userData.teacher?.phone || '-'}</span>
@@ -179,13 +213,13 @@ const TeacherProfileForm = ({ userData, onUpdate }) => {
                 <input
                   type="date"
                   name="birthdate"
-                  value={formData.birthdate}
+                  value={formatDateForInput(formData.birthdate)}
                   onChange={handleChange}
                   className={styles.inputField}
                 />
               ) : (
                 <span className={styles.value}>
-                  {userData.teacher?.birthdate ? new Date(userData.teacher.birthdate).toLocaleDateString('th-TH') : '-'}
+                  {formatDateForDisplay(userData.teacher?.birthdate)}
                 </span>
               )}
             </div>
@@ -227,50 +261,47 @@ const TeacherProfileForm = ({ userData, onUpdate }) => {
                   <option value="คณบดี">คณบดี</option>
                 </select>
               ) : (
-                <span className={styles.value}>{userData.teacher?.position || '-'}</span>
+                <span className={styles.value}>
+                  {userData.teacher?.isDean ? 'คณบดี' : 'อาจารย์'}
+                  {userData.teacher?.isDean && (
+                    <Crown className={styles.positionIcon} size={16} />
+                  )}
+                </span>
               )}
             </div>
             <div className={styles.infoRow}>
               <span className={styles.label}>คณะ:</span>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="faculty"
-                  value={formData.faculty}
-                  onChange={handleChange}
-                  className={styles.inputField}
-                />
-              ) : (
-                <span className={styles.value}>{userData.teacher?.faculty || '-'}</span>
-              )}
+              <span className={styles.value}>{userData.teacher?.faculty || '-'}</span>
             </div>
             <div className={styles.infoRow}>
               <span className={styles.label}>สาขาวิชา:</span>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="department"
-                  value={formData.department}
-                  onChange={handleChange}
-                  className={styles.inputField}
-                />
-              ) : (
-                <span className={styles.value}>{userData.teacher?.department || '-'}</span>
-              )}
+              <span className={styles.value}>{userData.teacher?.department || '-'}</span>
             </div>
             <div className={styles.infoRow}>
-              <span className={styles.label}>วันที่เริ่มงาน:</span>
+              <span className={styles.label}>สถานะการลาออก:</span>
+              <span className={`${styles.value} ${styles.statusBadge} ${userData.teacher?.isResigned ? styles.resigned : styles.notResigned}`}>
+                {userData.teacher?.isResigned ? 'ลาออกแล้ว' : 'ยังไม่ลาออก'}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className={`${styles.infoSection} ${styles.teacherSection}`}>
+          <h4>ข้อมูลสุขภาพ</h4>
+          <div className={styles.infoCard}>
+            <div className={styles.infoRow}>
+              <span className={styles.label}>ปัญหาสุขภาพ:</span>
               {isEditing ? (
-                <input
-                  type="date"
-                  name="startDate"
-                  value={formData.startDate}
+                <textarea
+                  name="medicalProblem"
+                  value={formData.medicalProblem}
                   onChange={handleChange}
-                  className={styles.inputField}
+                  className={styles.textareaField}
+                  placeholder="ระบุปัญหาสุขภาพ หรือ โรคประจำตัว (ถ้ามี)"
+                  rows="3"
                 />
               ) : (
                 <span className={styles.value}>
-                  {userData.teacher?.startDate ? new Date(userData.teacher.startDate).toLocaleDateString('th-TH') : '-'}
+                  {userData.teacher?.medicalProblem || 'ไม่มี'}
                 </span>
               )}
             </div>
@@ -337,6 +368,7 @@ const TeacherProfileForm = ({ userData, onUpdate }) => {
                           type="button"
                           onClick={() => removeOtherPhone(index)}
                           className={styles.deletePhone}
+                          title="ลบหมายเลขนี้"
                         >
                           <Trash2 size={14} />
                         </button>

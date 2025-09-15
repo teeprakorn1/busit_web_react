@@ -2,12 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, ExternalLink, Filter } from 'lucide-react';
 import styles from './ActivityForms.module.css';
 
-const RecentActivitiesForm = ({ userData }) => {
-  const [activities, setActivities] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
-
-  // Mock activities data
+// Mock activities data
   const mockActivities = [
     {
       id: 1,
@@ -57,6 +52,11 @@ const RecentActivitiesForm = ({ userData }) => {
       cancelledDate: '2024-03-04T09:00:00'
     }
   ];
+
+const RecentActivitiesForm = ({ userData }) => {
+  const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     setLoading(true);

@@ -1,26 +1,27 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../../NavigationBar/NavigationBar';
 import styles from './GetTimestampAdmin.module.css';
-import { AlertCircle, Loader, Calendar, ArrowLeft, Activity, Users } from 'lucide-react';
+import { AlertCircle, Loader, Calendar, ArrowLeft, Activity, Users, Shield } from 'lucide-react';
 import { FiBell } from 'react-icons/fi';
 
-// Components
 import TimestampFiltersForm from './TimestampFiltersForm/TimestampFiltersForm';
 import TimestampTable from './TimestampTable/TimestampTable';
 import TimestampModal from './TimestampModal/TimestampModal';
 import TimestampPagination from './TimestampPagination/TimestampPagination';
 
-// Custom Hooks
 import { useTimestamps } from './hooks/useTimestamps';
 import { useTimestampFilters } from './hooks/useTimestampFilters';
 import { useTimestampActions } from './hooks/useTimestampActions';
 import { useUIState } from './hooks/useUIState';
+import { useUserPermissions } from './hooks/useUserPermissions';
 
 function GetTimestamp() {
+  const navigate = useNavigate();
+  const permissions = useUserPermissions();
   const rowsPerPage = 10;
   const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
 
-  // Custom hooks
   const {
     timestamps,
     timestampStats,
@@ -60,35 +61,40 @@ function GetTimestamp() {
     setNotifyOpen
   } = useUIState();
 
-  // Modal states for timestamp details
   const [selectedTimestamp, setSelectedTimestamp] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Apply search criteria to filters
+  useEffect(() => {
+    if (permissions.userType !== null) {
+      if (!permissions.isStaff || !permissions.canAccessTimestampLogs) {
+        navigate('/dashboard');
+        return;
+      }
+    }
+  }, [permissions, navigate]);
+
   useEffect(() => {
     if (searchCriteria) {
       setSearchFromCriteria(searchCriteria);
     }
   }, [searchCriteria, setSearchFromCriteria]);
 
-  // Get filtered timestamps
   const filteredTimestamps = useMemo(() => {
     return getFilteredTimestamps(timestamps);
   }, [getFilteredTimestamps, timestamps]);
 
-  // Get unique event types for filter dropdown
   const uniqueEventTypes = useMemo(() => {
     return getUniqueEventTypes(timestamps);
   }, [getUniqueEventTypes, timestamps]);
 
-  // Pagination
   const totalPages = Math.ceil(filteredTimestamps.length / rowsPerPage);
   const indexOfLastRow = currentPage * rowsPerPage;
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
   const currentRows = filteredTimestamps.slice(indexOfFirstRow, indexOfLastRow);
-
-  // Handle view timestamp
   const handleViewTimestamp = (timestamp) => {
+    if (!permissions.canViewTimestampDetails) {
+      return;
+    }
     setSelectedTimestamp(timestamp);
     setModalOpen(true);
   };
@@ -98,64 +104,101 @@ function GetTimestamp() {
     setSelectedTimestamp(null);
   };
 
-  // Handle export
   const handleExport = () => {
+    if (!permissions.canExportTimestampData) {
+      return;
+    }
     exportToExcel(filteredTimestamps, searchCriteria);
   };
 
-  // Handle reset filters
   const handleResetFilters = () => {
-    resetFilters(!isPersonSearch); // Keep search criteria if it's a person search
+    resetFilters(!isPersonSearch);
   };
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className={styles.container}>
-        <Navbar
-          isMobile={isMobile}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-        <main className={`${styles.mainContent} ${isMobile ? styles.mobileContent : ""} ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}>
-          <div className={styles.loadingContainer}>
-            <Loader className={styles.spinner} />
-            <p>กำลังโหลดข้อมูล...</p>
-          </div>
-        </main>
+  const renderPermissionLoadingState = () => (
+    <div className={styles.container}>
+      <div className={styles.loadingWrapper}>
+        <div className={styles.loading}>กำลังตรวจสอบสิทธิ์...</div>
       </div>
-    );
+    </div>
+  );
+
+  const renderUnauthorizedState = () => (
+    <div className={styles.container}>
+      <Navbar
+        isMobile={isMobile}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+      />
+      <main className={`${styles.mainContent} ${isMobile ? styles.mobileContent : ""} ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}>
+        <div className={styles.errorContainer}>
+          <Shield className={styles.errorIcon} />
+          <h2>ไม่มีสิทธิ์เข้าถึง</h2>
+          <p>คุณไม่มีสิทธิ์ในการเข้าถึงประวัติการใช้งานระบบ เฉพาะเจ้าหน้าที่เท่านั้นที่สามารถดูข้อมูลนี้ได้</p>
+          <button
+            className={styles.backButton}
+            onClick={() => navigate('/dashboard')}
+          >
+            <ArrowLeft size={16} /> กลับไปหน้าหลัก
+          </button>
+        </div>
+      </main>
+    </div>
+  );
+
+  const renderLoadingState = () => (
+    <div className={styles.container}>
+      <Navbar
+        isMobile={isMobile}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+      />
+      <main className={`${styles.mainContent} ${isMobile ? styles.mobileContent : ""} ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}>
+        <div className={styles.loadingContainer}>
+          <Loader className={styles.spinner} />
+          <p>กำลังโหลดข้อมูล...</p>
+        </div>
+      </main>
+    </div>
+  );
+
+  const renderErrorState = () => (
+    <div className={styles.container}>
+      <Navbar
+        isMobile={isMobile}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+      />
+      <main className={`${styles.mainContent} ${isMobile ? styles.mobileContent : ""} ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}>
+        <div className={styles.errorContainer}>
+          <AlertCircle className={styles.errorIcon} />
+          <h2>เกิดข้อผิดพลาด</h2>
+          <p>{error}</p>
+          <div className={styles.errorActions}>
+            <button className={styles.retryButton} onClick={fetchTimestamps}>
+              ลองใหม่อีกครั้ง
+            </button>
+            {isPersonSearch && (
+              <button className={styles.backButton} onClick={goBackToPersonSearch}>
+                <ArrowLeft size={16} /> กลับไปค้นหาใหม่
+              </button>
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+
+  if (permissions.userType === null) {
+    return renderPermissionLoadingState();
   }
 
-  // Error state
-  if (error) {
-    return (
-      <div className={styles.container}>
-        <Navbar
-          isMobile={isMobile}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-        <main className={`${styles.mainContent} ${isMobile ? styles.mobileContent : ""} ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}>
-          <div className={styles.errorContainer}>
-            <AlertCircle className={styles.errorIcon} />
-            <h2>เกิดข้อผิดพลาด</h2>
-            <p>{error}</p>
-            <div className={styles.errorActions}>
-              <button className={styles.retryButton} onClick={fetchTimestamps}>
-                ลองใหม่อีกครั้ง
-              </button>
-              {isPersonSearch && (
-                <button className={styles.backButton} onClick={goBackToPersonSearch}>
-                  <ArrowLeft size={16} /> กลับไปค้นหาใหม่
-                </button>
-              )}
-            </div>
-          </div>
-        </main>
-      </div>
-    );
+  if (!permissions.isStaff || !permissions.canAccessTimestampLogs) {
+    return renderUnauthorizedState();
   }
+
+  if (loading) return renderLoadingState();
+  if (error) return renderErrorState();
 
   return (
     <div className={styles.container}>
@@ -252,6 +295,7 @@ function GetTimestamp() {
             resetFilters={handleResetFilters}
             hasActiveFilters={hasActiveFilters}
             setCurrentPage={setCurrentPage}
+            canExport={permissions.canExportTimestampData}
           />
 
           {/* Results Summary */}
@@ -269,6 +313,7 @@ function GetTimestamp() {
             timestamps={currentRows}
             onViewTimestamp={handleViewTimestamp}
             searchCriteria={searchCriteria}
+            canViewDetails={permissions.canViewTimestampDetails}
           />
 
           {/* Pagination */}
@@ -282,11 +327,13 @@ function GetTimestamp() {
         </div>
 
         {/* Timestamp Detail Modal */}
-        <TimestampModal
-          isOpen={modalOpen}
-          onClose={closeModal}
-          timestamp={selectedTimestamp}
-        />
+        {permissions.canViewTimestampDetails && (
+          <TimestampModal
+            isOpen={modalOpen}
+            onClose={closeModal}
+            timestamp={selectedTimestamp}
+          />
+        )}
 
       </main>
     </div>

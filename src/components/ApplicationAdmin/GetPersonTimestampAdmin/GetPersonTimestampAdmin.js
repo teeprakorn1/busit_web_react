@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../../NavigationBar/NavigationBar';
 import styles from './GetPersonTimestampAdmin.module.css';
 import { FiBell, FiSearch, FiInfo, FiClock, FiCheck, FiX, FiEye } from 'react-icons/fi';
+import { ArrowLeft, Shield } from 'lucide-react';
 import CustomModal from '../../../services/CustomModal/CustomModal';
 import { encryptValue, decryptValue } from '../../../utils/crypto';
+import { useUserPermissions } from './hooks/useUserPermissions';
 import axios from 'axios';
 
 const getApiUrl = (endpoint) => {
@@ -12,6 +14,9 @@ const getApiUrl = (endpoint) => {
 };
 
 function GetPersonTimestamp() {
+  const navigate = useNavigate();
+  const permissions = useUserPermissions();
+
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [notifyOpen, setNotifyOpen] = useState(false);
@@ -26,11 +31,19 @@ function GetPersonTimestamp() {
   const [previewData, setPreviewData] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
 
-  const navigate = useNavigate();
   const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
 
   const MAX_RECENT_SEARCHES = 5;
   const RECENT_SEARCHES_KEY = 'timestamp_recent_searches';
+
+  useEffect(() => {
+    if (permissions.userType !== null) {
+      if (!permissions.isStaff || !permissions.canSearchPersonalTimestamps) {
+        navigate('/dashboard');
+        return;
+      }
+    }
+  }, [permissions, navigate]);
 
   const isValidEmail = useCallback((email) => {
     if (!email || typeof email !== 'string') return false;
@@ -79,6 +92,8 @@ function GetPersonTimestamp() {
   }, []);
 
   const loadRecentSearches = useCallback(() => {
+    if (!permissions.canViewSearchHistory) return;
+
     try {
       const stored = sessionStorage.getItem(RECENT_SEARCHES_KEY);
       if (stored) {
@@ -92,18 +107,22 @@ function GetPersonTimestamp() {
       console.warn('Failed to load recent searches:', error);
       sessionStorage.removeItem(RECENT_SEARCHES_KEY);
     }
-  }, []);
+  }, [permissions.canViewSearchHistory]);
 
   const saveRecentSearches = useCallback((searches) => {
+    if (!permissions.canSaveSearchHistory) return;
+
     try {
       const encrypted = encryptValue(JSON.stringify(searches));
       sessionStorage.setItem(RECENT_SEARCHES_KEY, encrypted);
     } catch (error) {
       console.warn('Failed to save recent searches:', error);
     }
-  }, []);
+  }, [permissions.canSaveSearchHistory]);
 
   const addToRecentSearches = useCallback((type, value) => {
+    if (!permissions.canSaveSearchHistory) return;
+
     const newSearch = {
       type,
       value,
@@ -119,22 +138,32 @@ function GetPersonTimestamp() {
       saveRecentSearches(updated);
       return updated;
     });
-  }, [saveRecentSearches]);
+  }, [saveRecentSearches, permissions.canSaveSearchHistory]);
 
   const removeFromRecentSearches = useCallback((index) => {
+    if (!permissions.canManageSearchHistory) return;
+
     setRecentSearches(prev => {
       const updated = prev.filter((_, i) => i !== index);
       saveRecentSearches(updated);
       return updated;
     });
-  }, [saveRecentSearches]);
+  }, [saveRecentSearches, permissions.canManageSearchHistory]);
 
   const clearRecentSearches = useCallback(() => {
+    if (!permissions.canManageSearchHistory) return;
+
     setRecentSearches([]);
     sessionStorage.removeItem(RECENT_SEARCHES_KEY);
-  }, []);
+  }, [permissions.canManageSearchHistory]);
 
   const handlePreview = useCallback(async (type, value = null) => {
+    if (!permissions.canPreviewTimestampData) {
+      setModalMessage("คุณไม่มีสิทธิ์ในการดูตัวอย่างข้อมูล");
+      setModalOpen(true);
+      return;
+    }
+
     if (isLoading) return;
 
     let searchValue;
@@ -162,6 +191,18 @@ function GetPersonTimestamp() {
 
     if (type === "ip" && !isValidIP(sanitizedValue)) {
       setModalMessage("รูปแบบ IP Address ไม่ถูกต้อง");
+      setModalOpen(true);
+      return;
+    }
+
+    if (type === "email" && !permissions.canSearchByEmail) {
+      setModalMessage("คุณไม่มีสิทธิ์ในการค้นหาด้วยอีเมล");
+      setModalOpen(true);
+      return;
+    }
+
+    if (type === "ip" && !permissions.canSearchByIP) {
+      setModalMessage("คุณไม่มีสิทธิ์ในการค้นหาด้วย IP Address");
       setModalOpen(true);
       return;
     }
@@ -200,9 +241,25 @@ function GetPersonTimestamp() {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, searchEmail, searchIpAddress, sanitizeInput, isValidEmail, isValidIP]);
+  }, [
+    isLoading,
+    searchEmail,
+    searchIpAddress,
+    sanitizeInput,
+    isValidEmail,
+    isValidIP,
+    permissions.canPreviewTimestampData,
+    permissions.canSearchByEmail,
+    permissions.canSearchByIP
+  ]);
 
   const handleSearch = useCallback(async (type, value = null) => {
+    if (!permissions.canSearchPersonalTimestamps) {
+      setModalMessage("คุณไม่มีสิทธิ์ในการค้นหาข้อมูล");
+      setModalOpen(true);
+      return;
+    }
+
     if (isLoading) return;
 
     let searchValue;
@@ -230,6 +287,18 @@ function GetPersonTimestamp() {
 
     if (type === "ip" && !isValidIP(sanitizedValue)) {
       setModalMessage("รูปแบบ IP Address ไม่ถูกต้อง (รองรับ IPv4, IPv6, และหลาย IP คั่นด้วยช่องว่าง)");
+      setModalOpen(true);
+      return;
+    }
+
+    if (type === "email" && !permissions.canSearchByEmail) {
+      setModalMessage("คุณไม่มีสิทธิ์ในการค้นหาด้วยอีเมล");
+      setModalOpen(true);
+      return;
+    }
+
+    if (type === "ip" && !permissions.canSearchByIP) {
+      setModalMessage("คุณไม่มีสิทธิ์ในการค้นหาด้วย IP Address");
       setModalOpen(true);
       return;
     }
@@ -264,10 +333,15 @@ function GetPersonTimestamp() {
     isValidEmail,
     isValidIP,
     addToRecentSearches,
-    navigate
+    navigate,
+    permissions.canSearchPersonalTimestamps,
+    permissions.canSearchByEmail,
+    permissions.canSearchByIP
   ]);
 
   const recentSearchesDisplay = useMemo(() => {
+    if (!permissions.canViewSearchHistory) return [];
+
     return recentSearches.map((search, index) => (
       <div key={`${search.type}-${search.value}-${search.timestamp}`} className={styles.recentSearchItem}>
         <button
@@ -278,27 +352,40 @@ function GetPersonTimestamp() {
           <FiClock size={14} />
           <span>{search.displayValue}</span>
         </button>
-        <button
-          className={styles.previewButton}
-          onClick={() => handlePreview(search.type, search.value)}
-          disabled={isLoading}
-          title="ดูตัวอย่าง"
-        >
-          <FiEye size={12} />
-        </button>
-        <button
-          className={styles.removeSearchButton}
-          onClick={(e) => {
-            e.stopPropagation();
-            removeFromRecentSearches(index);
-          }}
-          aria-label={`ลบการค้นหา ${search.displayValue}`}
-        >
-          <FiX size={12} />
-        </button>
+        {permissions.canPreviewTimestampData && (
+          <button
+            className={styles.previewButton}
+            onClick={() => handlePreview(search.type, search.value)}
+            disabled={isLoading}
+            title="ดูตัวอย่าง"
+          >
+            <FiEye size={12} />
+          </button>
+        )}
+        {permissions.canManageSearchHistory && (
+          <button
+            className={styles.removeSearchButton}
+            onClick={(e) => {
+              e.stopPropagation();
+              removeFromRecentSearches(index);
+            }}
+            aria-label={`ลบการค้นหา ${search.displayValue}`}
+          >
+            <FiX size={12} />
+          </button>
+        )}
       </div>
     ));
-  }, [recentSearches, handleSearch, handlePreview, isLoading, removeFromRecentSearches]);
+  }, [
+    recentSearches,
+    handleSearch,
+    handlePreview,
+    isLoading,
+    removeFromRecentSearches,
+    permissions.canViewSearchHistory,
+    permissions.canPreviewTimestampData,
+    permissions.canManageSearchHistory
+  ]);
 
   useEffect(() => {
     loadRecentSearches();
@@ -323,6 +410,45 @@ function GetPersonTimestamp() {
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
+
+  const renderPermissionLoadingState = () => (
+    <div className={styles.container}>
+      <div className={styles.loadingWrapper}>
+        <div className={styles.loading}>กำลังตรวจสอบสิทธิ์...</div>
+      </div>
+    </div>
+  );
+
+  const renderUnauthorizedState = () => (
+    <div className={styles.container}>
+      <Navbar
+        isMobile={isMobile}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+      />
+      <main className={`${styles.mainContent} ${isMobile ? styles.mobileContent : ""} ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}>
+        <div className={styles.errorContainer}>
+          <Shield className={styles.errorIcon} />
+          <h2>ไม่มีสิทธิ์เข้าถึง</h2>
+          <p>คุณไม่มีสิทธิ์ในการเข้าถึงการค้นหาประวัติการใช้งานรายบุคคล เฉพาะเจ้าหน้าที่เท่านั้นที่สามารถใช้ฟีเจอร์นี้ได้</p>
+          <button
+            className={styles.backButton}
+            onClick={() => navigate('/dashboard')}
+          >
+            <ArrowLeft size={16} /> กลับไปหน้าหลัก
+          </button>
+        </div>
+      </main>
+    </div>
+  );
+
+  if (permissions.userType === null) {
+    return renderPermissionLoadingState();
+  }
+
+  if (!permissions.isStaff || !permissions.canSearchPersonalTimestamps) {
+    return renderUnauthorizedState();
+  }
 
   return (
     <div className={styles.container}>
@@ -368,29 +494,26 @@ function GetPersonTimestamp() {
             </div>
           </div>
         </div>
-
-        {/* Center Card */}
         <div className={styles.centerCard}>
-          {/* Recent Searches */}
-          {recentSearches.length > 0 && (
+          {permissions.canViewSearchHistory && recentSearches.length > 0 && (
             <div className={styles.recentSearchesSection}>
               <div className={styles.recentSearchesHeader}>
                 <h3>การค้นหาล่าสุด</h3>
-                <button
-                  className={styles.clearAllButton}
-                  onClick={clearRecentSearches}
-                  aria-label="ล้างการค้นหาทั้งหมด"
-                >
-                  ล้างทั้งหมด
-                </button>
+                {permissions.canManageSearchHistory && (
+                  <button
+                    className={styles.clearAllButton}
+                    onClick={clearRecentSearches}
+                    aria-label="ล้างการค้นหาทั้งหมด"
+                  >
+                    ล้างทั้งหมด
+                  </button>
+                )}
               </div>
               <div className={styles.recentSearchesList}>
                 {recentSearchesDisplay}
               </div>
             </div>
           )}
-
-          {/* Tip Box */}
           <div className={styles.tipBox}>
             <div className={styles.tipHeader}>
               <FiInfo size={24} className={styles.tipIcon} />
@@ -409,12 +532,14 @@ function GetPersonTimestamp() {
                   กรอกข้อมูลในช่องค้นหาที่เกี่ยวข้อง
                 </span>
               </div>
-              <div className={styles.tipItem}>
-                <FiEye size={16} />
-                <span className={styles.tipItemText}>
-                  กดปุ่ม <strong>"ดูตัวอย่าง"</strong> เพื่อดูผลลัพธ์เบื้องต้น (ไม่บังคับ)
-                </span>
-              </div>
+              {permissions.canPreviewTimestampData && (
+                <div className={styles.tipItem}>
+                  <FiEye size={16} />
+                  <span className={styles.tipItemText}>
+                    กดปุ่ม <strong>"ดูตัวอย่าง"</strong> เพื่อดูผลลัพธ์เบื้องต้น (ไม่บังคับ)
+                  </span>
+                </div>
+              )}
               <div className={styles.tipItem}>
                 <FiSearch size={16} />
                 <span className={styles.tipItemText}>
@@ -423,95 +548,106 @@ function GetPersonTimestamp() {
               </div>
             </div>
           </div>
-
-          {/* Search Boxes */}
-          <div className={styles.searchCard}>
-            <label className={styles.searchLabel} htmlFor="email-search">
-              ค้นหาด้วยอีเมลแอดเดรส (Email Address)
-            </label>
-            <div className={styles.searchInner}>
-              <FiSearch size={20} color="#6b7280" />
-              <input
-                id="email-search"
-                type="email"
-                placeholder="กรอกอีเมลแอดเดรส..."
-                className={styles.searchInput}
-                value={searchEmail}
-                onChange={(e) => setSearchEmail(sanitizeInput(e.target.value))}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch("email")}
-                disabled={isLoading}
-                maxLength={254}
-                autoComplete="off"
-                aria-describedby="email-search-help"
-              />
-              <button
-                className={styles.previewButton}
-                onClick={() => handlePreview("email")}
-                disabled={isLoading || !searchEmail.trim()}
-                aria-label="ดูตัวอย่างผลการค้นหา"
-                title="ดูตัวอย่าง"
-              >
-                <FiEye size={16} />
-              </button>
-              <button
-                className={styles.searchButton}
-                onClick={() => handleSearch("email")}
-                disabled={isLoading || !searchEmail.trim()}
-                aria-label="ค้นหาด้วยอีเมล"
-              >
-                {isLoading ? "กำลังค้นหา..." : "ค้นหา"}
-              </button>
+          {permissions.canSearchByEmail && (
+            <div className={styles.searchCard}>
+              <label className={styles.searchLabel} htmlFor="email-search">
+                ค้นหาด้วยอีเมลแอดเดรส (Email Address)
+              </label>
+              <div className={styles.searchInner}>
+                <FiSearch size={20} color="#6b7280" />
+                <input
+                  id="email-search"
+                  type="email"
+                  placeholder="กรอกอีเมลแอดเดรส..."
+                  className={styles.searchInput}
+                  value={searchEmail}
+                  onChange={(e) => setSearchEmail(sanitizeInput(e.target.value))}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch("email")}
+                  disabled={isLoading}
+                  maxLength={254}
+                  autoComplete="off"
+                  aria-describedby="email-search-help"
+                />
+                {permissions.canPreviewTimestampData && (
+                  <button
+                    className={styles.previewButton}
+                    onClick={() => handlePreview("email")}
+                    disabled={isLoading || !searchEmail.trim()}
+                    aria-label="ดูตัวอย่างผลการค้นหา"
+                    title="ดูตัวอย่าง"
+                  >
+                    <FiEye size={16} />
+                  </button>
+                )}
+                <button
+                  className={styles.searchButton}
+                  onClick={() => handleSearch("email")}
+                  disabled={isLoading || !searchEmail.trim()}
+                  aria-label="ค้นหาด้วยอีเมล"
+                >
+                  {isLoading ? "กำลังค้นหา..." : "ค้นหา"}
+                </button>
+              </div>
+              <small id="email-search-help" className={styles.searchHelp}>
+                รูปแบบ: user@example.com
+              </small>
             </div>
-            <small id="email-search-help" className={styles.searchHelp}>
-              รูปแบบ: user@example.com
-            </small>
-          </div>
+          )}
 
-          <div className={styles.searchCard}>
-            <label className={styles.searchLabel} htmlFor="ip-search">
-              ค้นหาด้วยไอพีแอดเดรส (IP Address)
-            </label>
-            <div className={styles.searchInner}>
-              <FiSearch size={20} color="#6b7280" />
-              <input
-                id="ip-search"
-                type="text"
-                placeholder="กรอกไอพีแอดเดรส..."
-                className={styles.searchInput}
-                value={searchIpAddress}
-                onChange={(e) => setSearchIpAddress(sanitizeInput(e.target.value))}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch("ip")}
-                disabled={isLoading}
-                maxLength={255}
-                autoComplete="off"
-                aria-describedby="ip-search-help"
-              />
-              <button
-                className={styles.previewButton}
-                onClick={() => handlePreview("ip")}
-                disabled={isLoading || !searchIpAddress.trim()}
-                aria-label="ดูตัวอย่างผลการค้นหา"
-                title="ดูตัวอย่าง"
-              >
-                <FiEye size={16} />
-              </button>
-              <button
-                className={styles.searchButton}
-                onClick={() => handleSearch("ip")}
-                disabled={isLoading || !searchIpAddress.trim()}
-                aria-label="ค้นหาด้วย IP Address"
-              >
-                {isLoading ? "กำลังค้นหา..." : "ค้นหา"}
-              </button>
+          {permissions.canSearchByIP && (
+            <div className={styles.searchCard}>
+              <label className={styles.searchLabel} htmlFor="ip-search">
+                ค้นหาด้วยไอพีแอดเดรส (IP Address)
+              </label>
+              <div className={styles.searchInner}>
+                <FiSearch size={20} color="#6b7280" />
+                <input
+                  id="ip-search"
+                  type="text"
+                  placeholder="กรอกไอพีแอดเดรส..."
+                  className={styles.searchInput}
+                  value={searchIpAddress}
+                  onChange={(e) => setSearchIpAddress(sanitizeInput(e.target.value))}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch("ip")}
+                  disabled={isLoading}
+                  maxLength={255}
+                  autoComplete="off"
+                  aria-describedby="ip-search-help"
+                />
+                {permissions.canPreviewTimestampData && (
+                  <button
+                    className={styles.previewButton}
+                    onClick={() => handlePreview("ip")}
+                    disabled={isLoading || !searchIpAddress.trim()}
+                    aria-label="ดูตัวอย่างผลการค้นหา"
+                    title="ดูตัวอย่าง"
+                  >
+                    <FiEye size={16} />
+                  </button>
+                )}
+                <button
+                  className={styles.searchButton}
+                  onClick={() => handleSearch("ip")}
+                  disabled={isLoading || !searchIpAddress.trim()}
+                  aria-label="ค้นหาด้วย IP Address"
+                >
+                  {isLoading ? "กำลังค้นหา..." : "ค้นหา"}
+                </button>
+              </div>
+              <small id="ip-search-help" className={styles.searchHelp}>
+                รูปแบบ: 192.168.1.1 หรือ 2001:db8::1 (สามารถใส่หลาย IP คั่นด้วยช่องว่าง)
+              </small>
             </div>
-            <small id="ip-search-help" className={styles.searchHelp}>
-              รูปแบบ: 192.168.1.1 หรือ 2001:db8::1 (สามารถใส่หลาย IP คั่นด้วยช่องว่าง)
-            </small>
-          </div>
+          )}
+          {!permissions.canSearchByEmail && !permissions.canSearchByIP && (
+            <div className={styles.noPermissionMessage}>
+              <Shield size={48} />
+              <h3>ไม่มีสิทธิ์ในการค้นหา</h3>
+              <p>คุณไม่มีสิทธิ์ในการใช้ฟีเจอร์การค้นหาใดๆ</p>
+            </div>
+          )}
         </div>
-
-        {/* Preview Modal */}
-        {showPreview && previewData && (
+        {permissions.canPreviewTimestampData && showPreview && previewData && (
           <div className={styles.modalOverlay} onClick={() => setShowPreview(false)}>
             <div className={styles.previewModal} onClick={(e) => e.stopPropagation()}>
               <div className={styles.previewHeader}>
@@ -574,8 +710,6 @@ function GetPersonTimestamp() {
             </div>
           </div>
         )}
-
-        {/* Custom Modal */}
         <CustomModal
           isOpen={modalOpen}
           message={modalMessage}

@@ -8,7 +8,6 @@ const getApiUrl = (endpoint) => {
 };
 
 export const useTimestamps = () => {
-  // Data states
   const [timestamps, setTimestamps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,7 +17,6 @@ export const useTimestamps = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Statistics calculation
   const timestampStats = useMemo(() => {
     if (!Array.isArray(timestamps)) return {};
 
@@ -30,7 +28,6 @@ export const useTimestamps = () => {
       userTypes: {}
     };
 
-    // Count by user types
     timestamps.forEach(t => {
       if (t.Users_Type) {
         stats.userTypes[t.Users_Type] = (stats.userTypes[t.Users_Type] || 0) + 1;
@@ -40,7 +37,6 @@ export const useTimestamps = () => {
     return stats;
   }, [timestamps]);
 
-  // Load search criteria from session storage or URL params
   const loadSearchCriteria = useCallback(() => {
     try {
       const encryptedCriteria = sessionStorage.getItem('current_search_criteria');
@@ -76,7 +72,6 @@ export const useTimestamps = () => {
     }
   }, [location.search]);
 
-  // Fetch timestamps data
   const fetchTimestamps = useCallback(async (criteria = null) => {
     try {
       setLoading(true);
@@ -84,7 +79,7 @@ export const useTimestamps = () => {
 
       const currentCriteria = criteria || searchCriteria;
       let apiUrl = getApiUrl(process.env.REACT_APP_API_TIMESTAMP_WEBSITE_GET);
-      
+
       if (currentCriteria && currentCriteria.type === 'ip') {
         const params = new URLSearchParams();
         params.append('ip', currentCriteria.value);
@@ -126,12 +121,10 @@ export const useTimestamps = () => {
     }
   }, [searchCriteria]);
 
-  // Go back to person search
   const goBackToPersonSearch = useCallback(() => {
     navigate('/application/get-person-timestamp');
   }, [navigate]);
 
-  // Reset search criteria
   const resetSearchCriteria = useCallback(() => {
     setSearchCriteria(null);
     setIsPersonSearch(false);
@@ -141,34 +134,25 @@ export const useTimestamps = () => {
     });
   }, [navigate, location.pathname]);
 
-  // Load search criteria on mount
   useEffect(() => {
     loadSearchCriteria();
   }, [loadSearchCriteria]);
 
-  // Fetch timestamps when criteria change
   useEffect(() => {
     fetchTimestamps();
   }, [fetchTimestamps]);
 
   return {
-    // Data
     timestamps,
     timestampStats,
     searchCriteria,
     isPersonSearch,
-    
-    // Loading states
     loading,
     error,
-    
-    // Actions
     fetchTimestamps,
     loadSearchCriteria,
     goBackToPersonSearch,
     resetSearchCriteria,
-    
-    // Utilities
     setError
   };
 };

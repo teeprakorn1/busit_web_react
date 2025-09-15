@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import axios from 'axios';
-import { academicYearUtils } from '../utils/academicYearUtils';
 
 const getApiUrl = (endpoint) => {
   const protocol = process.env.REACT_APP_SERVER_PROTOCOL;
@@ -34,32 +33,32 @@ const getProfileImageUrl = (filename) => {
   return getApiUrl(`${process.env.REACT_APP_API_ADMIN_IMAGES_GET}${filename}`);
 };
 
-export const useStudentDetail = () => {
-  const [studentDetail, setStudentDetail] = useState(null);
+export const useTeacherDetail = () => {
+  const [teacherDetail, setTeacherDetail] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [imageLoadError, setImageLoadError] = useState(false);
 
-  const fetchStudentDetail = useCallback(async (studentId) => {
-    if (!studentId) {
-      setError('Student ID is required');
+  const fetchTeacherDetail = useCallback(async (teacherId) => {
+    if (!teacherId) {
+      setError('Teacher ID is required');
       return;
     }
 
-    const numericStudentId = parseInt(studentId);
-    if (isNaN(numericStudentId) || numericStudentId <= 0) {
-      setError('รหัสนักศึกษาไม่ถูกต้อง');
+    const numericTeacherId = parseInt(teacherId);
+    if (isNaN(numericTeacherId) || numericTeacherId <= 0) {
+      setError('รหัสอาจารย์ไม่ถูกต้อง');
       return;
     }
 
     try {
       setLoading(true);
       setError(null);
-      setStudentDetail(null);
+      setTeacherDetail(null);
       setImageLoadError(false);
 
       const response = await axios.get(
-        getApiUrl(`${process.env.REACT_APP_API_ADMIN_STUDENTS_GET}/${numericStudentId}`),
+        getApiUrl(`${process.env.REACT_APP_API_ADMIN_TEACHERS_GET}/${numericTeacherId}`),
         {
           withCredentials: true,
           timeout: 15000,
@@ -74,26 +73,26 @@ export const useStudentDetail = () => {
 
       if (response.status === 200 && response.data && response.data.status === true) {
         const data = response.data.data;
-        if (!data || !data.student) {
-          setError('ข้อมูลนักศึกษาไม่สมบูรณ์');
+        if (!data || !data.teacher) {
+          setError('ข้อมูลอาจารย์ไม่สมบูรณ์');
           return;
         }
 
-        const transformedStudent = {
+        const transformedTeacher = {
           id: data.id,
           email: data.email || '',
           username: data.username || '',
-          userType: data.userType || 'student',
+          userType: data.userType || 'teacher',
           isActive: Boolean(data.isActive),
           userRegisTime: data.regisTime,
           imageFile: data.imageFile,
-          imageUrl: getProfileImageUrl(data.imageFile), // Add image URL
-          code: data.student.code || '',
-          firstName: data.student.firstName || '',
-          lastName: data.student.lastName || '',
-          phone: data.student.phone || '',
-          otherPhones: Array.isArray(data.student.otherPhones)
-            ? data.student.otherPhones.filter(phone =>
+          imageUrl: getProfileImageUrl(data.imageFile),
+          code: data.teacher.code || '',
+          firstName: data.teacher.firstName || '',
+          lastName: data.teacher.lastName || '',
+          phone: data.teacher.phone || '',
+          otherPhones: Array.isArray(data.teacher.otherPhones)
+            ? data.teacher.otherPhones.filter(phone =>
               phone &&
               typeof phone === 'object' &&
               phone.phone &&
@@ -101,35 +100,28 @@ export const useStudentDetail = () => {
               phone.phone !== 'undefined'
             )
             : [],
-          academicYear: data.student.academicYear,
-          academicYearBuddhist: data.student.academicYear
-            ? academicYearUtils.convertToBuddhistYear(data.student.academicYear)
-            : null,
-          birthdate: data.student.birthdate,
-          religion: data.student.religion || '',
-          medicalProblem: data.student.medicalProblem || '',
-          department: data.student.department || '',
-          faculty: data.student.faculty || '',
-          advisor: data.student.advisor || '',
-          isGraduated: Boolean(data.student.isGraduated),
-          regisTime: data.student.regisTime,
-          studentYear: data.student.academicYear
-            ? academicYearUtils.calculateStudentYear(data.student.academicYear)
-            : '',
+          birthdate: data.teacher.birthdate,
+          religion: data.teacher.religion || '',
+          medicalProblem: data.teacher.medicalProblem || '',
+          department: data.teacher.department || '',
+          faculty: data.teacher.faculty || '',
+          isResigned: Boolean(data.teacher.isResigned),
+          isDean: Boolean(data.teacher.isDean),
+          regisTime: data.teacher.regisTime,
           departmentInfo: data.department || null
         };
-        setStudentDetail(transformedStudent);
+        setTeacherDetail(transformedTeacher);
 
       } else {
-        const errorMessage = response.data?.message || 'ไม่สามารถดึงข้อมูลนักศึกษาได้';
+        const errorMessage = response.data?.message || 'ไม่สามารถดึงข้อมูลอาจารย์ได้';
         console.error('API Error Response:', response.status, errorMessage);
         setError(errorMessage);
       }
 
     } catch (err) {
-      console.error('Fetch student detail error:', err);
+      console.error('Fetch teacher detail error:', err);
 
-      let errorMessage = 'เกิดข้อผิดพลาดในการโหลดข้อมูลนักศึกษา';
+      let errorMessage = 'เกิดข้อผิดพลาดในการโหลดข้อมูลอาจารย์';
 
       if (axios.isAxiosError(err)) {
         if (err.code === 'ECONNABORTED') {
@@ -140,16 +132,16 @@ export const useStudentDetail = () => {
 
           switch (status) {
             case 400:
-              errorMessage = serverMessage || 'รหัสนักศึกษาไม่ถูกต้อง';
+              errorMessage = serverMessage || 'รหัสอาจารย์ไม่ถูกต้อง';
               break;
             case 401:
               errorMessage = 'กรุณาเข้าสู่ระบบใหม่';
               break;
             case 403:
-              errorMessage = 'ไม่มีสิทธิ์เข้าถึงข้อมูลนักศึกษานี้';
+              errorMessage = 'ไม่มีสิทธิ์เข้าถึงข้อมูลอาจารย์นี้';
               break;
             case 404:
-              errorMessage = 'ไม่พบข้อมูลนักศึกษา';
+              errorMessage = 'ไม่พบข้อมูลอาจารย์';
               break;
             case 429:
               errorMessage = 'คำขอเกินขีดจำกัด กรุณารอสักครู่';
@@ -177,27 +169,27 @@ export const useStudentDetail = () => {
     setImageLoadError(true);
   }, []);
 
-  const clearStudentDetail = useCallback(() => {
-    setStudentDetail(null);
+  const clearTeacherDetail = useCallback(() => {
+    setTeacherDetail(null);
     setError(null);
     setLoading(false);
     setImageLoadError(false);
   }, []);
 
-  const retryFetch = useCallback((studentId) => {
-    if (studentId) {
-      fetchStudentDetail(studentId);
+  const retryFetch = useCallback((teacherId) => {
+    if (teacherId) {
+      fetchTeacherDetail(teacherId);
     }
-  }, [fetchStudentDetail]);
+  }, [fetchTeacherDetail]);
 
   return {
-    studentDetail,
+    teacherDetail,
     loading,
     error,
     imageLoadError,
-    fetchStudentDetail,
+    fetchTeacherDetail,
     handleImageError,
-    clearStudentDetail,
+    clearTeacherDetail,
     retryFetch
   };
 };

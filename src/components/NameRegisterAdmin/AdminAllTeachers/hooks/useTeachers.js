@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { academicYearUtils } from '../utils/academicYearUtils';
 
 const sanitizeInput = (input) => {
   if (typeof input !== 'string') return input;
@@ -44,8 +43,8 @@ const getProfileImageUrl = (filename) => {
   return getApiUrl(`${process.env.REACT_APP_API_ADMIN_IMAGES_GET}${filename}`);
 };
 
-export const useStudents = () => {
-  const [students, setStudents] = useState([]);
+export const useTeachers = () => {
+  const [teachers, setTeachers] = useState([]);
   const [faculties, setFaculties] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,19 +55,6 @@ export const useStudents = () => {
 
   const navigate = useNavigate();
 
-  const availableAcademicYears = useMemo(() => {
-    const years = Array.from(new Set(students.map(s => s.academicYear).filter(Boolean)))
-      .sort((a, b) => b - a);
-    return years;
-  }, [students]);
-
-  const availableStudentYears = useMemo(() => {
-    const years = Array.from(new Set(students.map(s =>
-      academicYearUtils.calculateStudentYear(s.academicYear)
-    ).filter(Boolean))).sort();
-    return years;
-  }, [students]);
-
   const handleImageError = useCallback((filename) => {
     setImageLoadErrors(prev => new Set([...prev, filename]));
   }, []);
@@ -77,23 +63,23 @@ export const useStudents = () => {
     return filename && !imageLoadErrors.has(filename);
   }, [imageLoadErrors]);
 
-  const fetchStudents = useCallback(async (params = {}) => {
+  const fetchTeachers = useCallback(async (params = {}) => {
     try {
       setLoading(true);
       setError(null);
       setSecurityAlert(null);
 
-      const studentParams = {
+      const teacherParams = {
         page: params.currentPage || 1,
         limit: params.rowsPerPage || 10,
-        includeGraduated: true
+        includeResigned: params.includeResigned || false
       };
 
       if (params.facultyFilter && faculties.length > 0) {
         const sanitizedFaculty = sanitizeInput(params.facultyFilter);
         const selectedFaculty = faculties.find(f => f.Faculty_Name === sanitizedFaculty);
         if (selectedFaculty) {
-          studentParams.facultyId = selectedFaculty.Faculty_ID;
+          teacherParams.facultyId = selectedFaculty.Faculty_ID;
         }
       }
 
@@ -101,28 +87,21 @@ export const useStudents = () => {
         const sanitizedDepartment = sanitizeInput(params.departmentFilter);
         const selectedDepartment = departments.find(d => d.Department_Name === sanitizedDepartment);
         if (selectedDepartment) {
-          studentParams.departmentId = selectedDepartment.Department_ID;
-        }
-      }
-
-      if (params.academicYearFilter) {
-        const year = parseInt(params.academicYearFilter, 10);
-        if (!isNaN(year) && year >= 2000 && year <= 2030) {
-          studentParams.academicYear = year;
+          teacherParams.departmentId = selectedDepartment.Department_ID;
         }
       }
 
       if (params.searchQuery) {
         const sanitizedQuery = sanitizeInput(params.searchQuery);
         if (sanitizedQuery.length >= 2 && sanitizedQuery.length <= 100) {
-          studentParams.search = sanitizedQuery;
+          teacherParams.search = sanitizedQuery;
         }
       }
 
-      const studentsRes = await axios.get(getApiUrl(process.env.REACT_APP_API_ADMIN_STUDENTS_GET), {
+      const teachersRes = await axios.get(getApiUrl(process.env.REACT_APP_API_ADMIN_TEACHERS_GET), {
         withCredentials: true,
         timeout: 15000,
-        params: studentParams,
+        params: teacherParams,
         headers: {
           'Cache-Control': 'no-cache',
           'X-Requested-With': 'XMLHttpRequest'
@@ -130,39 +109,40 @@ export const useStudents = () => {
         validateStatus: (status) => status >= 200 && status < 300
       });
 
-      if (studentsRes.data && studentsRes.data.status) {
-        const transformedStudents = studentsRes.data.data.map(student => ({
-          id: student.Student_ID,
-          code: sanitizeInput(student.Student_Code || ''),
-          firstName: sanitizeInput(student.Student_FirstName || ''),
-          lastName: sanitizeInput(student.Student_LastName || ''),
-          phone: sanitizeInput(student.Student_Phone || ''),
-          academicYear: student.Student_AcademicYear,
-          birthdate: student.Student_Birthdate,
-          religion: sanitizeInput(student.Student_Religion || ''),
-          medicalProblem: sanitizeInput(student.Student_MedicalProblem || ''),
-          regisTime: student.Student_RegisTime,
-          isGraduated: Boolean(student.Student_IsGraduated),
-          department: sanitizeInput(student.Department?.Department_Name || ''),
-          faculty: sanitizeInput(student.Department?.Faculty_Name || ''),
-          email: sanitizeInput(student.Users?.Users_Email || ''),
-          username: sanitizeInput(student.Users?.Users_Username || ''),
-          userRegisTime: student.Users?.Users_RegisTime,
-          imageFile: sanitizeInput(student.Users?.Users_ImageFile || ''),
-          imageUrl: getProfileImageUrl(student.Users?.Users_ImageFile),
-          isActive: Boolean(student.Users?.Users_IsActive),
-          studentYear: academicYearUtils.calculateStudentYear(student.Student_AcademicYear),
-          academicYearBuddhist: academicYearUtils.convertToBuddhistYear(student.Student_AcademicYear)
+      if (teachersRes.data && teachersRes.data.status) {
+        const transformedTeachers = teachersRes.data.data.map(teacher => ({
+          id: teacher.Teacher_ID,
+          code: sanitizeInput(teacher.Teacher_Code || ''),
+          firstName: sanitizeInput(teacher.Teacher_FirstName || ''),
+          lastName: sanitizeInput(teacher.Teacher_LastName || ''),
+          fullName: sanitizeInput(teacher.Teacher_FullName || ''),
+          phone: sanitizeInput(teacher.Teacher_Phone || ''),
+          birthdate: teacher.Teacher_Birthdate,
+          religion: sanitizeInput(teacher.Teacher_Religion || ''),
+          medicalProblem: sanitizeInput(teacher.Teacher_MedicalProblem || ''),
+          regisTime: teacher.Teacher_RegisTime,
+          isResigned: Boolean(teacher.Teacher_IsResign),
+          isDean: Boolean(teacher.Teacher_IsDean),
+          department: sanitizeInput(teacher.Department?.Department_Name || ''),
+          faculty: sanitizeInput(teacher.Department?.Faculty_Name || ''),
+          departmentId: teacher.Department?.Department_ID,
+          facultyId: teacher.Department?.Faculty_ID,
+          email: sanitizeInput(teacher.Users?.Users_Email || ''),
+          username: sanitizeInput(teacher.Users?.Users_Username || ''),
+          userRegisTime: teacher.Users?.Users_RegisTime,
+          imageFile: sanitizeInput(teacher.Users?.Users_ImageFile || ''),
+          imageUrl: getProfileImageUrl(teacher.Users?.Users_ImageFile),
+          isActive: Boolean(teacher.Users?.Users_IsActive)
         }));
 
-        setStudents(transformedStudents);
+        setTeachers(transformedTeachers);
       } else {
-        setError('ไม่สามารถโหลดข้อมูลนักศึกษาได้: ' + (studentsRes.data?.message || 'Unknown error'));
-        setStudents([]);
+        setError('ไม่สามารถโหลดข้อมูลอาจารย์ได้: ' + (teachersRes.data?.message || 'Unknown error'));
+        setTeachers([]);
       }
 
     } catch (err) {
-      console.error('Fetch students error:', err);
+      console.error('Fetch teachers error:', err);
 
       let errorMessage = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
 
@@ -180,7 +160,7 @@ export const useStudents = () => {
               setSecurityAlert('การเข้าถึงถูกปฏิเสธ - ไม่มีสิทธิ์เพียงพอ');
               break;
             case 404:
-              errorMessage = 'ไม่พบ API สำหรับดึงข้อมูลนักศึกษา กรุณาติดต่อผู้ดูแลระบบ';
+              errorMessage = 'ไม่พบ API สำหรับดึงข้อมูลอาจารย์ กรุณาติดต่อผู้ดูแลระบบ';
               break;
             case 429:
               errorMessage = 'คำขอเกินจำนวนที่กำหนด กรุณารอสักครู่แล้วลองใหม่';
@@ -194,7 +174,7 @@ export const useStudents = () => {
       }
 
       setError(errorMessage);
-      setStudents([]);
+      setTeachers([]);
     } finally {
       setLoading(false);
     }
@@ -232,19 +212,19 @@ export const useStudents = () => {
     }
   }, []);
 
-  const toggleStudentStatus = useCallback(async (student) => {
-    if (!student?.id || !validateId(student.id)) {
-      console.error('Invalid student ID for status toggle:', student?.id);
+  const toggleTeacherStatus = useCallback(async (teacher) => {
+    if (!teacher?.id || !validateId(teacher.id)) {
+      console.error('Invalid teacher ID for status toggle:', teacher?.id);
       setSecurityAlert('ตรวจพบการพยายามเข้าถึงข้อมูลไม่ถูกต้อง');
-      return { success: false, error: 'Invalid student ID' };
+      return { success: false, error: 'Invalid teacher ID' };
     }
 
     try {
       setActionLoading(true);
 
       const response = await axios.patch(
-        getApiUrl(`${process.env.REACT_APP_API_ADMIN_STUDENTS_GET}/${student.id}${process.env.REACT_APP_API_ADMIN_STATUS}`),
-        { isActive: !student.isActive },
+        getApiUrl(`${process.env.REACT_APP_API_ADMIN_TEACHERS_GET}/${teacher.id}${process.env.REACT_APP_API_ADMIN_STATUS}`),
+        { isActive: !teacher.isActive },
         {
           withCredentials: true,
           timeout: 15000,
@@ -257,19 +237,19 @@ export const useStudents = () => {
       );
 
       if (response.data?.status) {
-        setStudents(prevStudents =>
-          prevStudents.map(s =>
-            s.id === student.id
-              ? { ...s, isActive: !s.isActive }
-              : s
+        setTeachers(prevTeachers =>
+          prevTeachers.map(t =>
+            t.id === teacher.id
+              ? { ...t, isActive: !t.isActive }
+              : t
           )
         );
 
-        const action = student.isActive ? 'ระงับ' : 'เปิด';
+        const action = teacher.isActive ? 'ระงับ' : 'เปิด';
         return {
           success: true,
           message: `${action}การใช้งานเรียบร้อยแล้ว`,
-          updatedStudent: { ...student, isActive: !student.isActive }
+          updatedTeacher: { ...teacher, isActive: !teacher.isActive }
         };
       } else {
         return {
@@ -284,9 +264,9 @@ export const useStudents = () => {
 
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 403) {
-          errorMessage = 'ไม่มีสิทธิ์เปลี่ยนสถานะนักศึกษา';
+          errorMessage = 'ไม่มีสิทธิ์เปลี่ยนสถานะอาจารย์';
         } else if (error.response?.status === 404) {
-          errorMessage = 'ไม่พบข้อมูลนักศึกษา';
+          errorMessage = 'ไม่พบข้อมูลอาจารย์';
         } else if (error.response?.data?.message) {
           errorMessage = error.response.data.message;
         }
@@ -298,15 +278,15 @@ export const useStudents = () => {
     }
   }, []);
 
-  const refreshStudent = useCallback(async (studentId) => {
-    if (!validateId(studentId)) {
-      console.error('Invalid student ID for refresh:', studentId);
+  const refreshTeacher = useCallback(async (teacherId) => {
+    if (!validateId(teacherId)) {
+      console.error('Invalid teacher ID for refresh:', teacherId);
       return;
     }
 
     try {
       const response = await axios.get(
-        getApiUrl(`${process.env.REACT_APP_API_ADMIN_STUDENTS_GET}/${studentId}`),
+        getApiUrl(`${process.env.REACT_APP_API_ADMIN_TEACHERS_GET}/${teacherId}`),
         {
           withCredentials: true,
           timeout: 10000,
@@ -318,25 +298,25 @@ export const useStudents = () => {
       );
 
       if (response.data?.status) {
-        const updatedStudentData = response.data.data;
-        setStudents(prevStudents =>
-          prevStudents.map(s =>
-            s.id === studentId
+        const updatedTeacherData = response.data.data;
+        setTeachers(prevTeachers =>
+          prevTeachers.map(t =>
+            t.id === teacherId
               ? {
-                ...s,
-                isActive: Boolean(updatedStudentData.isActive),
-                firstName: sanitizeInput(updatedStudentData.student?.firstName || s.firstName),
-                lastName: sanitizeInput(updatedStudentData.student?.lastName || s.lastName),
-                email: sanitizeInput(updatedStudentData.email || s.email),
-                imageFile: sanitizeInput(updatedStudentData.imageFile || s.imageFile),
-                imageUrl: getProfileImageUrl(updatedStudentData.imageFile)
+                ...t,
+                isActive: Boolean(updatedTeacherData.isActive),
+                firstName: sanitizeInput(updatedTeacherData.teacher?.firstName || t.firstName),
+                lastName: sanitizeInput(updatedTeacherData.teacher?.lastName || t.lastName),
+                email: sanitizeInput(updatedTeacherData.email || t.email),
+                imageFile: sanitizeInput(updatedTeacherData.imageFile || t.imageFile),
+                imageUrl: getProfileImageUrl(updatedTeacherData.imageFile)
               }
-              : s
+              : t
           )
         );
       }
     } catch (error) {
-      console.warn('Failed to refresh student data:', error);
+      console.warn('Failed to refresh teacher data:', error);
     }
   }, []);
 
@@ -350,20 +330,18 @@ export const useStudents = () => {
   }, [securityAlert]);
 
   return {
-    students,
+    teachers,
     faculties,
     departments,
-    availableAcademicYears,
-    availableStudentYears,
     loading,
     error,
     actionLoading,
     securityAlert,
     imageLoadErrors,
-    fetchStudents,
+    fetchTeachers,
     loadFacultiesAndDepartments,
-    toggleStudentStatus,
-    refreshStudent,
+    toggleTeacherStatus,
+    refreshTeacher,
     handleImageError,
     shouldLoadImage,
     getProfileImageUrl,

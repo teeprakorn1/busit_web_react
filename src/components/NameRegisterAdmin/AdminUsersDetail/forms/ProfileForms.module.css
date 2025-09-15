@@ -212,7 +212,144 @@
   cursor: pointer;
 }
 
-/* Phone List */
+/* Status badges for teachers */
+.resigned {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.notResigned {
+  background: #f0fdf4;
+  color: #16a34a;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Phone list styles */
+.phoneList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.phoneItemContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+}
+
+.phoneInputGroup {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+}
+
+.phoneNameInput {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.phoneNumberInput {
+  flex: 1.5;
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.deletePhone {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  padding: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.deletePhone:hover {
+  background: #fecaca;
+}
+
+.addPhone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.addPhone:hover {
+  background: #e0f2fe;
+}
+
+.phoneDisplayList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.phoneDisplay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border-left: 3px solid #7c3aed;
+}
+
+.phoneName {
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  min-width: 80px;
+}
+
+.phoneNumber {
+  font-weight: 500;
+  color: #374151;
+  font-size: 14px;
+}
+
+.textareaField {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.textareaField:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
 .phoneList {
   display: flex;
   flex-direction: column;
@@ -263,7 +400,6 @@
   background: white;
 }
 
-/* Phone Display List */
 .phoneDisplayList {
   display: flex;
   flex-direction: column;
@@ -326,7 +462,6 @@
   font-weight: 500;
 }
 
-/* Student form add phone button */
 .addPhone {
   background: #dbeafe;
   color: var(--primary-color);
@@ -337,7 +472,6 @@
   background: #bfdbfe;
 }
 
-/* Teacher form add phone button */
 .teacherSection .addPhone {
   background: #f0fdf4;
   color: var(--success-color);
@@ -348,7 +482,6 @@
   background: #dcfce7;
 }
 
-/* Staff form add phone button */
 .staffSection .addPhone {
   background: #fef7ff;
   color: var(--staff-color);
@@ -359,7 +492,6 @@
   background: #fae8ff;
 }
 
-/* Status Badges */
 .statusBadge {
   padding: 4px 8px;
   border-radius: 12px;
@@ -482,5 +614,25 @@
 
   .infoRow {
     padding: 12px 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .phoneInputGroup {
+    flex-direction: column;
+  }
+  
+  .phoneNameInput,
+  .phoneNumberInput {
+    width: 100%;
+  }
+  
+  .phoneItemContainer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .deletePhone {
+    align-self: flex-end;
   }
 }
