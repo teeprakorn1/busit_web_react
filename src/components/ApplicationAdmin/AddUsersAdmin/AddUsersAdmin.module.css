@@ -188,6 +188,112 @@
   display: none;
 }
 
+.loadingWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.loading {
+  background: white;
+  padding: 2rem 3rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  font-size: 1.1rem;
+  color: #4a5568;
+  text-align: center;
+  font-weight: 500;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+.unauthorizedWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1rem;
+}
+
+.unauthorizedContent {
+  background: white;
+  padding: 3rem 2rem;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  animation: slideInUp 0.6s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.unauthorizedIcon {
+  color: #f56565;
+  margin-bottom: 1.5rem;
+  animation: shake 0.8s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 20%, 40%, 60%, 80%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+}
+
+.unauthorizedTitle {
+  color: #2d3748;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.unauthorizedMessage {
+  color: #4a5568;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.backButton:hover {
+  background: #e5e7eb;
+  transform: translateX(-2px);
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 768px) {
   .mainContent {
@@ -213,5 +319,23 @@
 
   .buttonWrapper {
     justify-content: center;
+  }
+
+  .unauthorizedContent {
+    padding: 2rem 1.5rem;
+    margin: 1rem;
+  }
+
+  .unauthorizedTitle {
+    font-size: 1.5rem;
+  }
+
+  .unauthorizedMessage {
+    font-size: 0.95rem;
+  }
+
+  .unauthorizedIcon {
+    width: 48px;
+    height: 48px;
   }
 }

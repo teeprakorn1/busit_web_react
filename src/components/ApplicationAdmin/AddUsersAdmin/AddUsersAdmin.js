@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../../NavigationBar/NavigationBar';
 import InfoForm from './InfoForms/InfoForms';
 import UserTypeSelector from './UserTypeSelector/UserTypeSelector';
@@ -7,14 +8,22 @@ import ExcelImportExport from './ExcelImportExport/ExcelImportExport';
 import ImportDataModal from './ImportDataModal/ImportDataModal';
 import CustomModal from '../../../services/CustomModal/CustomModal';
 import { validateUserForm } from './../../../utils/formValidator';
+import { useUserPermissions } from './hooks/useUserPermissions';
 import styles from './AddUsersAdmin.module.css';
-import { FiBell } from 'react-icons/fi';
+import { FiBell, FiArrowLeft } from 'react-icons/fi';
 
 const getApiUrl = (endpoint) => {
   return `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}${endpoint}`;
 };
 
 function AddUsersAdmin() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const permissions = useUserPermissions();
+  
+  const referrer = location.state?.from || null;
+  const showBackButton = referrer === '/name-register/student-name';
+
   const [selectedUserType, setSelectedUserType] = useState('student');
   const [formData, setFormData] = useState({
     email: '',
@@ -46,6 +55,16 @@ function AddUsersAdmin() {
   const [isLoading, setIsLoading] = useState(false);
 
   const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
+
+  useEffect(() => {
+    if (permissions.userType !== null) {
+      if (!permissions.canAddStudents || !permissions.isStaff) {
+        navigate('/dashboard');
+        return;
+      }
+    }
+  }, [permissions, navigate]);
+
   const insertTimestamp = async (timestampName, timestampTypeId) => {
     try {
       await axios.post(getApiUrl(process.env.REACT_APP_API_TIMESTAMP_WEBSITE_INSERT), {
@@ -56,6 +75,7 @@ function AddUsersAdmin() {
       console.error('Error inserting timestamp:', error);
     }
   };
+
   const generateTimestampName = (action, userType, method = 'form') => {
     const now = new Date();
     const dateStr = now.toLocaleDateString('th-TH', {
@@ -99,6 +119,12 @@ function AddUsersAdmin() {
   };
 
   const handleConfirmImport = async (validData) => {
+    if (!permissions.canAddStudents || !permissions.isStaff) {
+      setAlertMessage("คุณไม่มีสิทธิ์ในการดำเนินการนี้");
+      setIsAlertModalOpen(true);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -278,6 +304,12 @@ function AddUsersAdmin() {
   };
 
   const handleSubmit = async () => {
+    if (!permissions.canAddStudents || !permissions.isStaff) {
+      setAlertMessage("คุณไม่มีสิทธิ์ในการดำเนินการนี้");
+      setIsAlertModalOpen(true);
+      return;
+    }
+
     if (!validateForm()) {
       setAlertMessage("กรุณาตรวจสอบข้อมูลให้ครบถ้วนและถูกต้อง");
       setIsAlertModalOpen(true);
@@ -355,6 +387,28 @@ function AddUsersAdmin() {
     handleSubmit();
   };
 
+  const handleGoBack = () => {
+    if (referrer) {
+      navigate(referrer);
+    } else {
+      navigate('/admin/all-students');
+    }
+  };
+
+  if (permissions.userType === null) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loadingWrapper}>
+          <div className={styles.loading}>กำลังตรวจสอบสิทธิ์...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!permissions.canAddStudents || !permissions.isStaff) {
+    return null;
+  }
+
   return (
     <>
       <div className={styles.container}>
@@ -369,6 +423,17 @@ function AddUsersAdmin() {
           ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}
         >
           <div className={styles.headerBar}>
+            {showBackButton && (
+              <div className={styles.backButtonWrapper}>
+                <button
+                  className={styles.backButton}
+                  onClick={handleGoBack}
+                  title="กลับไปหน้ารายชื่อนักศึกษา"
+                >
+                  <FiArrowLeft size={20} />
+                </button>
+              </div>
+            )}
             <h1 className={styles.heading}>เพิ่มข้อมูลผู้ใช้</h1>
             <div className={styles.headerRight}>
               <div className={styles.notifyWrapper}>

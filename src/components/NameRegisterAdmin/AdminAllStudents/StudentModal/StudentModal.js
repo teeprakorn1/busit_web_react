@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, User, Mail, Phone, Calendar, GraduationCap, MapPin, Heart, AlertTriangle, Clock, Loader } from 'lucide-react';
 import styles from './StudentModal.module.css';
 import { useStudentDetail } from '../hooks/useStudentDetail';
@@ -45,22 +45,48 @@ function StudentModal({
     studentDetail,
     loading,
     error,
+    imageLoadError,
     fetchStudentDetail,
+    handleImageError,
     clearStudentDetail
   } = useStudentDetail();
+
+  const [imageDisplayError, setImageDisplayError] = useState(false);
 
   useEffect(() => {
     if (isOpen && studentId) {
       fetchStudentDetail(studentId);
+      setImageDisplayError(false);
     } else if (!isOpen) {
       clearStudentDetail();
+      setImageDisplayError(false);
     }
   }, [isOpen, studentId, fetchStudentDetail, clearStudentDetail]);
+
   if (!isOpen) return null;
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
       onClose();
+    }
+  };
+
+  const handleImageLoadError = (e) => {
+    setImageDisplayError(true);
+    handleImageError();
+    e.target.style.display = 'none';
+    const nextElement = e.target.nextElementSibling;
+    if (nextElement) {
+      nextElement.style.display = 'flex';
+    }
+  };
+
+  const handleImageLoad = (e) => {
+    setImageDisplayError(false);
+    e.target.style.display = 'block';
+    const nextElement = e.target.nextElementSibling;
+    if (nextElement) {
+      nextElement.style.display = 'none';
     }
   };
 
@@ -150,6 +176,7 @@ function StudentModal({
   }
 
   const age = studentDetail.birthdate ? calculateAge(studentDetail.birthdate) : null;
+  const shouldShowImage = studentDetail.imageUrl && !imageDisplayError && !imageLoadError;
 
   return (
     <div className={styles.modalOverlay} onClick={handleBackdropClick}>
@@ -157,17 +184,19 @@ function StudentModal({
         <div className={styles.modalHeader}>
           <div className={styles.studentInfo}>
             <div className={styles.avatar}>
-              {studentDetail.imageFile ? (
+              {shouldShowImage ? (
                 <img
-                  src={studentDetail.imageFile}
+                  src={studentDetail.imageUrl}
                   alt="Profile"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'flex';
-                  }}
+                  onError={handleImageLoadError}
+                  onLoad={handleImageLoad}
+                  crossOrigin="use-credentials"
                 />
               ) : null}
-              <User className={styles.defaultAvatar} style={{ display: studentDetail.imageFile ? 'none' : 'flex' }} />
+              <User 
+                className={styles.defaultAvatar} 
+                style={{ display: shouldShowImage ? 'none' : 'flex' }} 
+              />
             </div>
             <div className={styles.nameSection}>
               <h2 className={styles.studentName}>
@@ -319,7 +348,7 @@ function StudentModal({
                 <div className={styles.medicalItem}>
                   <AlertTriangle className={styles.medicalIcon} />
                   <div>
-                    <label>ปัญหาสุขภาพ</label>
+                    <label>ปัญหาสุขภาพ </label>
                     <span className={styles.medicalText}>{studentDetail.medicalProblem}</span>
                   </div>
                 </div>

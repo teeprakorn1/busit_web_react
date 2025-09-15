@@ -32,6 +32,8 @@ function AdminAllStudents() {
     fetchStudents,
     loadFacultiesAndDepartments,
     toggleStudentStatus,
+    handleImageError,
+    shouldLoadImage,
     setError,
     setSecurityAlert,
     sanitizeInput,
@@ -131,6 +133,7 @@ function AdminAllStudents() {
     };
     fetchStudents(params);
   }, [fetchStudents, currentPage, facultyFilter, departmentFilter, academicYearFilter, searchQuery]);
+  
   if (loading) {
     return (
       <div className={styles.container}>
@@ -148,6 +151,7 @@ function AdminAllStudents() {
       </div>
     );
   }
+  
   if (error) {
     return (
       <div className={styles.container}>
@@ -338,6 +342,8 @@ function AdminAllStudents() {
             actionLoading={actionLoading}
             sortConfig={sortConfig}
             onSort={handleSort}
+            handleImageError={handleImageError}
+            shouldLoadImage={shouldLoadImage}
           />
           <StudentPagination
             currentPage={currentPage}

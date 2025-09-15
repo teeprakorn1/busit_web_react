@@ -25,6 +25,27 @@ const getApiUrl = (endpoint) => {
   return `${protocol}${baseUrl}${port}${endpoint}`;
 };
 
+// Helper function to get profile image URL
+const getProfileImageUrl = (filename) => {
+  if (!filename || filename === 'undefined' || filename.trim() === '') {
+    return null;
+  }
+  
+  // Validate filename format
+  if (!filename.match(/^[a-zA-Z0-9._-]+$/)) {
+    return null;
+  }
+  
+  const allowedExt = ['.jpg', '.jpeg', '.png'];
+  const ext = filename.substring(filename.lastIndexOf('.')).toLowerCase();
+  
+  if (!allowedExt.includes(ext)) {
+    return null;
+  }
+  
+  return getApiUrl(`/api/images/profile-images-admin/${filename}`);
+};
+
 export const useStudents = () => {
   const [students, setStudents] = useState([]);
   const [faculties, setFaculties] = useState([]);
@@ -33,6 +54,7 @@ export const useStudents = () => {
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [securityAlert, setSecurityAlert] = useState(null);
+  const [imageLoadErrors, setImageLoadErrors] = useState(new Set());
 
   const navigate = useNavigate();
 
@@ -48,6 +70,16 @@ export const useStudents = () => {
     ).filter(Boolean))).sort();
     return years;
   }, [students]);
+
+  // Function to handle image load errors
+  const handleImageError = useCallback((filename) => {
+    setImageLoadErrors(prev => new Set([...prev, filename]));
+  }, []);
+
+  // Function to check if image should be loaded
+  const shouldLoadImage = useCallback((filename) => {
+    return filename && !imageLoadErrors.has(filename);
+  }, [imageLoadErrors]);
 
   const fetchStudents = useCallback(async (params = {}) => {
     try {
@@ -121,6 +153,7 @@ export const useStudents = () => {
           username: sanitizeInput(student.Users?.Users_Username || ''),
           userRegisTime: student.Users?.Users_RegisTime,
           imageFile: sanitizeInput(student.Users?.Users_ImageFile || ''),
+          imageUrl: getProfileImageUrl(student.Users?.Users_ImageFile), // Add image URL
           isActive: Boolean(student.Users?.Users_IsActive),
           studentYear: academicYearUtils.calculateStudentYear(student.Student_AcademicYear),
           academicYearBuddhist: academicYearUtils.convertToBuddhistYear(student.Student_AcademicYear)
@@ -298,7 +331,9 @@ export const useStudents = () => {
                 isActive: Boolean(updatedStudentData.isActive),
                 firstName: sanitizeInput(updatedStudentData.student?.firstName || s.firstName),
                 lastName: sanitizeInput(updatedStudentData.student?.lastName || s.lastName),
-                email: sanitizeInput(updatedStudentData.email || s.email)
+                email: sanitizeInput(updatedStudentData.email || s.email),
+                imageFile: sanitizeInput(updatedStudentData.imageFile || s.imageFile),
+                imageUrl: getProfileImageUrl(updatedStudentData.imageFile) // Update image URL
               }
               : s
           )
@@ -328,10 +363,14 @@ export const useStudents = () => {
     error,
     actionLoading,
     securityAlert,
+    imageLoadErrors,
     fetchStudents,
     loadFacultiesAndDepartments,
     toggleStudentStatus,
     refreshStudent,
+    handleImageError,
+    shouldLoadImage,
+    getProfileImageUrl, // Export for use in components
     setError,
     setSecurityAlert,
     sanitizeInput,

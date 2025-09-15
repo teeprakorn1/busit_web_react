@@ -15,10 +15,32 @@ const getApiUrl = (endpoint) => {
   return `${protocol}${baseUrl}${port}${endpoint}`;
 };
 
+// Helper function to get profile image URL
+const getProfileImageUrl = (filename) => {
+  if (!filename || filename === 'undefined' || filename.trim() === '') {
+    return null;
+  }
+  
+  // Validate filename format
+  if (!filename.match(/^[a-zA-Z0-9._-]+$/)) {
+    return null;
+  }
+  
+  const allowedExt = ['.jpg', '.jpeg', '.png'];
+  const ext = filename.substring(filename.lastIndexOf('.')).toLowerCase();
+  
+  if (!allowedExt.includes(ext)) {
+    return null;
+  }
+  
+  return getApiUrl(`/api/images/profile-images-admin/${filename}`);
+};
+
 export const useStudentDetail = () => {
   const [studentDetail, setStudentDetail] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [imageLoadError, setImageLoadError] = useState(false);
 
   const fetchStudentDetail = useCallback(async (studentId) => {
     if (!studentId) {
@@ -36,6 +58,8 @@ export const useStudentDetail = () => {
       setLoading(true);
       setError(null);
       setStudentDetail(null);
+      setImageLoadError(false);
+      
       const response = await axios.get(
         getApiUrl(`${process.env.REACT_APP_API_ADMIN_STUDENTS_GET}/${numericStudentId}`),
         {
@@ -65,6 +89,7 @@ export const useStudentDetail = () => {
           isActive: Boolean(data.isActive),
           userRegisTime: data.regisTime,
           imageFile: data.imageFile,
+          imageUrl: getProfileImageUrl(data.imageFile), // Add image URL
           code: data.student.code || '',
           firstName: data.student.firstName || '',
           lastName: data.student.lastName || '',
@@ -150,10 +175,15 @@ export const useStudentDetail = () => {
     }
   }, []);
 
+  const handleImageError = useCallback(() => {
+    setImageLoadError(true);
+  }, []);
+
   const clearStudentDetail = useCallback(() => {
     setStudentDetail(null);
     setError(null);
     setLoading(false);
+    setImageLoadError(false);
   }, []);
 
   const retryFetch = useCallback((studentId) => {
@@ -166,7 +196,9 @@ export const useStudentDetail = () => {
     studentDetail,
     loading,
     error,
+    imageLoadError,
     fetchStudentDetail,
+    handleImageError,
     clearStudentDetail,
     retryFetch
   };

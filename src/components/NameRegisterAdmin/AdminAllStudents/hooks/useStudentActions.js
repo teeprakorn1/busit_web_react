@@ -95,7 +95,10 @@ export const useStudentActions = ({
       setSecurityAlert('ไม่มีสิทธิ์ในการเพิ่มนักศึกษา - ต้องเป็น Staff เท่านั้น');
       return;
     }
-    navigate('/application/add-user');
+    
+    navigate('/application/add-user', { 
+      state: { from: '/name-register/student-name' } 
+    });
   }, [navigate, permissions.canAddStudents, setSecurityAlert]);
 
   return {

@@ -13,6 +13,7 @@ export const isValidThaiPhone = (phone) => {
     return phoneRegex.test(phone);
 };
 
+// อัปเดตฟังก์ชันตรวจสอบวันที่ให้รองรับทั้ง พ.ศ. และ ค.ศ.
 export const isValidThaiDate = (dateString) => {
     if (!dateString || dateString.trim() === '') return true;
 
@@ -22,19 +23,29 @@ export const isValidThaiDate = (dateString) => {
     const parts = dateString.split('-');
     const day = parseInt(parts[0]);
     const month = parseInt(parts[1]);
-    const buddhistYear = parseInt(parts[2]);
+    const year = parseInt(parts[2]);
 
     if (day < 1 || day > 31) return false;
     if (month < 1 || month > 12) return false;
-    if (buddhistYear < 2400 || buddhistYear > 2600) return false;
 
-    const christianYear = buddhistYear - 543;
-    const testDate = new Date(christianYear, month - 1, day);
+    let testYear = year;
+    
+    // ตรวจสอบว่าเป็น พ.ศ. หรือ ค.ศ.
+    if (year > 2400) {
+        // พ.ศ. - แปลงเป็น ค.ศ.
+        testYear = year - 543;
+        if (year < 2400 || year > 2600) return false;
+    } else {
+        // ค.ศ.
+        if (year < 1900 || year > 2100) return false;
+    }
 
+    const testDate = new Date(testYear, month - 1, day);
     const today = new Date();
+
     return testDate.getDate() === day &&
         testDate.getMonth() === (month - 1) &&
-        testDate.getFullYear() === christianYear &&
+        testDate.getFullYear() === testYear &&
         testDate <= today;
 };
 
@@ -55,10 +66,25 @@ export const isValidName = (name) => {
     return nameRegex.test(name.trim());
 };
 
+// อัปเดตฟังก์ชันตรวจสอบปีการศึกษาให้รองรับทั้ง พ.ศ. และ ค.ศ.
 export const isValidAcademicYear = (year) => {
-    const currentYear = new Date().getFullYear() + 543;
     const yearNum = parseInt(year);
-    return yearNum >= 2500 && yearNum <= currentYear + 10;
+    if (isNaN(yearNum)) return false;
+    
+    const currentChristianYear = new Date().getFullYear();
+    const currentBuddhistYear = currentChristianYear + 543;
+    
+    // ตรวจสอบ ค.ศ. (1950-2040)
+    if (yearNum >= 1950 && yearNum <= currentChristianYear + 10) {
+        return true;
+    }
+    
+    // ตรวจสอบ พ.ศ. (2493-2583)
+    if (yearNum >= 2493 && yearNum <= currentBuddhistYear + 10) {
+        return true;
+    }
+    
+    return false;
 };
 
 export const validateUserForm = (formData, userType) => {
@@ -109,7 +135,7 @@ export const validateUserForm = (formData, userType) => {
     }
 
     if (formData.birthDate && !isValidThaiDate(formData.birthDate)) {
-        errors.birthDate = "วันเกิดต้องอยู่ในรูปแบบ dd-mm-yyyy (พ.ศ.) เช่น 15-01-2545 และไม่อยู่ในอนาคต";
+        errors.birthDate = "วันเกิดต้องอยู่ในรูปแบบ dd-mm-yyyy (รองรับทั้ง พ.ศ. และ ค.ศ.) เช่น 15-01-2545 หรือ 15-01-2002 และไม่อยู่ในอนาคต";
     }
 
     if (!formData.faculty) {
@@ -124,7 +150,7 @@ export const validateUserForm = (formData, userType) => {
         if (!formData.academicYear) {
             errors.academicYear = "กรุณากรอกปีการศึกษา";
         } else if (!isValidAcademicYear(formData.academicYear)) {
-            errors.academicYear = "ปีการศึกษาต้องเป็นปี พ.ศ. ที่ถูกต้อง";
+            errors.academicYear = "ปีการศึกษาต้องเป็นปี พ.ศ. (2493-2583) หรือ ค.ศ. (1950-2040) ที่ถูกต้อง";
         }
 
         if (!formData.teacherAdvisor) {
@@ -135,6 +161,7 @@ export const validateUserForm = (formData, userType) => {
     return errors;
 };
 
+// อัปเดตฟังก์ชันตรวจสอบข้อมูล CSV ให้รองรับทั้ง พ.ศ. และ ค.ศ.
 export const validateCSVData = (data, userType) => {
     const errors = [];
 
@@ -165,7 +192,7 @@ export const validateCSVData = (data, userType) => {
             errors.push('รหัสนักศึกษาต้องเป็น 12 หลัก ตามด้วย - และเลข 1 หลัก (เช่น 026530461001-6)');
         }
         if (data.Student_AcademicYear && !isValidAcademicYear(data.Student_AcademicYear)) {
-            errors.push('ปีการศึกษาไม่ถูกต้อง');
+            errors.push('ปีการศึกษาต้องเป็น พ.ศ. (2493-2583) หรือ ค.ศ. (1950-2040) ที่ถูกต้อง');
         }
     } else {
         if (data.Teacher_Code && !isValidTeacherCode(data.Teacher_Code)) {
@@ -191,7 +218,7 @@ export const validateCSVData = (data, userType) => {
 
     const birthDateField = userType === 'student' ? 'Student_Birthdate' : 'Teacher_Birthdate';
     if (data[birthDateField] && data[birthDateField] !== '' && !isValidThaiDate(data[birthDateField])) {
-        errors.push('วันเกิดต้องอยู่ในรูปแบบ dd-mm-yyyy (พ.ศ.) เช่น 15-01-2545');
+        errors.push('วันเกิดต้องอยู่ในรูปแบบ dd-mm-yyyy (รองรับทั้ง พ.ศ. และ ค.ศ.) เช่น 15-01-2545 หรือ 15-01-2002');
     }
 
     if (userType === 'teacher' && data.Teacher_IsDean &&

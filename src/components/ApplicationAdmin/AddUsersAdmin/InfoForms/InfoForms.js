@@ -176,6 +176,63 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
         return emailRegex.test(email);
     };
 
+    // ฟังก์ชันตรวจสอบปีการศึกษาทั้ง พ.ศ. และ ค.ศ.
+    const isValidAcademicYear = (year) => {
+        const yearNum = parseInt(year);
+        if (isNaN(yearNum)) return false;
+        
+        const currentChristianYear = new Date().getFullYear();
+        const currentBuddhistYear = currentChristianYear + 543;
+        
+        // ตรวจสอบ ค.ศ. (1950-2040)
+        if (yearNum >= 1950 && yearNum <= currentChristianYear + 10) {
+            return true;
+        }
+        
+        // ตรวจสอบ พ.ศ. (2493-2583)
+        if (yearNum >= 2493 && yearNum <= currentBuddhistYear + 10) {
+            return true;
+        }
+        
+        return false;
+    };
+
+    // ฟังก์ชันตรวจสอบวันเกิดทั้ง พ.ศ. และ ค.ศ.
+    const isValidBirthDate = (dateString) => {
+        if (!dateString || dateString.trim() === '') return true;
+
+        const dateRegex = /^\d{1,2}-\d{1,2}-\d{4}$/;
+        if (!dateRegex.test(dateString)) return false;
+
+        const parts = dateString.split('-');
+        const day = parseInt(parts[0]);
+        const month = parseInt(parts[1]);
+        const year = parseInt(parts[2]);
+
+        if (day < 1 || day > 31) return false;
+        if (month < 1 || month > 12) return false;
+
+        let testYear = year;
+        
+        // ตรวจสอบว่าเป็น พ.ศ. หรือ ค.ศ.
+        if (year > 2400) {
+            // พ.ศ. - แปลงเป็น ค.ศ.
+            testYear = year - 543;
+            if (year < 2400 || year > 2600) return false;
+        } else {
+            // ค.ศ.
+            if (year < 1900 || year > 2100) return false;
+        }
+
+        const testDate = new Date(testYear, month - 1, day);
+        const today = new Date();
+
+        return testDate.getDate() === day &&
+            testDate.getMonth() === (month - 1) &&
+            testDate.getFullYear() === testYear &&
+            testDate <= today;
+    };
+
     return (
         <>
             {/* Users Information */}
@@ -388,12 +445,16 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
                         name="birthDate"
                         value={formData?.birthDate || ''}
                         onChange={handleChange}
-                        className={styles.inputField}
-                        placeholder="เช่น 15-01-2545 (dd-mm-yyyy พ.ศ.)"
+                        className={`${styles.inputField} ${!isValidBirthDate(formData?.birthDate) && formData?.birthDate ? styles.error : ''}`}
+                        placeholder="เช่น 15-01-2545 (พ.ศ.) หรือ 15-01-2002 (ค.ศ.)"
                     />
-                    {errors.birthDate && <span className={styles.errorText}>{errors.birthDate}</span>}
+                    {formData?.birthDate && !isValidBirthDate(formData.birthDate) && (
+                        <span className={styles.errorText}>
+                            รูปแบบวันเกิดไม่ถูกต้อง กรุณาใช้รูปแบบ dd-mm-yyyy
+                        </span>
+                    )}
                     <small className={styles.helpText}>
-                        รูปแบบ: dd-mm-yyyy (พ.ศ.) เช่น 15-01-2545
+                        รูปแบบ: dd-mm-yyyy (รองรับทั้ง พ.ศ. และ ค.ศ.) เช่น 15-01-2545 หรือ 15-01-2002
                     </small>
                 </div>
 
@@ -536,13 +597,18 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
                                 name="academicYear"
                                 value={formData?.academicYear || ''}
                                 onChange={handleChange}
-                                className={`${styles.inputField} ${errors.academicYear ? styles.error : ''}`}
-                                placeholder="เช่น 2567"
+                                className={`${styles.inputField} ${errors.academicYear ? styles.error : ''} ${!isValidAcademicYear(formData?.academicYear) && formData?.academicYear ? styles.error : ''}`}
+                                placeholder="เช่น 2567 (พ.ศ.) หรือ 2024 (ค.ศ.)"
                                 required
                             />
+                            {formData?.academicYear && !isValidAcademicYear(formData.academicYear) && (
+                                <span className={styles.errorText}>
+                                    ปีการศึกษาไม่ถูกต้อง กรุณาใส่ปี พ.ศ. (2493-2583) หรือ ค.ศ. (1950-2040)
+                                </span>
+                            )}
                             {errors.academicYear && <span className={styles.errorText}>{errors.academicYear}</span>}
                             <small className={styles.helpText}>
-                                รองรับทั้ง พ.ศ. (2567) และ ค.ศ. (2024)
+                                รองรับทั้ง พ.ศ. (เช่น 2567) และ ค.ศ. (เช่น 2024)
                             </small>
                         </div>
                     </>

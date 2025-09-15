@@ -36,7 +36,9 @@ function StudentTable({
   onToggleStatus,
   actionLoading,
   sortConfig,
-  onSort
+  onSort,
+  handleImageError,
+  shouldLoadImage
 }) {
   const permissions = useUserPermissions();
 
@@ -51,6 +53,25 @@ function StudentTable({
   const getSortIcon = (field) => {
     if (sortConfig.field !== field) return '⇅';
     return sortConfig.direction === 'asc' ? '↑' : '↓';
+  };
+
+  const handleImageLoadError = (e, filename) => {
+    e.target.style.display = 'none';
+    const nextElement = e.target.nextElementSibling;
+    if (nextElement) {
+      nextElement.style.display = 'block';
+    }
+    if (handleImageError) {
+      handleImageError(filename);
+    }
+  };
+
+  const handleImageLoad = (e) => {
+    e.target.style.display = 'block';
+    const nextElement = e.target.nextElementSibling;
+    if (nextElement) {
+      nextElement.style.display = 'none';
+    }
   };
 
   return (
@@ -106,106 +127,113 @@ function StudentTable({
           </tr>
         </thead>
         <tbody>
-          {students.map(student => (
-            <tr key={student.id}>
-              <td>{student.code}</td>
-              <td>
-                <div className={styles.studentName}>
-                  <div className={styles.avatar}>
-                    {student.imageFile ? (
-                      <img
-                        src={student.imageFile}
-                        alt="Profile"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
+          {students.map(student => {
+            const shouldShowImage = student.imageUrl && 
+              (shouldLoadImage ? shouldLoadImage(student.imageFile) : true);
+            
+            return (
+              <tr key={student.id}>
+                <td>{student.code}</td>
+                <td>
+                  <div className={styles.studentName}>
+                    <div className={styles.avatar}>
+                      {shouldShowImage ? (
+                        <img
+                          src={student.imageUrl}
+                          alt="Profile"
+                          onError={(e) => handleImageLoadError(e, student.imageFile)}
+                          onLoad={handleImageLoad}
+                          crossOrigin="use-credentials"
+                        />
+                      ) : null}
+                      <User 
+                        className={styles.userIcon} 
+                        style={{ display: shouldShowImage ? 'none' : 'block' }} 
                       />
-                    ) : null}
-                    <User className={styles.userIcon} style={{ display: student.imageFile ? 'none' : 'block' }} />
+                    </div>
+                    <span>{student.firstName} {student.lastName}</span>
                   </div>
-                  <span>{student.firstName} {student.lastName}</span>
-                </div>
-              </td>
-              <td>
-                <span className={styles.eventTag} title={student.faculty}>
-                  {student.faculty === "คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ"
-                    ? "บธ.สท."
-                    : "ศิลปศาสตร์"}
-                </span>
-              </td>
-              <td>
-                <span className={styles.eventTag} title={student.department}>
-                  {getDepartmentDisplay(student.department)}
-                </span>
-              </td>
-              <td>
-                <div className={styles.academicYearCell}>
-                  <span className={styles.primaryYear}>
-                    {showBuddhistYear ? student.academicYearBuddhist : student.academicYear}
+                </td>
+                <td>
+                  <span className={styles.eventTag} title={student.faculty}>
+                    {student.faculty === "คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ"
+                      ? "บธ.สท."
+                      : "ศิลปศาสตร์"}
                   </span>
-                  <span className={styles.secondaryYear}>
-                    ({showBuddhistYear ? student.academicYear : student.academicYearBuddhist})
+                </td>
+                <td>
+                  <span className={styles.eventTag} title={student.department}>
+                    {getDepartmentDisplay(student.department)}
                   </span>
-                </div>
-              </td>
-              <td title={student.email}>{student.email}</td>
-              <td>{formatDate(student.regisTime)}</td>
-              <td>
-                <span
-                  className={`${styles.badgeType} ${student.isGraduated ? styles.graduated : styles.notGraduated}`}
-                >
-                  {student.isGraduated ? "สำเร็จการศึกษา" : "ยังไม่สำเร็จการศึกษา"}
-                </span>
-              </td>
-              <td>
-                <span
-                  className={`${styles.badgeType} ${student.isActive ? styles.active : styles.inactive}`}
-                >
-                  {student.isActive ? "ใช้งาน" : "ระงับ"}
-                </span>
-              </td>
-              <td>
-                <div className={styles.actions}>
-                  {permissions.canViewStudentDetails && (
-                    <button
-                      className={styles.viewBtn}
-                      onClick={() => onViewStudent(student)}
-                      title={`ดูรายละเอียดของ ${student.firstName} ${student.lastName}`}
-                      disabled={!student.id || actionLoading}
-                    >
-                      <Eye className={styles.iconSmall} />
-                    </button>
-                  )}
-                  {permissions.canEditStudents && (
-                    <button
-                      className={styles.editBtn}
-                      onClick={() => onEditStudent(student)}
-                      title="แก้ไขข้อมูลโดยตรง"
-                      disabled={!student.id || actionLoading}
-                    >
-                      <Edit className={styles.iconSmall} />
-                    </button>
-                  )}
-                  {permissions.canToggleStudentStatus && (
-                    <button
-                      className={styles.deleteBtn}
-                      onClick={() => onToggleStatus(student)}
-                      title={student.isActive ? "ระงับการใช้งาน" : "เปิดการใช้งาน"}
-                      disabled={!student.id || actionLoading}
-                    >
-                      <Ban className={styles.iconSmall} />
-                    </button>
-                  )}
-                  {!permissions.canViewStudentDetails && (
-                    <span className={styles.noPermission} title="ไม่มีสิทธิ์เข้าถึง">
-                      ไม่มีสิทธิ์
+                </td>
+                <td>
+                  <div className={styles.academicYearCell}>
+                    <span className={styles.primaryYear}>
+                      {showBuddhistYear ? student.academicYearBuddhist : student.academicYear}
                     </span>
-                  )}
-                </div>
-              </td>
-            </tr>
-          ))}
+                    <span className={styles.secondaryYear}>
+                      ({showBuddhistYear ? student.academicYear : student.academicYearBuddhist})
+                    </span>
+                  </div>
+                </td>
+                <td title={student.email}>{student.email}</td>
+                <td>{formatDate(student.regisTime)}</td>
+                <td>
+                  <span
+                    className={`${styles.badgeType} ${student.isGraduated ? styles.graduated : styles.notGraduated}`}
+                  >
+                    {student.isGraduated ? "สำเร็จการศึกษา" : "ยังไม่สำเร็จการศึกษา"}
+                  </span>
+                </td>
+                <td>
+                  <span
+                    className={`${styles.badgeType} ${student.isActive ? styles.active : styles.inactive}`}
+                  >
+                    {student.isActive ? "ใช้งาน" : "ระงับ"}
+                  </span>
+                </td>
+                <td>
+                  <div className={styles.actions}>
+                    {permissions.canViewStudentDetails && (
+                      <button
+                        className={styles.viewBtn}
+                        onClick={() => onViewStudent(student)}
+                        title={`ดูรายละเอียดของ ${student.firstName} ${student.lastName}`}
+                        disabled={!student.id || actionLoading}
+                      >
+                        <Eye className={styles.iconSmall} />
+                      </button>
+                    )}
+                    {permissions.canEditStudents && (
+                      <button
+                        className={styles.editBtn}
+                        onClick={() => onEditStudent(student)}
+                        title="แก้ไขข้อมูลโดยตรง"
+                        disabled={!student.id || actionLoading}
+                      >
+                        <Edit className={styles.iconSmall} />
+                      </button>
+                    )}
+                    {permissions.canToggleStudentStatus && (
+                      <button
+                        className={styles.deleteBtn}
+                        onClick={() => onToggleStatus(student)}
+                        title={student.isActive ? "ระงับการใช้งาน" : "เปิดการใช้งาน"}
+                        disabled={!student.id || actionLoading}
+                      >
+                        <Ban className={styles.iconSmall} />
+                      </button>
+                    )}
+                    {!permissions.canViewStudentDetails && (
+                      <span className={styles.noPermission} title="ไม่มีสิทธิ์เข้าถึง">
+                        ไม่มีสิทธิ์
+                      </span>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
           {students.length === 0 && (
             <tr>
               <td colSpan="10" style={{ textAlign: "center", padding: "20px" }}>
