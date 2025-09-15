@@ -20,9 +20,34 @@ function AddUsersAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
   const permissions = useUserPermissions();
-  
   const referrer = location.state?.from || null;
-  const showBackButton = referrer === '/name-register/student-name';
+
+  const getBackButtonInfo = () => {
+    if (!referrer) return { show: false };
+
+    switch (referrer) {
+      case '/name-register/student-name':
+        return {
+          show: true,
+          title: "กลับไปหน้ารายชื่อนักศึกษา",
+          destination: referrer
+        };
+      case '/name-register/teacher-name':
+        return {
+          show: true,
+          title: "กลับไปหน้ารายชื่ออาจารย์",
+          destination: referrer
+        };
+      default:
+        return {
+          show: true,
+          title: "กลับไปหน้าเดิม",
+          destination: referrer
+        };
+    }
+  };
+
+  const backButtonInfo = getBackButtonInfo();
 
   const [selectedUserType, setSelectedUserType] = useState('student');
   const [formData, setFormData] = useState({
@@ -299,7 +324,6 @@ function AddUsersAdmin() {
     } else {
       baseData.Teacher_IsDean = formData.isDean;
     }
-
     return baseData;
   };
 
@@ -388,10 +412,19 @@ function AddUsersAdmin() {
   };
 
   const handleGoBack = () => {
-    if (referrer) {
-      navigate(referrer);
+    if (backButtonInfo.destination) {
+      navigate(backButtonInfo.destination);
     } else {
-      navigate('/admin/all-students');
+      switch (selectedUserType) {
+        case 'student':
+          navigate('/name-register/student-name');
+          break;
+        case 'teacher':
+          navigate('/name-register/teacher-name');
+          break;
+        default:
+          navigate('/dashboard');
+      }
     }
   };
 
@@ -423,12 +456,12 @@ function AddUsersAdmin() {
           ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}
         >
           <div className={styles.headerBar}>
-            {showBackButton && (
+            {backButtonInfo.show && (
               <div className={styles.backButtonWrapper}>
                 <button
                   className={styles.backButton}
                   onClick={handleGoBack}
-                  title="กลับไปหน้ารายชื่อนักศึกษา"
+                  title={backButtonInfo.title}
                 >
                   <FiArrowLeft size={20} />
                 </button>
@@ -460,20 +493,17 @@ function AddUsersAdmin() {
             </div>
           </div>
 
-          {/* User Type Selector */}
           <UserTypeSelector
             selectedType={selectedUserType}
             onTypeChange={handleUserTypeChange}
           />
 
-          {/* Excel Import / Export */}
           <ExcelImportExport
             setModalOpen={setModalOpen}
             onDataImport={handleDataImport}
             userType={selectedUserType}
           />
 
-          {/* Forms */}
           <InfoForm
             formData={formData}
             setFormData={setFormData}
@@ -491,7 +521,6 @@ function AddUsersAdmin() {
             </button>
           </div>
 
-          {/* Import Data Modal */}
           <ImportDataModal
             open={modalOpen}
             setOpen={setModalOpen}

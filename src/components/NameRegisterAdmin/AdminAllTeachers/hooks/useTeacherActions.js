@@ -96,7 +96,7 @@ export const useTeacherActions = ({
       return;
     }
     
-    navigate('/application/add-teacher', { 
+    navigate('/application/add-user', { 
       state: { from: '/name-register/teacher-name' } 
     });
   }, [navigate, permissions.canAddTeachers, setSecurityAlert]);
