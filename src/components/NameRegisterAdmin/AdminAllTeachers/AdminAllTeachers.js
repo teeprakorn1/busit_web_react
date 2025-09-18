@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Navbar from '../../NavigationBar/NavigationBar';
 import styles from './AdminAllTeachers.module.css';
-import { AlertCircle, Loader, Calendar, GraduationCap, Shield } from 'lucide-react';
+import { AlertCircle, Loader, Calendar, GraduationCap, Shield, ArrowLeft } from 'lucide-react';
 import { FiBell } from 'react-icons/fi';
 
 import TeacherFiltersForm from './TeacherFiltersForm/TeacherFiltersForm';
@@ -18,6 +19,8 @@ import { useTeacherActions } from './hooks/useTeacherActions';
 function AdminAllTeachers() {
   const rowsPerPage = 10;
   const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
+
+  const [searchParams] = useSearchParams();
 
   const {
     teachers,
@@ -86,7 +89,8 @@ function AdminAllTeachers() {
     handleEditTeacher,
     handleToggleStatus,
     handleExportToExcel,
-    handleAddTeacher
+    handleAddTeacher,
+    handleGoBack
   } = useTeacherActions({
     validateId,
     sanitizeInput,
@@ -112,13 +116,30 @@ function AdminAllTeachers() {
     return handleExportToExcel(sortedTeachers, filterInfo);
   };
 
-  // Count statistics
+  const departmentFromURL = useMemo(() => {
+    const departmentIdParam = searchParams.get('departmentId');
+
+    if (departmentIdParam && departments.length > 0) {
+      const departmentId = parseInt(departmentIdParam, 10);
+      if (validateId(departmentId)) {
+        const selectedDepartment = departments.find(d => d.Department_ID === departmentId);
+        if (selectedDepartment) {
+          return {
+            departmentId,
+            departmentName: selectedDepartment.Department_Name,
+            facultyName: selectedDepartment.Faculty_Name
+          };
+        }
+      }
+    }
+    return null;
+  }, [searchParams, departments, validateId]);
   const teacherStats = useMemo(() => {
     const totalTeachers = teachers.length;
     const activeTeachers = teachers.filter(t => t.isActive).length;
     const deanCount = teachers.filter(t => t.isDean).length;
     const resignedCount = teachers.filter(t => t.isResigned).length;
-    const facultyCount = new Set(teachers.map(t => t.faculty)).size;
+    const facultyCount = departmentFromURL ? 1 : new Set(teachers.map(t => t.faculty)).size;
 
     return {
       total: totalTeachers,
@@ -127,11 +148,21 @@ function AdminAllTeachers() {
       resigned: resignedCount,
       faculties: facultyCount
     };
-  }, [teachers]);
+  }, [teachers, departmentFromURL]);
 
   useEffect(() => {
     loadFacultiesAndDepartments();
   }, [loadFacultiesAndDepartments]);
+  useEffect(() => {
+    if (departmentFromURL && departments.length > 0) {
+      const { departmentName, facultyName } = departmentFromURL;
+
+      setFacultyFilter(facultyName);
+      setTimeout(() => {
+        setDepartmentFilter(departmentName);
+      }, 100);
+    }
+  }, [departmentFromURL, departments.length, setFacultyFilter, setDepartmentFilter]);
 
   useEffect(() => {
     const params = {
@@ -144,7 +175,7 @@ function AdminAllTeachers() {
     };
     fetchTeachers(params);
   }, [fetchTeachers, currentPage, facultyFilter, departmentFilter, searchQuery, resignedFilter]);
-  
+
   if (loading) {
     return (
       <div className={styles.container}>
@@ -162,7 +193,7 @@ function AdminAllTeachers() {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className={styles.container}>
@@ -183,8 +214,13 @@ function AdminAllTeachers() {
               </div>
             )}
             <div className={styles.errorActions}>
-              <button 
-                className={styles.retryButton} 
+              {departmentFromURL && (
+                <button className={styles.backButton} onClick={handleGoBack}>
+                  <ArrowLeft size={16} /> กลับไปหน้าสาขา
+                </button>
+              )}
+              <button
+                className={styles.retryButton}
                 onClick={() => {
                   setError(null);
                   setSecurityAlert(null);
@@ -229,13 +265,38 @@ function AdminAllTeachers() {
         )}
         <div className={styles.headerBar}>
           <div className={styles.headerLeft}>
+            {departmentFromURL && (
+              <button className={styles.backButton} onClick={handleGoBack}>
+                <ArrowLeft size={20} />
+              </button>
+            )}
             <div>
-              <h1 className={styles.heading}>รายชื่ออาจารย์ทั้งหมด</h1>
+              <h1 className={styles.heading}>
+                {departmentFromURL ?
+                  `รายชื่ออาจารย์ - ${departmentFromURL.departmentName}` :
+                  'รายชื่ออาจารย์ทั้งหมด'
+                }
+              </h1>
+              {departmentFromURL && (
+                <div className={styles.breadcrumb}>
+                  <span>รายชื่อสาขา</span>
+                  <span className={styles.breadcrumbSeparator}>&gt;</span>
+                  <span className={styles.breadcrumbCurrent}>อาจารย์ในสาขา</span>
+                </div>
+              )}
               <div className={styles.summaryStats}>
                 <span className={styles.statItem}>
                   <GraduationCap className={styles.iconSmall} />
-                  ทั้งหมด: {teacherStats.total} คน
+                  {departmentFromURL ?
+                    `ของสาขา: ${teacherStats.total} คน` :
+                    `ทั้งหมด: ${teacherStats.total} คน`
+                  }
                 </span>
+                {departmentFromURL && (
+                  <span className={styles.statItem}>
+                    คณะ: {departmentFromURL.facultyName}
+                  </span>
+                )}
                 <span className={styles.statItem}>
                   <Calendar className={styles.iconSmall} />
                   คณบดี: {teacherStats.dean} คน
@@ -273,6 +334,7 @@ function AdminAllTeachers() {
             </div>
           </div>
         </div>
+
         <div className={styles.teachersSection}>
           <TeacherFiltersForm
             searchQuery={searchQuery}
@@ -319,6 +381,11 @@ function AdminAllTeachers() {
                 {statusFilter && `สถานะ: ${statusFilter === 'active' ? 'ใช้งาน' : 'ระงับ'} `}
                 {resignedFilter && `การลาออก: ${resignedFilter === 'active' ? 'ยังไม่ลาออก' : resignedFilter === 'resigned' ? 'ลาออกแล้ว' : 'ทั้งหมด'} `}
                 {deanFilter && `ตำแหน่ง: ${deanFilter === 'dean' ? 'คณบดี' : 'อาจารย์ทั่วไป'} `}
+              </span>
+            )}
+            {departmentFromURL && (
+              <span className={styles.departmentSummary}>
+                แสดงอาจารย์ของสาขา: {departmentFromURL.departmentName}
               </span>
             )}
           </div>

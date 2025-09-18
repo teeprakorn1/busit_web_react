@@ -101,12 +101,152 @@ export const useStudentActions = ({
     });
   }, [navigate, permissions.canAddStudents, setSecurityAlert]);
 
+  const handleGoBack = useCallback(() => {
+    navigate('/name-register/department-name');
+  }, [navigate]);
+
+  const handleSmartBack = useCallback((searchParams, currentPath) => {
+    const departmentId = searchParams?.get('departmentId');
+    const fromParam = searchParams?.get('from');
+    
+    if (departmentId) {
+      navigate('/name-register/department-name');
+    } else if (fromParam) {
+      navigate(fromParam);
+    } else {
+      const referrer = document.referrer;
+      if (referrer && referrer.includes('/name-register/department-name')) {
+        navigate('/name-register/department-name');
+      } else if (referrer && referrer.includes('/name-register/teacher-name')) {
+        navigate('/name-register/teacher-name');
+      } else if (window.history.length > 1) {
+        navigate(-1);
+      } else {
+        navigate('/name-register/department-name');
+      }
+    }
+  }, [navigate]);
+
+  const handleShowStudentSummary = useCallback((students, filterInfo) => {
+    if (!students || students.length === 0) {
+      showModal('ไม่มีข้อมูลนักศึกษา', [
+        {
+          label: 'ตกลง',
+          onClick: closeModal,
+        }
+      ]);
+      return;
+    }
+
+    const totalStudents = students.length;
+    const activeStudents = students.filter(s => s.isActive).length;
+    const inactiveStudents = totalStudents - activeStudents;
+    const graduatedStudents = students.filter(s => s.isGraduated).length;
+    const studyingStudents = totalStudents - graduatedStudents;
+
+    const summaryMessage = `
+สรุปข้อมูลนักศึกษา:
+
+จำนวนทั้งหมด: ${totalStudents} คน
+- กำลังใช้งาน: ${activeStudents} คน
+- ระงับการใช้งาน: ${inactiveStudents} คน
+
+สถานะการศึกษา:
+- กำลังศึกษา: ${studyingStudents} คน
+- จบการศึกษา: ${graduatedStudents} คน
+
+${filterInfo?.department ? `สาขา: ${filterInfo.department}` : ''}
+${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
+${filterInfo?.academicYear ? `ปีการศึกษา: ${filterInfo.academicYear}` : ''}
+    `;
+
+    showModal(summaryMessage, [
+      {
+        label: 'ส่งออกข้อมูล',
+        onClick: () => {
+          closeModal();
+          handleExportToExcel(students, filterInfo);
+        },
+      },
+      {
+        label: 'ปิด',
+        onClick: closeModal,
+      }
+    ]);
+  }, [showModal, closeModal, handleExportToExcel]);
+
+  const handleRefreshStudents = useCallback(async () => {
+    try {
+      await fetchStudents();
+    } catch (error) {
+      console.warn('Failed to refresh student data:', error);
+      setSecurityAlert('ไม่สามารถรีเฟรชข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
+    }
+  }, [fetchStudents, setSecurityAlert]);
+
+  const handleBulkExport = useCallback((students, filterInfo, options = {}) => {
+    if (!permissions.canExportData) {
+      setSecurityAlert('ไม่มีสิทธิ์ในการส่งออกข้อมูล');
+      return;
+    }
+
+    if (!students || students.length === 0) {
+      showModal('ไม่มีข้อมูลสำหรับการส่งออก', [
+        {
+          label: 'ตกลง',
+          onClick: closeModal,
+        }
+      ]);
+      return;
+    }
+
+    const confirmMessage = `
+คุณต้องการส่งออกข้อมูลนักศึกษาทั้งหมด ${students.length} คน เป็นไฟล์ Excel หรือไม่?
+
+ข้อมูลที่จะส่งออก:
+- ข้อมูลส่วนตัวนักศึกษา
+- ข้อมูลการศึกษา
+- สถานะการใช้งาน
+- สรุปตามสาขาและคณะ
+
+${filterInfo?.department ? `สาขา: ${filterInfo.department}` : ''}
+${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
+    `;
+
+    showModal(confirmMessage, [
+      {
+        label: 'ยกเลิก',
+        onClick: closeModal,
+      },
+      {
+        label: 'ส่งออกข้อมูล',
+        onClick: () => {
+          closeModal();
+          const success = exportFilteredStudentsToExcel(students, filterInfo, options);
+          if (success) {
+            showModal('ส่งออกข้อมูลเรียบร้อยแล้ว', [
+              {
+                label: 'ตกลง',
+                onClick: closeModal,
+              }
+            ]);
+          }
+        },
+      }
+    ]);
+  }, [permissions.canExportData, setSecurityAlert, showModal, closeModal]);
+
   return {
     handleViewStudent,
     handleEditStudent,
     handleToggleStatus,
     handleExportToExcel,
     handleAddStudent,
+    handleGoBack,
+    handleSmartBack,
+    handleShowStudentSummary,
+    handleRefreshStudents,
+    handleBulkExport,
     permissions
   };
 };

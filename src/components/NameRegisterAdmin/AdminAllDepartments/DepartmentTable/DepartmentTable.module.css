@@ -1,0 +1,487 @@
+/* DepartmentTable.module.css */
+:root {
+  --primary-color: #2563eb;
+  --bg-light: #f9fafb;
+  --text-dark: #374151;
+  --text-muted: #6b7280;
+  --card-bg: #ffffff;
+  --shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  --building-color: #059669;
+  --building-bg: #d1fae5;
+}
+
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-bg);
+  box-shadow: var(--shadow);
+  border-radius: 12px;
+  overflow: hidden;
+  min-width: 800px;
+}
+
+.table th,
+.table td {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 14px;
+  color: var(--text-dark);
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.table th {
+  background-color: var(--bg-light);
+  font-weight: 600;
+}
+
+.table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.table th.sortable:hover,
+.table th.sortable:active {
+  background-color: #e5e7eb;
+}
+
+.table tr:hover {
+  background-color: #f1f5f9;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .table tr:active {
+    background-color: #f1f5f9;
+  }
+}
+
+.departmentName {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 200px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--building-bg);
+  flex-shrink: 0;
+  border: 2px solid var(--building-color);
+}
+
+.buildingIcon {
+  color: var(--building-color);
+  width: 20px;
+  height: 20px;
+}
+
+.nameInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.fullName {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-dark);
+  line-height: 1.2;
+}
+
+.fullNameSubtle {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.2;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.facultyTag {
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-block;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-left: 3px solid var(--primary-color);
+  text-align: center;
+}
+
+.countInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 80px;
+}
+
+.countIcon {
+  width: 16px;
+  height: 16px;
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.count {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.departmentId {
+  font-family: 'Courier New', monospace;
+  background: #f1f5f9;
+  color: var(--text-muted);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.totalInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+
+.totalCount {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--building-color);
+  line-height: 1.2;
+}
+
+.totalSubtext {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-start;
+  align-items: center;
+  min-height: 40px;
+  min-width: 140px;
+}
+
+.viewBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 120px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.viewBtn:hover:not(:disabled),
+.viewBtn:active:not(:disabled) {
+  background: #bae6fd;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .viewBtn:active:not(:disabled) {
+    background: #bae6fd;
+    transform: scale(0.98);
+  }
+}
+
+.viewBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.buttonText {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.iconSmall {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.noPermission {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 40px;
+}
+
+@media (max-width: 1024px) {
+  .table {
+    min-width: 700px;
+  }
+
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .departmentName {
+    min-width: 180px;
+  }
+
+  .fullNameSubtle {
+    max-width: 150px;
+  }
+
+  .facultyTag {
+    max-width: 100px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .tableWrapper {
+    padding: 0 8px;
+  }
+
+  .table {
+    min-width: 600px;
+  }
+
+  .table th,
+  .table td {
+    font-size: 12px;
+    padding: 8px 6px;
+  }
+
+  .departmentName {
+    min-width: 150px;
+    gap: 8px;
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .buildingIcon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .fullName {
+    font-size: 13px;
+  }
+
+  .fullNameSubtle {
+    max-width: 120px;
+    font-size: 11px;
+  }
+
+  .facultyTag {
+    max-width: 80px;
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+
+  .countInfo {
+    min-width: 60px;
+    gap: 4px;
+  }
+
+  .countIcon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .count {
+    font-size: 12px;
+  }
+
+  .totalInfo {
+    min-width: 100px;
+    gap: 4px;
+  }
+
+  .totalCount {
+    font-size: 14px;
+  }
+
+  .totalSubtext {
+    font-size: 10px;
+  }
+
+  .actions {
+    min-width: 100px;
+  }
+
+  .viewBtn {
+    min-width: 90px;
+    padding: 6px 10px;
+    font-size: 12px;
+    gap: 4px;
+  }
+
+  .buttonText {
+    font-size: 12px;
+  }
+
+  .iconSmall {
+    width: 14px;
+    height: 14px;
+  }
+
+  .noPermission {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tableWrapper {
+    padding: 0 4px;
+  }
+
+  .table {
+    min-width: 500px;
+  }
+
+  .table th,
+  .table td {
+    font-size: 11px;
+    padding: 6px 4px;
+  }
+
+  .departmentName {
+    min-width: 120px;
+    gap: 6px;
+  }
+
+  .avatar {
+    width: 28px;
+    height: 28px;
+  }
+
+  .buildingIcon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .fullName {
+    font-size: 12px;
+  }
+
+  .fullNameSubtle {
+    max-width: 100px;
+    font-size: 10px;
+  }
+
+  .facultyTag {
+    max-width: 60px;
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+
+  .countInfo {
+    min-width: 50px;
+  }
+
+  .countIcon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .count {
+    font-size: 11px;
+  }
+
+  .totalInfo {
+    min-width: 80px;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .totalCount {
+    font-size: 13px;
+  }
+
+  .totalSubtext {
+    font-size: 9px;
+  }
+
+  .actions {
+    min-width: 80px;
+  }
+
+  .viewBtn {
+    min-width: 70px;
+    padding: 5px 8px;
+    font-size: 11px;
+    gap: 3px;
+  }
+
+  .buttonText {
+    font-size: 11px;
+  }
+
+  .iconSmall {
+    width: 12px;
+    height: 12px;
+  }
+
+  .noPermission {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 320px) {
+  .table {
+    min-width: 400px;
+  }
+
+  .table th,
+  .table td {
+    font-size: 10px;
+    padding: 4px 2px;
+  }
+}

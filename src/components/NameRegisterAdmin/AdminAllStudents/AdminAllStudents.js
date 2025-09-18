@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import Navbar from '../../NavigationBar/NavigationBar';
 import styles from './AdminAllStudents.module.css';
-import { AlertCircle, Loader, Calendar, GraduationCap, Shield } from 'lucide-react';
+import { AlertCircle, Loader, Calendar, GraduationCap, Shield, ArrowLeft } from 'lucide-react';
 import { FiBell } from 'react-icons/fi';
 
 import StudentFiltersForm from './StudentFiltersForm/StudentFiltersForm';
@@ -18,6 +19,9 @@ import { useStudentActions } from './hooks/useStudentActions';
 function AdminAllStudents() {
   const rowsPerPage = 10;
   const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
+
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const {
     students,
@@ -118,9 +122,45 @@ function AdminAllStudents() {
     return handleExportToExcel(sortedStudents, filterInfo);
   };
 
+  const departmentFromURL = useMemo(() => {
+    const departmentIdParam = searchParams.get('departmentId');
+
+    if (departmentIdParam && departments.length > 0) {
+      const departmentId = parseInt(departmentIdParam, 10);
+      if (validateId(departmentId)) {
+        const selectedDepartment = departments.find(d => d.Department_ID === departmentId);
+        if (selectedDepartment) {
+          return {
+            departmentId,
+            departmentName: selectedDepartment.Department_Name,
+            facultyName: selectedDepartment.Faculty_Name
+          };
+        }
+      }
+    }
+    return null;
+  }, [searchParams, departments, validateId]);
+
+  const handleGoBack = () => {
+    if (departmentFromURL) {
+      navigate('/name-register/department-name');
+    }
+  };
+
   useEffect(() => {
     loadFacultiesAndDepartments();
   }, [loadFacultiesAndDepartments]);
+
+  useEffect(() => {
+    if (departmentFromURL && departments.length > 0) {
+      const { departmentName, facultyName } = departmentFromURL;
+
+      setFacultyFilter(facultyName);
+      setTimeout(() => {
+        setDepartmentFilter(departmentName);
+      }, 100);
+    }
+  }, [departmentFromURL, departments.length, setFacultyFilter, setDepartmentFilter]);
 
   useEffect(() => {
     const params = {
@@ -133,7 +173,7 @@ function AdminAllStudents() {
     };
     fetchStudents(params);
   }, [fetchStudents, currentPage, facultyFilter, departmentFilter, academicYearFilter, searchQuery]);
-  
+
   if (loading) {
     return (
       <div className={styles.container}>
@@ -151,7 +191,7 @@ function AdminAllStudents() {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className={styles.container}>
@@ -172,8 +212,13 @@ function AdminAllStudents() {
               </div>
             )}
             <div className={styles.errorActions}>
-              <button 
-                className={styles.retryButton} 
+              {departmentFromURL && (
+                <button className={styles.backButton} onClick={handleGoBack}>
+                  <ArrowLeft size={16} /> กลับไปหน้าสาขา
+                </button>
+              )}
+              <button
+                className={styles.retryButton}
                 onClick={() => {
                   setError(null);
                   setSecurityAlert(null);
@@ -216,15 +261,41 @@ function AdminAllStudents() {
             <span>{securityAlert}</span>
           </div>
         )}
+
         <div className={styles.headerBar}>
           <div className={styles.headerLeft}>
+            {departmentFromURL && (
+              <button className={styles.backButton} onClick={handleGoBack}>
+                <ArrowLeft size={20} />
+              </button>
+            )}
             <div>
-              <h1 className={styles.heading}>รายชื่อนักศึกษาทั้งหมด</h1>
+              <h1 className={styles.heading}>
+                {departmentFromURL ?
+                  `รายชื่อนักศึกษา - ${departmentFromURL.departmentName}` :
+                  'รายชื่อนักศึกษาทั้งหมด'
+                }
+              </h1>
+              {departmentFromURL && (
+                <div className={styles.breadcrumb}>
+                  <span>รายชื่อสาขา</span>
+                  <span className={styles.breadcrumbSeparator}>&gt;</span>
+                  <span className={styles.breadcrumbCurrent}>นักศึกษาในสาขา</span>
+                </div>
+              )}
               <div className={styles.summaryStats}>
                 <span className={styles.statItem}>
                   <GraduationCap className={styles.iconSmall} />
-                  ทั้งหมด: {students.length} คน
+                  {departmentFromURL ?
+                    `ของสาขา: ${students.length} คน` :
+                    `ทั้งหมด: ${students.length} คน`
+                  }
                 </span>
+                {departmentFromURL && (
+                  <span className={styles.statItem}>
+                    คณะ: {departmentFromURL.facultyName}
+                  </span>
+                )}
                 <span className={styles.statItem}>
                   <Calendar className={styles.iconSmall} />
                   ปีการศึกษา: {availableAcademicYears.length} ปี
@@ -275,6 +346,7 @@ function AdminAllStudents() {
             </div>
           </div>
         </div>
+
         <div className={styles.studentsSection}>
           <StudentFiltersForm
             searchQuery={searchQuery}
@@ -330,6 +402,11 @@ function AdminAllStudents() {
                     yearRangeFilter === 'old' ? 'มากกว่า 3 ปี' :
                       yearRangeFilter === 'graduated_eligible' ? 'ควรจบแล้ว' : ''
                   }`}
+              </span>
+            )}
+            {departmentFromURL && (
+              <span className={styles.departmentSummary}>
+                แสดงนักศึกษาของสาขา: {departmentFromURL.departmentName}
               </span>
             )}
           </div>

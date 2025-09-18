@@ -87,7 +87,7 @@ export const useStudentDetail = () => {
           isActive: Boolean(data.isActive),
           userRegisTime: data.regisTime,
           imageFile: data.imageFile,
-          imageUrl: getProfileImageUrl(data.imageFile), // Add image URL
+          imageUrl: getProfileImageUrl(data.imageFile),
           code: data.student.code || '',
           firstName: data.student.firstName || '',
           lastName: data.student.lastName || '',

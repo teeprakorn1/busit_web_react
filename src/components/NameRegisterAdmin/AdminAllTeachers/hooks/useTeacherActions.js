@@ -100,6 +100,9 @@ export const useTeacherActions = ({
       state: { from: '/name-register/teacher-name' } 
     });
   }, [navigate, permissions.canAddTeachers, setSecurityAlert]);
+  const handleGoBack = useCallback(() => {
+    navigate('/name-register/department-name');
+  }, [navigate]);
 
   return {
     handleViewTeacher,
@@ -107,6 +110,7 @@ export const useTeacherActions = ({
     handleToggleStatus,
     handleExportToExcel,
     handleAddTeacher,
+    handleGoBack,
     permissions
   };
 };

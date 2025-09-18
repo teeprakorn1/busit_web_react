@@ -1,4 +1,4 @@
-/* AdminAllStudents.module.css - Refactored Version */
+/* AdminAllStudents.module.css - Complete Version with Back Button */
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap");
 
 :root {
@@ -12,6 +12,7 @@
   --success-color: #10b981;
   --warning-color: #f59e0b;
   --danger-color: #ef4444;
+  --info-color: #3b82f6;
 }
 
 /* Main Container */
@@ -57,6 +58,32 @@
   flex: 1;
 }
 
+.headerLeft > div {
+  flex: 1;
+}
+
+/* Back Button Styles */
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.backButton:hover {
+  background: #e5e7eb;
+  transform: translateX(-2px);
+}
+
 .heading {
   margin: 0;
   color: var(--text-dark);
@@ -64,6 +91,29 @@
   font-weight: 700;
   padding-left: 0;
   transition: padding-left 0.3s ease;
+}
+
+.heading.withBackButton {
+  padding-left: 0;
+}
+
+/* Breadcrumb Styles */
+.breadcrumb {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.breadcrumbSeparator {
+  color: #d1d5db;
+}
+
+.breadcrumbCurrent {
+  color: var(--primary-color);
+  font-weight: 500;
 }
 
 .summaryStats {
@@ -266,6 +316,17 @@
   border-radius: 6px;
 }
 
+/* Department Summary in Results */
+.departmentSummary {
+  font-size: 13px;
+  color: var(--info-color);
+  font-weight: 500;
+  background: #eff6ff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
 /* Loading States */
 .loadingContainer {
   display: flex;
@@ -443,9 +504,34 @@
     padding: 15px 20px;
   }
 
+  .headerBar {
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+  }
+
+  .headerLeft {
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .backButton {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .breadcrumb {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .breadcrumbSeparator {
+    display: none;
+  }
+
   .heading {
     font-size: 22px;
-    padding-left: 50px;
+    padding-left: 0;
   }
 
   .summaryStats {
@@ -475,6 +561,11 @@
     text-align: center;
   }
 
+  .departmentSummary {
+    font-size: 12px;
+    padding: 3px 6px;
+  }
+
   .securityBanner {
     position: relative;
     margin: -15px -20px 20px -20px;
@@ -494,9 +585,27 @@
     padding: 12px 16px;
   }
 
+  .headerLeft {
+    gap: 10px;
+  }
+
+  .backButton span {
+    display: none;
+  }
+
+  .backButton {
+    padding: 8px;
+    min-width: 40px;
+    justify-content: center;
+  }
+
   .heading {
     font-size: 20px;
-    padding-left: 45px;
+    padding-left: 0;
+  }
+
+  .breadcrumb {
+    font-size: 13px;
   }
 
   .summaryStats {
@@ -515,6 +624,11 @@
     padding: 3px 6px;
     font-size: 10px;
     min-width: 25px;
+  }
+
+  .departmentSummary {
+    font-size: 12px;
+    padding: 3px 6px;
   }
 
   .securityBanner {
