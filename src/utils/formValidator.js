@@ -13,14 +13,16 @@ export const isValidThaiPhone = (phone) => {
     return phoneRegex.test(phone);
 };
 
-// อัปเดตฟังก์ชันตรวจสอบวันที่ให้รองรับทั้ง พ.ศ. และ ค.ศ.
+// อัปเดตฟังก์ชันตรวจสอบวันที่ให้รองรับทั้ง พ.ศ. และ ค.ศ. และรูปแบบ - และ /
 export const isValidThaiDate = (dateString) => {
     if (!dateString || dateString.trim() === '') return true;
 
-    const dateRegex = /^\d{1,2}-\d{1,2}-\d{4}$/;
+    // รองรับทั้ง - และ / เป็น separator
+    const dateRegex = /^\d{1,2}[-/]\d{1,2}[-/]\d{4}$/;
     if (!dateRegex.test(dateString)) return false;
 
-    const parts = dateString.split('-');
+    // แยกส่วนของวันที่ รองรับทั้ง - และ /
+    const parts = dateString.split(/[-/]/);
     const day = parseInt(parts[0]);
     const month = parseInt(parts[1]);
     const year = parseInt(parts[2]);
@@ -29,7 +31,7 @@ export const isValidThaiDate = (dateString) => {
     if (month < 1 || month > 12) return false;
 
     let testYear = year;
-    
+
     // ตรวจสอบว่าเป็น พ.ศ. หรือ ค.ศ.
     if (year > 2400) {
         // พ.ศ. - แปลงเป็น ค.ศ.
@@ -70,21 +72,37 @@ export const isValidName = (name) => {
 export const isValidAcademicYear = (year) => {
     const yearNum = parseInt(year);
     if (isNaN(yearNum)) return false;
-    
+
     const currentChristianYear = new Date().getFullYear();
     const currentBuddhistYear = currentChristianYear + 543;
-    
+
     // ตรวจสอบ ค.ศ. (1950-2040)
     if (yearNum >= 1950 && yearNum <= currentChristianYear + 10) {
         return true;
     }
-    
+
     // ตรวจสอบ พ.ศ. (2493-2583)
     if (yearNum >= 2493 && yearNum <= currentBuddhistYear + 10) {
         return true;
     }
-    
+
     return false;
+};
+
+// ฟังก์ชันตรวจสอบ boolean value ที่รองรับทั้งตัวเล็กและตัวใหญ่
+export const isValidBoolean = (value) => {
+    if (value === '' || value === null || value === undefined) return true; // อนุญาตให้ว่าง
+
+    const stringValue = value.toString().toLowerCase().trim();
+    return ['true', 'false'].includes(stringValue);
+};
+
+// ฟังก์ชันแปลง string เป็น boolean
+export const stringToBoolean = (value) => {
+    if (value === '' || value === null || value === undefined) return false;
+
+    const stringValue = value.toString().toLowerCase().trim();
+    return stringValue === 'true';
 };
 
 export const validateUserForm = (formData, userType) => {
@@ -135,7 +153,7 @@ export const validateUserForm = (formData, userType) => {
     }
 
     if (formData.birthDate && !isValidThaiDate(formData.birthDate)) {
-        errors.birthDate = "วันเกิดต้องอยู่ในรูปแบบ dd-mm-yyyy (รองรับทั้ง พ.ศ. และ ค.ศ.) เช่น 15-01-2545 หรือ 15-01-2002 และไม่อยู่ในอนาคต";
+        errors.birthDate = "วันเกิดต้องอยู่ในรูปแบบ dd-mm-yyyy หรือ dd/mm/yyyy (รองรับทั้ง พ.ศ. และ ค.ศ.) เช่น 15-01-2545, 15/01/2002 และไม่อยู่ในอนาคต";
     }
 
     if (!formData.faculty) {
@@ -161,7 +179,7 @@ export const validateUserForm = (formData, userType) => {
     return errors;
 };
 
-// อัปเดตฟังก์ชันตรวจสอบข้อมูล CSV ให้รองรับทั้ง พ.ศ. และ ค.ศ.
+// อัปเดตฟังก์ชันตรวจสอบข้อมูล CSV ให้รองรับรูปแบบวันที่และ boolean ที่หลากหลาย
 export const validateCSVData = (data, userType) => {
     const errors = [];
 
@@ -218,12 +236,12 @@ export const validateCSVData = (data, userType) => {
 
     const birthDateField = userType === 'student' ? 'Student_Birthdate' : 'Teacher_Birthdate';
     if (data[birthDateField] && data[birthDateField] !== '' && !isValidThaiDate(data[birthDateField])) {
-        errors.push('วันเกิดต้องอยู่ในรูปแบบ dd-mm-yyyy (รองรับทั้ง พ.ศ. และ ค.ศ.) เช่น 15-01-2545 หรือ 15-01-2002');
+        errors.push('วันเกิดต้องอยู่ในรูปแบบ dd-mm-yyyy หรือ dd/mm/yyyy (รองรับทั้ง พ.ศ. และ ค.ศ.) เช่น 15-01-2545, 15/01/2002');
     }
 
-    if (userType === 'teacher' && data.Teacher_IsDean &&
-        !['true', 'false', true, false, ''].includes(data.Teacher_IsDean)) {
-        errors.push('Teacher_IsDean ต้องเป็น true หรือ false เท่านั้น');
+    // อัปเดตการตรวจสอบ Teacher_IsDean ให้รองรับทั้งตัวเล็กและตัวใหญ่
+    if (userType === 'teacher' && data.Teacher_IsDean !== undefined && data.Teacher_IsDean !== '' && !isValidBoolean(data.Teacher_IsDean)) {
+        errors.push('Teacher_IsDean ต้องเป็น true หรือ false เท่านั้น (ไม่คำนึงตัวเล็กตัวใหญ่)');
     }
 
     return errors;

@@ -69,9 +69,8 @@ export const useTeachers = () => {
       setError(null);
       setSecurityAlert(null);
 
+      // แก้ไข: ลบ page และ limit parameters ออก
       const teacherParams = {
-        page: params.currentPage || 1,
-        limit: params.rowsPerPage || 10,
         includeResigned: params.includeResigned || false
       };
 

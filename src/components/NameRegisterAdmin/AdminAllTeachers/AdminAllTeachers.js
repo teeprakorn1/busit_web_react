@@ -41,6 +41,7 @@ function AdminAllTeachers() {
     validateId
   } = useTeachers();
 
+  // แก้ไข: เพิ่ม fetchTeachers และ rowsPerPage เป็น parameters
   const {
     searchQuery,
     setSearchQuery,
@@ -65,7 +66,7 @@ function AdminAllTeachers() {
     handleSort,
     resetFilters,
     getFilterInfo
-  } = useFilters();
+  } = useFilters(fetchTeachers, rowsPerPage);
 
   const {
     isMobile,
@@ -102,6 +103,7 @@ function AdminAllTeachers() {
     fetchTeachers
   });
 
+  // แก้ไข: กลับมาใช้ client-side pagination
   const sortedTeachers = useMemo(() => {
     return getFilteredAndSortedTeachers(teachers);
   }, [getFilteredAndSortedTeachers, teachers]);
@@ -134,6 +136,7 @@ function AdminAllTeachers() {
     }
     return null;
   }, [searchParams, departments, validateId]);
+
   const teacherStats = useMemo(() => {
     const totalTeachers = teachers.length;
     const activeTeachers = teachers.filter(t => t.isActive).length;
@@ -153,6 +156,7 @@ function AdminAllTeachers() {
   useEffect(() => {
     loadFacultiesAndDepartments();
   }, [loadFacultiesAndDepartments]);
+
   useEffect(() => {
     if (departmentFromURL && departments.length > 0) {
       const { departmentName, facultyName } = departmentFromURL;
@@ -166,15 +170,13 @@ function AdminAllTeachers() {
 
   useEffect(() => {
     const params = {
-      currentPage,
-      rowsPerPage,
       facultyFilter,
       departmentFilter,
       searchQuery,
       includeResigned: resignedFilter === 'all' || resignedFilter === 'resigned'
     };
     fetchTeachers(params);
-  }, [fetchTeachers, currentPage, facultyFilter, departmentFilter, searchQuery, resignedFilter]);
+  }, [fetchTeachers, facultyFilter, departmentFilter, searchQuery, resignedFilter]);
 
   if (loading) {
     return (
@@ -225,8 +227,6 @@ function AdminAllTeachers() {
                   setError(null);
                   setSecurityAlert(null);
                   fetchTeachers({
-                    currentPage,
-                    rowsPerPage,
                     facultyFilter,
                     departmentFilter,
                     searchQuery,
@@ -361,8 +361,12 @@ function AdminAllTeachers() {
             setCurrentPage={setCurrentPage}
             onAddTeacher={handleAddTeacher}
           />
+          
           <div className={styles.resultsSummary}>
             <span>พบ {sortedTeachers.length} รายการ</span>
+            <span className={styles.pageInfo}>
+              (แสดงหน้า {currentPage} จาก {totalPages} หน้า)
+            </span>
             {sortBy && (
               <span className={styles.searchSummary}>
                 เรียงตาม{sortBy === 'name' ? 'ชื่อ-นามสกุล' :
@@ -389,6 +393,7 @@ function AdminAllTeachers() {
               </span>
             )}
           </div>
+
           <TeacherTable
             teachers={currentRows}
             onViewTeacher={handleViewTeacher}
@@ -400,6 +405,7 @@ function AdminAllTeachers() {
             handleImageError={handleImageError}
             shouldLoadImage={shouldLoadImage}
           />
+
           <TeacherPagination
             currentPage={currentPage}
             totalPages={totalPages}
@@ -408,6 +414,7 @@ function AdminAllTeachers() {
             totalItems={sortedTeachers.length}
           />
         </div>
+
         {actionLoading && (
           <div className={styles.actionOverlay}>
             <div className={styles.actionSpinner}>
@@ -416,12 +423,14 @@ function AdminAllTeachers() {
             </div>
           </div>
         )}
+
         <CustomModal
           isOpen={modalOpen}
           message={modalMessage}
           onClose={closeModal}
           buttons={modalButtons}
         />
+
         <TeacherModal
           isOpen={teacherModalOpen}
           onClose={closeTeacherModal}

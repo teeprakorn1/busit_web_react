@@ -79,6 +79,10 @@ function AddUsersAdmin() {
   const [alertMessage, setAlertMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // เพิ่ม state สำหรับ CSV import loading
+  const [isImportLoading, setIsImportLoading] = useState(false);
+  const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
+
   const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
 
   useEffect(() => {
@@ -150,7 +154,9 @@ function AddUsersAdmin() {
       return;
     }
 
-    setIsLoading(true);
+    setIsImportLoading(true);
+    setImportProgress({ current: 0, total: validData.length });
+    setModalOpen(false); // ปิด modal ก่อนเริ่ม import
 
     try {
       let successCount = 0;
@@ -159,6 +165,9 @@ function AddUsersAdmin() {
 
       for (let i = 0; i < validData.length; i++) {
         const record = validData[i];
+
+        // อัปเดต progress
+        setImportProgress({ current: i + 1, total: validData.length });
 
         try {
           const apiData = transformCSVToAPI(record, selectedUserType);
@@ -179,7 +188,13 @@ function AddUsersAdmin() {
           const errorMessage = error.response?.data?.message || error.message;
           errors.push(`แถวที่ ${i + 1}: ${errorMessage}`);
         }
+
+        // หน่วงเวลาเล็กน้อยเพื่อให้ UI อัปเดตได้
+        if (i % 10 === 0) {
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
       }
+
       const csvTimestampTypeId = selectedUserType === 'student' ? 16 : 17;
 
       if (successCount > 0 || errorCount > 0) {
@@ -216,7 +231,8 @@ function AddUsersAdmin() {
 
       setAlertMessage('เกิดข้อผิดพลาดในการนำเข้าข้อมูล: ' + error.message);
     } finally {
-      setIsLoading(false);
+      setIsImportLoading(false);
+      setImportProgress({ current: 0, total: 0 });
       setIsAlertModalOpen(true);
     }
   };
@@ -515,7 +531,7 @@ function AddUsersAdmin() {
             <button
               className={`${styles.formButton} ${isLoading ? styles.loading : ''}`}
               onClick={handleConfirm}
-              disabled={isLoading}
+              disabled={isLoading || isImportLoading}
             >
               {isLoading ? 'กำลังบันทึก...' : 'ยืนยัน'}
             </button>
@@ -528,6 +544,44 @@ function AddUsersAdmin() {
             userType={selectedUserType}
             onConfirmImport={handleConfirmImport}
           />
+
+          {/* CSV Import Loading Overlay */}
+          {isImportLoading && (
+            <div className={styles.importLoadingOverlay}>
+              <div className={styles.importLoadingModal}>
+                <div className={styles.importLoadingContent}>
+                  <div className={styles.importLoadingSpinner}></div>
+                  <h3>กำลังนำเข้าข้อมูล...</h3>
+                  <p>กรุณารอสักครู่ ระบบกำลังประมวลผลข้อมูลของคุณ</p>
+
+                  <div className={styles.progressInfo}>
+                    <div className={styles.progressText}>
+                      ดำเนินการแล้ว: {importProgress.current} / {importProgress.total} รายการ
+                    </div>
+                    <div className={styles.progressBar}>
+                      <div
+                        className={styles.progressFill}
+                        style={{
+                          width: importProgress.total > 0
+                            ? `${(importProgress.current / importProgress.total) * 100}%`
+                            : '0%'
+                        }}
+                      ></div>
+                    </div>
+                    <div className={styles.progressPercentage}>
+                      {importProgress.total > 0
+                        ? Math.round((importProgress.current / importProgress.total) * 100)
+                        : 0}%
+                    </div>
+                  </div>
+
+                  <div className={styles.importWarning}>
+                    <strong>หมายเหตุ:</strong> กรุณาอย่าปิดหน้าต่างนี้จนกว่าการจะเสร็จสิ้น
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </div>
 

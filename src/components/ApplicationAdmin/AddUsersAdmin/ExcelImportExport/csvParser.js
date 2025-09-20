@@ -1,5 +1,5 @@
 // csvParser.js - Utility functions for parsing CSV files
-import { validateCSVData } from './../../../../utils/formValidator';
+import { validateCSVData, stringToBoolean } from './../../../../utils/formValidator';
 
 export const parseCSV = (file) => {
   return new Promise((resolve, reject) => {
@@ -26,10 +26,23 @@ export const parseCSV = (file) => {
           if (hasData && values.length === headers.length) {
             const row = {};
             headers.forEach((header, index) => {
-              row[header] = values[index] || '';
+              let value = values[index] || '';
+              
+              // จัดการกับ Teacher_IsDean เป็นพิเศษ เพื่อแปลงเป็น boolean
+              if (header === 'Teacher_IsDean' && value !== '') {
+                value = stringToBoolean(value);
+              }
+              
+              row[header] = value;
             });
             data.push(row);
           }
+        }
+        
+        // ตรวจสอบจำนวนข้อมูลไม่เกิน 1,000 รายการ
+        if (data.length > 1000) {
+          reject(new Error(`จำนวนข้อมูลเกินกำหนด: ${data.length} รายการ (จำกัดไม่เกิน 1,000 รายการต่อครั้ง)`));
+          return;
         }
         
         resolve({ headers, data });

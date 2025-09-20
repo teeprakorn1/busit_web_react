@@ -44,6 +44,7 @@ function AdminAllStudents() {
     validateId
   } = useStudents();
 
+  // แก้ไข: เพิ่ม fetchStudents และ rowsPerPage เป็น parameters
   const {
     searchQuery,
     setSearchQuery,
@@ -70,7 +71,7 @@ function AdminAllStudents() {
     handleSort,
     resetFilters,
     getFilterInfo
-  } = useFilters();
+  } = useFilters(fetchStudents, rowsPerPage);
 
   const {
     isMobile,
@@ -108,6 +109,7 @@ function AdminAllStudents() {
     fetchStudents
   });
 
+  // แก้ไข: กลับมาใช้ client-side pagination
   const sortedStudents = useMemo(() => {
     return getFilteredAndSortedStudents(students);
   }, [getFilteredAndSortedStudents, students]);
@@ -164,15 +166,13 @@ function AdminAllStudents() {
 
   useEffect(() => {
     const params = {
-      currentPage,
-      rowsPerPage,
       facultyFilter,
       departmentFilter,
       academicYearFilter,
       searchQuery
     };
     fetchStudents(params);
-  }, [fetchStudents, currentPage, facultyFilter, departmentFilter, academicYearFilter, searchQuery]);
+  }, [fetchStudents, facultyFilter, departmentFilter, academicYearFilter, searchQuery]);
 
   if (loading) {
     return (
@@ -185,7 +185,7 @@ function AdminAllStudents() {
         <main className={`${styles.mainContent} ${isMobile ? styles.mobileContent : ""} ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}>
           <div className={styles.loadingContainer}>
             <Loader className={styles.spinner} />
-            <p>กำลังโหลดข้อมูล...</p>
+            <p>กำลังโหลดข้อมูل...</p>
           </div>
         </main>
       </div>

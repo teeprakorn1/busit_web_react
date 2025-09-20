@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from './StudentPagination.module.css';
 
@@ -10,7 +10,10 @@ function StudentPagination({
   totalItems,
   showInfo = true
 }) {
-  const getVisiblePages = () => {
+  // Memoize การคำนวณ visible pages เพื่อไม่ให้คำนวณใหม่ทุกครั้ง
+  const getVisiblePages = useMemo(() => {
+    if (totalPages <= 1) return [];
+    
     const delta = 2;
     const range = [];
     const rangeWithDots = [];
@@ -40,12 +43,35 @@ function StudentPagination({
     }
 
     return rangeWithDots;
-  };
+  }, [currentPage, totalPages]);
 
-  const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+  // Memoize การคำนวณ start และ end items
+  const { startItem, endItem } = useMemo(() => ({
+    startItem: (currentPage - 1) * itemsPerPage + 1,
+    endItem: Math.min(currentPage * itemsPerPage, totalItems)
+  }), [currentPage, itemsPerPage, totalItems]);
 
-  if (totalPages <= 1) {
+  // Memoize page change handlers เพื่อป้องกัน unnecessary re-renders
+  const handlePreviousPage = useCallback(() => {
+    if (currentPage > 1) {
+      onPageChange(currentPage - 1);
+    }
+  }, [currentPage, onPageChange]);
+
+  const handleNextPage = useCallback(() => {
+    if (currentPage < totalPages) {
+      onPageChange(currentPage + 1);
+    }
+  }, [currentPage, totalPages, onPageChange]);
+
+  const handlePageClick = useCallback((page) => {
+    if (page !== currentPage && page >= 1 && page <= totalPages) {
+      onPageChange(page);
+    }
+  }, [currentPage, totalPages, onPageChange]);
+
+  // ถ้ามีแค่ 1 หน้าหรือไม่มีข้อมูล ไม่แสดง pagination
+  if (totalPages <= 1 || totalItems === 0) {
     return null;
   }
 
@@ -53,7 +79,7 @@ function StudentPagination({
     <div className={styles.paginationContainer}>
       {showInfo && (
         <div className={styles.pageInfo}>
-          แสดง {startItem}-{endItem} จาก {totalItems} รายการ
+          แสดง {startItem.toLocaleString()}-{endItem.toLocaleString()} จาก {totalItems.toLocaleString()} รายการ
         </div>
       )}
       
@@ -61,30 +87,39 @@ function StudentPagination({
         <button
           className={`${styles.pageButton} ${styles.navButton}`}
           disabled={currentPage === 1}
-          onClick={() => onPageChange(currentPage - 1)}
+          onClick={handlePreviousPage}
           title="หน้าก่อนหน้า"
+          aria-label="ไปหน้าก่อนหน้า"
         >
           <ChevronLeft className={styles.icon} />
           <span className={styles.navText}>Previous</span>
         </button>
 
-        {getVisiblePages().map((page, index) => {
+        {getVisiblePages.map((page, index) => {
           if (page === '...') {
             return (
-              <span key={`dots-${index}`} className={styles.dots}>
+              <span 
+                key={`dots-${index}`} 
+                className={styles.dots}
+                aria-hidden="true"
+              >
                 ...
               </span>
             );
           }
 
+          const isCurrentPage = currentPage === page;
           return (
             <button
               key={page}
               className={`${styles.pageButton} ${
-                currentPage === page ? styles.activePage : ''
+                isCurrentPage ? styles.activePage : ''
               }`}
-              onClick={() => onPageChange(page)}
+              onClick={() => handlePageClick(page)}
               title={`หน้า ${page}`}
+              aria-label={`ไปหน้า ${page}`}
+              aria-current={isCurrentPage ? 'page' : undefined}
+              disabled={isCurrentPage}
             >
               {page}
             </button>
@@ -94,8 +129,9 @@ function StudentPagination({
         <button
           className={`${styles.pageButton} ${styles.navButton}`}
           disabled={currentPage === totalPages}
-          onClick={() => onPageChange(currentPage + 1)}
+          onClick={handleNextPage}
           title="หน้าถัดไป"
+          aria-label="ไปหน้าถัดไป"
         >
           <span className={styles.navText}>Next</span>
           <ChevronRight className={styles.icon} />
@@ -109,4 +145,4 @@ function StudentPagination({
   );
 }
 
-export default StudentPagination;
+export default React.memo(StudentPagination);

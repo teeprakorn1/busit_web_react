@@ -100,7 +100,6 @@ function AdminAllDepartments() {
     return handleExportToExcel(sortedDepartments, filterInfo);
   };
 
-  // Count statistics
   const departmentStats = useMemo(() => {
     const totalDepartments = departments.length;
     const facultyCount = new Set(departments.map(d => d.Faculty_Name)).size;
@@ -132,7 +131,7 @@ function AdminAllDepartments() {
     setSecurityAlert(null);
     loadInitialData();
   };
-  
+
   if (loading) {
     return (
       <div className={styles.container}>
@@ -150,7 +149,7 @@ function AdminAllDepartments() {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className={styles.container}>
@@ -171,8 +170,8 @@ function AdminAllDepartments() {
               </div>
             )}
             <div className={styles.errorActions}>
-              <button 
-                className={styles.retryButton} 
+              <button
+                className={styles.retryButton}
                 onClick={refreshData}
                 disabled={loading}
               >

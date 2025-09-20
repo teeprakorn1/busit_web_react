@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Plus, Upload, X } from 'lucide-react';
 import { useUserPermissions } from '../hooks/useUserPermissions';
 import styles from './TeacherFiltersForm.module.css';
@@ -29,6 +29,60 @@ const TeacherFiltersForm = ({
   onAddTeacher
 }) => {
   const permissions = useUserPermissions();
+
+  // ฟังก์ชันสำหรับ reset page โดยไม่เรียก API
+  const resetToFirstPage = useCallback(() => {
+    if (setCurrentPage) {
+      setCurrentPage(1);
+    }
+  }, [setCurrentPage]);
+
+  // Handle search with just state update (no API call)
+  const handleSearchChange = useCallback((e) => {
+    setSearchQuery(e.target.value);
+    resetToFirstPage();
+  }, [setSearchQuery, resetToFirstPage]);
+
+  // Handle faculty filter change (no immediate API call)
+  const handleFacultyChange = useCallback((e) => {
+    setFacultyFilter(e.target.value);
+    setDepartmentFilter(""); // Reset department when faculty changes
+    resetToFirstPage();
+  }, [setFacultyFilter, setDepartmentFilter, resetToFirstPage]);
+
+  // Handle department filter change (no immediate API call)
+  const handleDepartmentChange = useCallback((e) => {
+    setDepartmentFilter(e.target.value);
+    resetToFirstPage();
+  }, [setDepartmentFilter, resetToFirstPage]);
+
+  // Handle status filter change (no immediate API call)
+  const handleStatusChange = useCallback((e) => {
+    setStatusFilter(e.target.value);
+    resetToFirstPage();
+  }, [setStatusFilter, resetToFirstPage]);
+
+  // Handle resigned filter change (no immediate API call)
+  const handleResignedChange = useCallback((e) => {
+    setResignedFilter(e.target.value);
+    resetToFirstPage();
+  }, [setResignedFilter, resetToFirstPage]);
+
+  // Handle dean filter change (no immediate API call)
+  const handleDeanChange = useCallback((e) => {
+    setDeanFilter(e.target.value);
+    resetToFirstPage();
+  }, [setDeanFilter, resetToFirstPage]);
+
+  // Handle sort by change (no API call needed for sorting)
+  const handleSortByChange = useCallback((e) => {
+    setSortBy(e.target.value);
+  }, [setSortBy]);
+
+  // Handle sort order change (no API call needed for sorting)
+  const handleSortOrderChange = useCallback((e) => {
+    setSortOrder(e.target.value);
+  }, [setSortOrder]);
 
   return (
     <div className={styles.teachersFilter}>
@@ -65,21 +119,20 @@ const TeacherFiltersForm = ({
           <span>ระดับการเข้าถึง: เจ้าหน้าที่ (สิทธิ์เต็ม)</span>
         </div>
       )}
+
       <input
         type="text"
         placeholder="ค้นหา ชื่อ, รหัส, อีเมล, สาขา, คณะ..."
         value={searchQuery}
-        onChange={(e) => {
-          setSearchQuery(e.target.value);
-          setCurrentPage(1);
-        }}
+        onChange={handleSearchChange}
         className={styles.teachersSearch}
         aria-label="ค้นหาข้อมูล"
       />
+
       <select
         className={styles.teachersSelect}
         value={sortBy}
-        onChange={(e) => setSortBy(e.target.value)}
+        onChange={handleSortByChange}
         aria-label="เรียงลำดับตาม"
       >
         <option value="">เรียงลำดับตาม</option>
@@ -96,21 +149,18 @@ const TeacherFiltersForm = ({
         <select
           className={styles.teachersSelect}
           value={sortOrder}
-          onChange={(e) => setSortOrder(e.target.value)}
+          onChange={handleSortOrderChange}
           aria-label="ลำดับการเรียง"
         >
           <option value="asc">น้อยไปมาก (A-Z)</option>
           <option value="desc">มากไปน้อย (Z-A)</option>
         </select>
       )}
+
       <select
         className={styles.teachersSelect}
         value={facultyFilter}
-        onChange={(e) => {
-          setFacultyFilter(e.target.value);
-          setDepartmentFilter("");
-          setCurrentPage(1);
-        }}
+        onChange={handleFacultyChange}
         aria-label="กรองตามคณะ"
       >
         <option value="">ทุกคณะ</option>
@@ -120,13 +170,11 @@ const TeacherFiltersForm = ({
           </option>
         ))}
       </select>
+
       <select
         className={styles.teachersSelect}
         value={departmentFilter}
-        onChange={(e) => {
-          setDepartmentFilter(e.target.value);
-          setCurrentPage(1);
-        }}
+        onChange={handleDepartmentChange}
         aria-label="กรองตามสาขา"
       >
         <option value="">ทุกสาขา</option>
@@ -138,45 +186,40 @@ const TeacherFiltersForm = ({
             </option>
           ))}
       </select>
+
       <select
         className={styles.teachersSelect}
         value={statusFilter}
-        onChange={(e) => {
-          setStatusFilter(e.target.value);
-          setCurrentPage(1);
-        }}
+        onChange={handleStatusChange}
         aria-label="กรองตามสถานะ"
       >
         <option value="">ทุกสถานะ</option>
         <option value="active">ใช้งาน</option>
         <option value="inactive">ระงับ</option>
       </select>
+
       <select
         className={styles.teachersSelect}
         value={resignedFilter}
-        onChange={(e) => {
-          setResignedFilter(e.target.value);
-          setCurrentPage(1);
-        }}
+        onChange={handleResignedChange}
         aria-label="กรองตามการลาออก"
       >
         <option value="active">ยังไม่ลาออก</option>
         <option value="resigned">ลาออกแล้ว</option>
         <option value="all">ทั้งหมด</option>
       </select>
+
       <select
         className={styles.teachersSelect}
         value={deanFilter}
-        onChange={(e) => {
-          setDeanFilter(e.target.value);
-          setCurrentPage(1);
-        }}
+        onChange={handleDeanChange}
         aria-label="กรองตามตำแหน่ง"
       >
         <option value="">ทุกตำแหน่ง</option>
         <option value="dean">คณบดี</option>
         <option value="regular">อาจารย์ทั่วไป</option>
       </select>
+
       {(searchQuery || facultyFilter || departmentFilter || statusFilter ||
         resignedFilter !== "active" || deanFilter || sortBy) && (
           <button

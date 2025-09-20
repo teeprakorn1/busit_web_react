@@ -129,7 +129,7 @@ function ExcelImportExport({ setModalOpen, onDataImport, userType = 'student' })
         'สมหมี',
         'เมืองเล',
         '0823456789',
-        '20-05-2523',
+        '20/05/2523',
         'พุทธ',
         '',
         'บริหารธุรกิจและเทคโนโลยีสารสนเทศ',
@@ -242,15 +242,16 @@ function ExcelImportExport({ setModalOpen, onDataImport, userType = 'student' })
           <div className={styles.instructions}>
             <h4>คำแนะนำ:</h4>
             <ul>
-              <li>ดาวน์โหลดไฟล์แม่แบบ CSV ก่อนเพื่อดูรูปแบบข้อมูลที่ถูกต้อง</li>
+              <li><strong>ดาวน์โหลดไฟล์แม่แบบ CSV</strong> ก่อนเพื่อดูรูปแบบข้อมูลที่ถูกต้อง</li>
               <li>กรอกข้อมูลในไฟล์ CSV ตามรูปแบบที่กำหนด</li>
-              <li>ชื่อ columns ต้องตรงกับแม่แบบที่กำหนด (ตาม Database Schema)</li>
-              <li><strong>วันที่ใช้รูปแบบ dd-mm-yyyy (พ.ศ.) เช่น 15-01-2545</strong></li>
-              <li>Teacher_IsDean ใช้ true/false เท่านั้น</li>
-              <li>รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร</li>
-              <li>ห้ามมีแถวว่างในไฟล์ CSV</li>
+              <li>ชื่อ columns <strong>ต้องตรงกับแม่แบบ</strong> ที่กำหนด (ตาม Database Schema)</li>
+              <li>วันที่ใช้รูปแบบ <strong>dd-mm-yyyy หรือ dd/mm/yyyy </strong> (พ.ศ.) (ค.ศ.) เช่น 15-01-2545, 15/01/2002</li>
+              <li>จำกัดการนำเข้าไม่เกิน <strong>1,000</strong> รายการต่อครั้ง และสามารถนำเข้าข้อมูล ได้ <strong>1</strong> ครั้งต่อนาที</li>
+              <li>Teacher_IsDean ใช้ <strong>true / false</strong></li>
+              <li>รหัสผ่านต้องมี<strong>อย่างน้อย 8 ตัวอักษร</strong></li>
+              <li><strong>ห้ามมีแถวว่าง</strong>ในไฟล์ CSV</li>
               <li>อัปโหลดไฟล์ที่กรอกข้อมูลเรียบร้อยแล้ว</li>
-              <li>ตรวจสอบข้อมูลในหน้า Preview ก่อนบันทึก</li>
+              <li><strong>ตรวจสอบข้อมูลในหน้า Preview</strong> ก่อนบันทึก</li>
             </ul>
           </div>
 
@@ -266,7 +267,7 @@ function ExcelImportExport({ setModalOpen, onDataImport, userType = 'student' })
                   <li><code>Student_FirstName</code> - ชื่อจริง (จำเป็น)</li>
                   <li><code>Student_LastName</code> - นามสกุล (จำเป็น)</li>
                   <li><code>Student_Phone</code> - เบอร์โทรศัพท์</li>
-                  <li><code>Student_Birthdate</code> - วันเกิด (dd-mm-yyyy พ.ศ.)</li>
+                  <li><code>Student_Birthdate</code> - วันเกิด (dd-mm-yyyy หรือ dd/mm/yyyy พ.ศ.)</li>
                   <li><code>Student_Religion</code> - ศาสนา</li>
                   <li><code>Student_MedicalProblem</code> - ข้อมูลทางการแพทย์</li>
                   <li><code>Faculty_Name</code> - ชื่อคณะ (จำเป็น)</li>
@@ -285,12 +286,12 @@ function ExcelImportExport({ setModalOpen, onDataImport, userType = 'student' })
                   <li><code>Teacher_FirstName</code> - ชื่อจริง (จำเป็น)</li>
                   <li><code>Teacher_LastName</code> - นามสกุล (จำเป็น)</li>
                   <li><code>Teacher_Phone</code> - เบอร์โทรศัพท์</li>
-                  <li><code>Teacher_Birthdate</code> - วันเกิด (dd-mm-yyyy พ.ศ.)</li>
+                  <li><code>Teacher_Birthdate</code> - วันเกิด (dd-mm-yyyy หรือ dd/mm/yyyy พ.ศ.)</li>
                   <li><code>Teacher_Religion</code> - ศาสนา</li>
                   <li><code>Teacher_MedicalProblem</code> - ข้อมูลทางการแพทย์</li>
                   <li><code>Faculty_Name</code> - ชื่อคณะ (จำเป็น)</li>
                   <li><code>Department_Name</code> - ชื่อภาควิชา (จำเป็น)</li>
-                  <li><code>Teacher_IsDean</code> - เป็นคณบดี (true/false)</li>
+                  <li><code>Teacher_IsDean</code> - เป็นคณบดี (true/false ไม่คำนึงตัวเล็กตัวใหญ่)</li>
                 </ul>
               </div>
             )}

@@ -45,7 +45,7 @@ export const useDepartments = () => {
       
       try {
         const [departmentsRes, facultiesRes] = await Promise.all([
-          axios.get(getApiUrl('/api/admin/departments/stats/all'), {
+          axios.get(getApiUrl(process.env.REACT_APP_API_ADMIN_DEPARTMENTS_STATS_ALL), {
             withCredentials: true,
             timeout: 15000,
             headers: {
@@ -53,7 +53,7 @@ export const useDepartments = () => {
               'X-Requested-With': 'XMLHttpRequest'
             }
           }),
-          axios.get(getApiUrl('/api/admin/faculties'), {
+          axios.get(getApiUrl(process.env.REACT_APP_API_ADMIN_FACULTIES_GET), {
             withCredentials: true,
             timeout: 10000,
             headers: {
@@ -75,7 +75,7 @@ export const useDepartments = () => {
         console.warn('New API not available, falling back to old method:', newApiError);
         
         const [departmentsRes, facultiesRes] = await Promise.all([
-          axios.get(getApiUrl('/api/admin/departments'), {
+          axios.get(getApiUrl(process.env.REACT_APP_API_ADMIN_DEPARTMENTS_GET), {
             withCredentials: true,
             timeout: 15000,
             headers: {
@@ -83,7 +83,7 @@ export const useDepartments = () => {
               'X-Requested-With': 'XMLHttpRequest'
             }
           }),
-          axios.get(getApiUrl('/api/admin/faculties'), {
+          axios.get(getApiUrl(process.env.REACT_APP_API_ADMIN_FACULTIES_GET), {
             withCredentials: true,
             timeout: 10000,
             headers: {
@@ -100,13 +100,13 @@ export const useDepartments = () => {
             departmentsWithoutStats.map(async (dept) => {
               try {
                 const [teachersRes, studentsRes] = await Promise.all([
-                  axios.get(getApiUrl('/api/admin/teachers'), {
+                  axios.get(getApiUrl(process.env.REACT_APP_API_ADMIN_TEACHERS_GET), {
                     params: { departmentId: dept.Department_ID, limit: 1, includeResigned: false },
                     withCredentials: true,
                     timeout: 5000,
                     headers: { 'Cache-Control': 'no-cache', 'X-Requested-With': 'XMLHttpRequest' }
                   }),
-                  axios.get(getApiUrl('/api/admin/students'), {
+                  axios.get(getApiUrl(process.env.REACT_APP_API_ADMIN_STUDENTS_GET), {
                     params: { departmentId: dept.Department_ID, limit: 1, includeGraduated: false },
                     withCredentials: true,
                     timeout: 5000,

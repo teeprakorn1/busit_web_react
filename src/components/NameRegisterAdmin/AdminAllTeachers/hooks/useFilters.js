@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-export const useFilters = () => {
+export const useFilters = (fetchTeachers, rowsPerPage = 10) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [facultyFilter, setFacultyFilter] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
@@ -10,10 +10,32 @@ export const useFilters = () => {
   const [deanFilter, setDeanFilter] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPageState] = useState(1);
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  // แก้ไข setCurrentPage ให้เรียก fetchTeachers ใหม่
+  const setCurrentPage = useCallback((page) => {
+    setCurrentPageState(page);
+    
+    // เรียก fetchTeachers ใหม่ด้วย parameters ปัจจุบัน
+    if (fetchTeachers) {
+      const params = {
+        currentPage: page,
+        rowsPerPage,
+        facultyFilter,
+        departmentFilter,
+        searchQuery,
+        includeResigned: resignedFilter === 'all' || resignedFilter === 'resigned'
+      };
+      
+      // ใช้ setTimeout เพื่อให้ state อัปเดตก่อน
+      setTimeout(() => {
+        fetchTeachers(params);
+      }, 0);
+    }
+  }, [fetchTeachers, rowsPerPage, facultyFilter, departmentFilter, searchQuery, resignedFilter]);
 
   const getFilteredAndSortedTeachers = useCallback((teachers) => {
     if (!Array.isArray(teachers)) return [];
@@ -130,7 +152,7 @@ export const useFilters = () => {
     setDeanFilter("");
     setSortBy("");
     setSortOrder("asc");
-    setCurrentPage(1);
+    setCurrentPageState(1); // ใช้ setCurrentPageState แทน setCurrentPage เพื่อไม่ให้เรียก fetchTeachers
     navigate({
       pathname: location.pathname,
       search: ""

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Plus, Upload, X } from 'lucide-react';
 import { academicYearUtils } from '../utils/academicYearUtils';
 import { useUserPermissions } from '../hooks/useUserPermissions';
@@ -35,6 +35,66 @@ const StudentFiltersForm = ({
   onAddStudent
 }) => {
   const permissions = useUserPermissions();
+
+  // ฟังก์ชันสำหรับ reset page โดยไม่เรียก API
+  const resetToFirstPage = useCallback(() => {
+    if (setCurrentPage) {
+      setCurrentPage(1);
+    }
+  }, [setCurrentPage]);
+
+  // Handle search with just state update (no API call)
+  const handleSearchChange = useCallback((e) => {
+    setSearchQuery(e.target.value);
+    resetToFirstPage();
+  }, [setSearchQuery, resetToFirstPage]);
+
+  // Handle faculty filter change (no immediate API call)
+  const handleFacultyChange = useCallback((e) => {
+    setFacultyFilter(e.target.value);
+    setDepartmentFilter(""); // Reset department when faculty changes
+    resetToFirstPage();
+  }, [setFacultyFilter, setDepartmentFilter, resetToFirstPage]);
+
+  // Handle department filter change (no immediate API call)
+  const handleDepartmentChange = useCallback((e) => {
+    setDepartmentFilter(e.target.value);
+    resetToFirstPage();
+  }, [setDepartmentFilter, resetToFirstPage]);
+
+  // Handle academic year filter change (no immediate API call)
+  const handleAcademicYearChange = useCallback((e) => {
+    setAcademicYearFilter(e.target.value);
+    resetToFirstPage();
+  }, [setAcademicYearFilter, resetToFirstPage]);
+
+  // Handle year range filter change (no immediate API call)
+  const handleYearRangeChange = useCallback((e) => {
+    setYearRangeFilter(e.target.value);
+    resetToFirstPage();
+  }, [setYearRangeFilter, resetToFirstPage]);
+
+  // Handle student year filter change (no immediate API call)
+  const handleStudentYearChange = useCallback((e) => {
+    setStudentYearFilter(e.target.value);
+    resetToFirstPage();
+  }, [setStudentYearFilter, resetToFirstPage]);
+
+  // Handle status filter change (no immediate API call)
+  const handleStatusChange = useCallback((e) => {
+    setStatusFilter(e.target.value);
+    resetToFirstPage();
+  }, [setStatusFilter, resetToFirstPage]);
+
+  // Handle sort by change (no API call needed for sorting)
+  const handleSortByChange = useCallback((e) => {
+    setSortBy(e.target.value);
+  }, [setSortBy]);
+
+  // Handle sort order change (no API call needed for sorting)
+  const handleSortOrderChange = useCallback((e) => {
+    setSortOrder(e.target.value);
+  }, [setSortOrder]);
 
   return (
     <div className={styles.studentsFilter}>
@@ -79,10 +139,7 @@ const StudentFiltersForm = ({
         type="text"
         placeholder="ค้นหา ชื่อ, รหัส, อีเมล, สาขา, ปีการศึกษา, ชั้นปี..."
         value={searchQuery}
-        onChange={(e) => {
-          setSearchQuery(e.target.value);
-          setCurrentPage(1);
-        }}
+        onChange={handleSearchChange}
         className={styles.studentsSearch}
         aria-label="ค้นหาข้อมูล"
       />
@@ -91,7 +148,7 @@ const StudentFiltersForm = ({
       <select
         className={styles.studentsSelect}
         value={sortBy}
-        onChange={(e) => setSortBy(e.target.value)}
+        onChange={handleSortByChange}
         aria-label="เรียงลำดับตาม"
       >
         <option value="">เรียงลำดับตาม</option>
@@ -109,7 +166,7 @@ const StudentFiltersForm = ({
         <select
           className={styles.studentsSelect}
           value={sortOrder}
-          onChange={(e) => setSortOrder(e.target.value)}
+          onChange={handleSortOrderChange}
           aria-label="ลำดับการเรียง"
         >
           <option value="asc">น้อยไปมาก (A-Z)</option>
@@ -121,11 +178,7 @@ const StudentFiltersForm = ({
       <select
         className={styles.studentsSelect}
         value={facultyFilter}
-        onChange={(e) => {
-          setFacultyFilter(e.target.value);
-          setDepartmentFilter("");
-          setCurrentPage(1);
-        }}
+        onChange={handleFacultyChange}
         aria-label="กรองตามคณะ"
       >
         <option value="">ทุกคณะ</option>
@@ -140,10 +193,7 @@ const StudentFiltersForm = ({
       <select
         className={styles.studentsSelect}
         value={departmentFilter}
-        onChange={(e) => {
-          setDepartmentFilter(e.target.value);
-          setCurrentPage(1);
-        }}
+        onChange={handleDepartmentChange}
         aria-label="กรองตามสาขา"
       >
         <option value="">ทุกสาขา</option>
@@ -160,10 +210,7 @@ const StudentFiltersForm = ({
       <select
         className={styles.studentsSelect}
         value={academicYearFilter}
-        onChange={(e) => {
-          setAcademicYearFilter(e.target.value);
-          setCurrentPage(1);
-        }}
+        onChange={handleAcademicYearChange}
         aria-label="กรองตามปีการศึกษา"
       >
         <option value="">ทุกปีการศึกษา</option>
@@ -181,10 +228,7 @@ const StudentFiltersForm = ({
       <select
         className={styles.studentsSelect}
         value={studentYearFilter}
-        onChange={(e) => {
-          setStudentYearFilter(e.target.value);
-          setCurrentPage(1);
-        }}
+        onChange={handleStudentYearChange}
         aria-label="กรองตามชั้นปี"
       >
         <option value="">ทุกชั้นปี</option>
@@ -199,10 +243,7 @@ const StudentFiltersForm = ({
       <select
         className={styles.studentsSelect}
         value={yearRangeFilter}
-        onChange={(e) => {
-          setYearRangeFilter(e.target.value);
-          setCurrentPage(1);
-        }}
+        onChange={handleYearRangeChange}
         aria-label="กรองตามช่วงปี"
       >
         <option value="">ทุกช่วงปี</option>
@@ -216,10 +257,7 @@ const StudentFiltersForm = ({
       <select
         className={styles.studentsSelect}
         value={statusFilter}
-        onChange={(e) => {
-          setStatusFilter(e.target.value);
-          setCurrentPage(1);
-        }}
+        onChange={handleStatusChange}
         aria-label="กรองตามสถานะ"
       >
         <option value="">ทุกสถานะ</option>

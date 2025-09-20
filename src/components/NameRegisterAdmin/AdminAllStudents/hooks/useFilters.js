@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { academicYearUtils } from '../utils/academicYearUtils';
 
-export const useFilters = () => {
+export const useFilters = (fetchStudents, rowsPerPage = 10) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [facultyFilter, setFacultyFilter] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
@@ -12,10 +12,16 @@ export const useFilters = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPageState] = useState(1);
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  // แก้ไข setCurrentPage ให้ไม่เรียก fetchStudents (ใช้ client-side pagination)
+  const setCurrentPage = useCallback((page) => {
+    setCurrentPageState(page);
+    // ไม่เรียก fetchStudents เพราะใช้ client-side pagination
+  }, []);
 
   const getFilteredAndSortedStudents = useCallback((students) => {
     if (!Array.isArray(students)) return [];
@@ -136,7 +142,7 @@ export const useFilters = () => {
     setStatusFilter("");
     setSortBy("");
     setSortOrder("asc");
-    setCurrentPage(1);
+    setCurrentPageState(1); // ใช้ setCurrentPageState แทน setCurrentPage เพื่อไม่ให้เรียก fetchStudents
     navigate({
       pathname: location.pathname,
       search: ""
