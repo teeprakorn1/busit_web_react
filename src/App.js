@@ -20,6 +20,9 @@ import AdminAllTeachers from './components/NameRegisterAdmin/AdminAllTeachers/Ad
 import AdminAllDepartments from './components/NameRegisterAdmin/AdminAllDepartments/AdminAllDepartments';
 import AdminUsersDetail from './components/NameRegisterAdmin/AdminUsersDetail/AdminUsersDetail';
 
+import AddStaffAdmin from './components/StaffManagementAdmin/AddStaffAdmin/AddStaffAdmin';
+import AdminAllStaff from './components/StaffManagementAdmin/AdminAllStaff/AdminAllStaff';
+
 const ProtectedRoute = ({ children }) => {
   const isLoggedIn = sessionStorage.getItem("userSession");
   return isLoggedIn ? children : <Navigate to="/login" />;
@@ -54,6 +57,10 @@ function App() {
         <Route path='/name-register/student-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
         <Route path='/name-register/teacher-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
         <Route path='/name-register/staff-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
+
+        {/* Staff Management Redirects */}
+        <Route path='/staff-management/add-staff' element={<ProtectedRoute><AddStaffAdmin /></ProtectedRoute>} />
+        <Route path='/staff-management/staff-name' element={<ProtectedRoute><AdminAllStaff /></ProtectedRoute>} />
 
         {/* 404 Page */}
         <Route path="*" element={<NotFoundPage />} />

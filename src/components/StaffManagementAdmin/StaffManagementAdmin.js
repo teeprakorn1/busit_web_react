@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../NavigationBar/NavigationBar';
 import styles from './StaffManagementAdmin.module.css';
 import { useNavigate } from "react-router-dom";
-import {FiBell, FiAward, FiFileText, FiEdit, FiUsers, FiUserPlus, FiUserMinus } from "react-icons/fi";
+import { FiBell, FiAward, FiFileText, FiEdit, FiUsers, FiUserPlus, FiClipboard } from "react-icons/fi";
 
 function StaffManagementAdmin() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -45,7 +45,7 @@ function StaffManagementAdmin() {
           ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}
       >
         {/* Header */}
-          <div className={styles.headerBar}>
+        <div className={styles.headerBar}>
           <h1 className={styles.heading}>จัดการเจ้าหน้าที่</h1>
           <div className={styles.headerRight}>
             <div className={styles.notifyWrapper}>
@@ -78,25 +78,25 @@ function StaffManagementAdmin() {
             <FiAward size={36} />
             <span>จัดการเกียรติบัตร</span>
           </div>
-          <div className={`${styles.card} ${styles.card02}`} onClick={() => navigate("/join-activity")}>
-            <FiFileText  size={36} />
-            <span>ประวัติสร้างกิจกรรม</span>
+          <div className={`${styles.card} ${styles.card02}`} onClick={() => navigate("/staff-management/staff-name")}>
+            <FiUsers size={36} />
+            <span>รายชื่อเจ้าหน้าที่</span>
           </div>
-          <div className={`${styles.card} ${styles.card03}`} onClick={() => navigate("/edit-activity")}>
-            <FiEdit  size={36} />
-            <span>ประวัติแก้ไขกิจกรรม</span>
-          </div>
-          <div className={`${styles.card} ${styles.card04}`} onClick={() => navigate("/all-activities")}>
-            <FiUsers  size={36} />
-            <span>ประวัติแก้ไขบัญชี</span>
-          </div>
-          <div className={`${styles.card} ${styles.card05}`} onClick={() => navigate("/all-activities")}>
-            <FiUserPlus  size={36} />
+          <div className={`${styles.card} ${styles.card03}`} onClick={() => navigate("/staff-management/add-staff")}>
+            <FiUserPlus size={36} />
             <span>เพิ่มบัญชีเจ้าหน้าที่</span>
           </div>
+          <div className={`${styles.card} ${styles.card04}`} onClick={() => navigate("/join-activity")}>
+            <FiFileText size={36} />
+            <span>ประวัติสร้างกิจกรรม</span>
+          </div>
+          <div className={`${styles.card} ${styles.card05}`} onClick={() => navigate("/edit-activity")}>
+            <FiEdit size={36} />
+            <span>ประวัติแก้ไขกิจกรรม</span>
+          </div>
           <div className={`${styles.card} ${styles.card06}`} onClick={() => navigate("/all-activities")}>
-            <FiUserMinus  size={36} />
-            <span>ลบบัญชีเจ้าหน้าที่</span>
+            <FiClipboard size={36} />
+            <span>ประวัติแก้ไขบัญชี</span>
           </div>
         </div>
       </main>

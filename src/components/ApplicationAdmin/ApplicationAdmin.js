@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../NavigationBar/NavigationBar';
 import styles from './ApplicationAdmin.module.css';
 import { useNavigate } from "react-router-dom";
-import { FiBell, FiAirplay, FiUserCheck, FiClipboard, FiUserPlus, FiUserX } from "react-icons/fi";
+import { FiBell, FiAirplay, FiUserCheck, FiClipboard, FiUserPlus } from "react-icons/fi";
 
 function ApplicationAdmin() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -84,15 +84,11 @@ function ApplicationAdmin() {
           </div>
           <div className={`${styles.card} ${styles.card03}`} onClick={() => navigate("/application/get-timestamp")}>
             <FiClipboard  size={36} />
-            <span>ประวัติการใช้งานทั้งหมด</span>
+            <span>ประวัติการใช้งาน</span>
           </div>
           <div className={`${styles.card} ${styles.card04}`} onClick={() => navigate("/application/add-user")}>
             <FiUserPlus  size={36} />
-            <span>เพิ่มบัญชีผู้ใช้งาน</span>
-          </div>
-          <div className={`${styles.card} ${styles.card05}`} onClick={() => navigate("/all-activities")}>
-            <FiUserX  size={36} />
-            <span>ลบบัญชีผู้ใช้งาน</span>
+            <span>เพิ่มบัญชีนักศึกษา/อาจารย์</span>
           </div>
         </div>
       </main>
