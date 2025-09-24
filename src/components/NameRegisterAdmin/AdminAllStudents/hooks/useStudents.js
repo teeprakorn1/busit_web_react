@@ -83,7 +83,6 @@ export const useStudents = () => {
       setError(null);
       setSecurityAlert(null);
 
-      // แก้ไข: ลบ page และ limit parameters ออก
       const studentParams = {
         includeGraduated: true
       };

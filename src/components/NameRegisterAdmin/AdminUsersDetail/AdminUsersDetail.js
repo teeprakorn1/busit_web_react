@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, AlertCircle, Shield } from 'lucide-react';
+import { ArrowLeft, User, AlertCircle, Shield, Lock, CheckCircle } from 'lucide-react';
 import { FiBell } from 'react-icons/fi';
 
 import Navbar from '../../NavigationBar/NavigationBar';
@@ -10,6 +10,7 @@ import StaffProfileForm from './forms/StaffProfileForm';
 import RecentActivitiesForm from './activityForms/RecentActivitiesForm';
 import IncompleteActivitiesForm from './activityForms/IncompleteActivitiesForm';
 import ExportExcelButton from './utils/ExportExcelButton';
+import ChangePasswordModal from './modals/ChangePasswordModal';
 
 import useAdminUserDetail from './hooks/useAdminUserDetail';
 import useUIState from './hooks/useUIState';
@@ -27,20 +28,35 @@ function AdminUsersDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const permissions = useUserPermissions();
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const {
     loading,
     userData,
     error,
     updateLoading,
+    passwordChangeLoading,
     securityAlert,
     imageUrls,
+    // เพิ่ม dropdown states และฟังก์ชันใหม่
+    faculties,
+    departments,
+    teachers,
+    dropdownLoading,
+    dropdownError,
     handleUserDataUpdate,
+    handlePasswordChange,
+    handleAssignmentChange,
     handleGoBack,
     retryFetch,
     handleImageError,
     shouldLoadImage,
-    loadImageWithCredentials
+    loadImageWithCredentials,
+    loadDropdownData,
+    retryLoadDropdownData,
+    formatDateForInput,
+    formatDateForSubmit
   } = useAdminUserDetail(id);
 
   const {
@@ -72,6 +88,33 @@ function AdminUsersDetail() {
     }
   }, [userData?.imageFile, shouldLoadImage, loadImageWithCredentials]);
 
+  // Clear success message after 5 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  const handleChangePassword = () => {
+    setShowPasswordModal(true);
+  };
+
+  const handlePasswordChangeSubmit = async (newPassword) => {
+    try {
+      const result = await handlePasswordChange(newPassword);
+      if (result.success) {
+        setShowPasswordModal(false);
+        setSuccessMessage(result.message || 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว');
+      }
+    } catch (error) {
+      // Error will be handled by the modal component
+      throw error;
+    }
+  };
+
   const renderProfileForm = () => {
     if (!userData) return null;
 
@@ -83,12 +126,27 @@ function AdminUsersDetail() {
       handleImageError,
       shouldLoadImage,
       loadImageWithCredentials,
-      canEdit: permissions.canEditStudents // Add edit permission
+      canEdit: permissions.canEditStudents
     };
 
     switch (userData.userType) {
       case 'student':
-        return <StudentProfileForm {...commonProps} />;
+        return (
+          <StudentProfileForm 
+            {...commonProps}
+            // เพิ่ม props ใหม่สำหรับ dropdown และการจัดการข้อมูล
+            faculties={faculties}
+            departments={departments}
+            teachers={teachers}
+            dropdownLoading={dropdownLoading}
+            dropdownError={dropdownError}
+            loadDropdownData={loadDropdownData}
+            retryLoadDropdownData={retryLoadDropdownData}
+            handleAssignmentChange={handleAssignmentChange}
+            formatDateForInput={formatDateForInput}
+            formatDateForSubmit={formatDateForSubmit}
+          />
+        );
       case 'teacher':
         return <TeacherProfileForm {...commonProps} />;
       case 'staff':
@@ -197,29 +255,57 @@ function AdminUsersDetail() {
             </div>
           </div>
           <div className={styles.profileInfo}>
-            <h2>{userInfo.displayName}</h2>
-            <p className={styles.userCode}>{userInfo.userCode}</p>
-            <div className={styles.profileMeta}>
-              <span className={`${styles.statusBadge} ${userInfo.isActive ? styles.active : styles.inactive}`}>
-                {userInfo.isActive ? 'ใช้งาน' : 'ระงับ'}
-              </span>
-              <span className={`${styles.typeBadge} ${styles[userInfo.userType]}`}>
-                {userInfo.userTypeDisplay}
-              </span>
-              {userInfo.userType === 'student' && userData.student && (
-                <span className={`${styles.statusBadge} ${userData.student.isGraduated ? styles.graduated : styles.studying}`}>
-                  {userData.student.isGraduated ? 'จบการศึกษา' : 'กำลังศึกษา'}
+            <div className={styles.profileInfoContent}>
+              <h2>{userInfo.displayName}</h2>
+              <p className={styles.userCode}>{userInfo.userCode}</p>
+              <div className={styles.profileMeta}>
+                <span className={`${styles.statusBadge} ${userInfo.isActive ? styles.active : styles.inactive}`}>
+                  {userInfo.isActive ? 'ใช้งาน' : 'ระงับ'}
                 </span>
+                <span className={`${styles.typeBadge} ${styles[userInfo.userType]}`}>
+                  {userInfo.userTypeDisplay}
+                </span>
+                {userInfo.userType === 'student' && userData.student && (
+                  <span className={`${styles.statusBadge} ${userData.student.isGraduated ? styles.graduated : styles.studying}`}>
+                    {userData.student.isGraduated ? 'จบการศึกษา' : 'กำลังศึกษา'}
+                  </span>
+                )}
+              </div>
+              {userInfo.regisTime && (
+                <div className={styles.registerInfo}>
+                  <span className={styles.registerLabel}>สมัครสมาชิกเมื่อ:</span>
+                  <span className={styles.registerDate}>
+                    {formatRegisterDate(userInfo.regisTime)}
+                  </span>
+                </div>
               )}
             </div>
-            {userInfo.regisTime && (
-              <div className={styles.registerInfo}>
-                <span className={styles.registerLabel}>สมัครสมาชิกเมื่อ:</span>
-                <span className={styles.registerDate}>
-                  {formatRegisterDate(userInfo.regisTime)}
-                </span>
-              </div>
-            )}
+            
+            {/* Action Buttons - ย้ายไปด้านขวา */}
+            <div className={styles.profileActions}>
+              {permissions.canExportData && (
+                <ExportExcelButton userData={userData} />
+              )}
+              {permissions.canEditUsers && (
+                <button 
+                  className={styles.changePasswordButton}
+                  onClick={handleChangePassword}
+                  disabled={passwordChangeLoading}
+                >
+                  {passwordChangeLoading ? (
+                    <>
+                      <div className={styles.spinner}></div>
+                      กำลังเปลี่ยน...
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={16} />
+                      เปลี่ยนรหัสผ่าน
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -246,6 +332,24 @@ function AdminUsersDetail() {
       )}
     </div>
   );
+
+  const renderSuccessMessage = () => {
+    if (!successMessage) return null;
+
+    return (
+      <div className={styles.successBanner}>
+        <CheckCircle size={16} />
+        <span>{successMessage}</span>
+        <button 
+          className={styles.closeSuccess}
+          onClick={() => setSuccessMessage('')}
+          aria-label="ปิดข้อความ"
+        >
+          ×
+        </button>
+      </div>
+    );
+  };
 
   const renderLoadingState = () => (
     <div className={styles.container}>
@@ -375,6 +479,9 @@ function AdminUsersDetail() {
           ${isMobile ? styles.mobileContent : ""} 
           ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}
       >
+        {/* Success Message */}
+        {renderSuccessMessage()}
+
         {/* Security Alert */}
         {securityAlert && (
           <div className={styles.securityBanner}>
@@ -399,9 +506,6 @@ function AdminUsersDetail() {
             </div>
           </div>
           <div className={styles.headerRight}>
-            {permissions.canExportData && (
-              <ExportExcelButton userData={userData} />
-            )}
             {renderNotificationDropdown()}
           </div>
         </div>
@@ -425,6 +529,16 @@ function AdminUsersDetail() {
               <p>กำลังอัพเดทข้อมูล...</p>
             </div>
           </div>
+        )}
+
+        {/* Change Password Modal */}
+        {showPasswordModal && (
+          <ChangePasswordModal
+            userData={userData}
+            onClose={() => setShowPasswordModal(false)}
+            onSubmit={handlePasswordChangeSubmit}
+            loading={passwordChangeLoading}
+          />
         )}
       </main>
     </div>

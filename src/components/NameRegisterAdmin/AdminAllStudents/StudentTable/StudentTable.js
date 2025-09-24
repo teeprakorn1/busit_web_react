@@ -16,7 +16,7 @@ const formatDate = (date) => {
 
 const getDepartmentDisplay = (department) => {
   const departmentMap = {
-    'วิทยาการคอมพิวเตอร์': 'คอมพิวเตอร์',
+    'วิทยาการคอมพิวเตอร์': 'วิทคอม',
     'เทคโนโลยีสารสนเทศ': 'สารสนเทศ',
     'การตลาด': 'การตลาด',
     'การจัดการ': 'การจัดการ',
@@ -128,9 +128,9 @@ function StudentTable({
         </thead>
         <tbody>
           {students.map(student => {
-            const shouldShowImage = student.imageUrl && 
+            const shouldShowImage = student.imageUrl &&
               (shouldLoadImage ? shouldLoadImage(student.imageFile) : true);
-            
+
             return (
               <tr key={student.id}>
                 <td>{student.code}</td>
@@ -146,9 +146,9 @@ function StudentTable({
                           crossOrigin="use-credentials"
                         />
                       ) : null}
-                      <User 
-                        className={styles.userIcon} 
-                        style={{ display: shouldShowImage ? 'none' : 'block' }} 
+                      <User
+                        className={styles.userIcon}
+                        style={{ display: shouldShowImage ? 'none' : 'block' }}
                       />
                     </div>
                     <span>{student.firstName} {student.lastName}</span>
@@ -156,7 +156,7 @@ function StudentTable({
                 </td>
                 <td>
                   <span className={styles.eventTag} title={student.faculty}>
-                    {student.faculty === "คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ"
+                    {student.faculty === "บริหารธุรกิจและเทคโนโลยีสารสนเทศ"
                       ? "บธ.สท."
                       : "ศิลปศาสตร์"}
                   </span>

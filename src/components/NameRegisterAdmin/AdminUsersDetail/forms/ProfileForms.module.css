@@ -1,4 +1,4 @@
-/* ProfileForms.module.css - Combined CSS for all profile forms */
+/* ProfileForms.module.css - Complete CSS with dropdown support and phone limit */
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap");
 
 :root {
@@ -21,6 +21,7 @@
 .profileContent {
   padding: 32px;
   font-family: 'Noto Sans', sans-serif;
+  position: relative;
 }
 
 /* Section Header */
@@ -62,6 +63,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 14px;
+  font-family: 'Noto Sans', sans-serif;
 }
 
 .editButton {
@@ -69,8 +71,15 @@
   color: white;
 }
 
-.editButton:hover {
+.editButton:hover:not(:disabled) {
   background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.editButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .saveButton {
@@ -78,8 +87,15 @@
   color: white;
 }
 
-.saveButton:hover {
+.saveButton:hover:not(:disabled) {
   background: #059669;
+  transform: translateY(-1px);
+}
+
+.saveButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .cancelButton {
@@ -87,8 +103,123 @@
   color: white;
 }
 
-.cancelButton:hover {
+.cancelButton:hover:not(:disabled) {
   background: #4b5563;
+}
+
+.cancelButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Spinner for loading states */
+.spinningIcon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Loading container for profile forms */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+  color: var(--text-muted);
+}
+
+.loadingContainer .spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Error Alert */
+.errorAlert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.retryButton {
+  margin-left: 10px;
+  padding: 4px 8px;
+  font-size: 12px;
+  border: 1px solid #dc3545;
+  background: transparent;
+  color: #dc3545;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.retryButton:hover:not(:disabled) {
+  background: #dc3545;
+  color: white;
+}
+
+.retryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Dropdown Loading Overlay */
+.dropdownLoadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  border-radius: 16px;
+}
+
+.dropdownLoadingContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dropdownLoadingContent .spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #f3f4f6;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.dropdownLoadingContent p {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
 }
 
 /* Info Grid */
@@ -99,6 +230,10 @@
 }
 
 /* Info Section */
+.infoSection {
+  position: relative;
+}
+
 .infoSection h4 {
   margin: 0 0 16px 0;
   color: var(--text-dark);
@@ -107,12 +242,7 @@
   padding: 12px 16px;
   border-radius: 8px 8px 0 0;
   border-left: 4px solid var(--primary-color);
-}
-
-/* Student form - Blue theme */
-.infoSection h4 {
   background: #f1f5f9;
-  border-left-color: var(--primary-color);
 }
 
 /* Teacher form - Green theme */
@@ -167,7 +297,6 @@
 
 /* Form Fields */
 .inputField,
-.selectField,
 .textareaField {
   width: 100%;
   max-width: 250px;
@@ -177,14 +306,22 @@
   font-size: 14px;
   transition: all 0.2s ease;
   background: white;
+  font-family: 'Noto Sans', sans-serif;
 }
 
 .inputField:focus,
-.selectField:focus,
 .textareaField:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.inputField:disabled,
+.textareaField:disabled {
+  background-color: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .textareaField {
@@ -192,8 +329,43 @@
   min-height: 80px;
 }
 
+/* Enhanced Select Field */
 .selectField {
+  width: 100%;
+  max-width: 250px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: white;
   cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 8px center;
+  background-repeat: no-repeat;
+  background-size: 16px;
+  padding-right: 32px;
+  font-family: 'Noto Sans', sans-serif;
+}
+
+.selectField:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.selectField:disabled {
+  background-color: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+  opacity: 0.7;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%9ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+
+.selectField option {
+  padding: 8px 12px;
+  font-size: 14px;
 }
 
 /* Checkbox */
@@ -204,6 +376,7 @@
   cursor: pointer;
   color: var(--text-dark);
   font-size: 14px;
+  user-select: none;
 }
 
 .checkboxField {
@@ -212,23 +385,9 @@
   cursor: pointer;
 }
 
-/* Status badges for teachers */
-.resigned {
-  background: #fef2f2;
-  color: #dc2626;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.notResigned {
-  background: #f0fdf4;
-  color: #16a34a;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
+.checkboxField:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Phone list styles */
@@ -237,125 +396,8 @@
   flex-direction: column;
   gap: 12px;
   width: 100%;
-}
-
-.phoneItemContainer {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #f9fafb;
-}
-
-.phoneInputGroup {
-  display: flex;
-  gap: 8px;
-  flex: 1;
-}
-
-.phoneNameInput {
-  flex: 1;
-  padding: 6px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  font-size: 13px;
-}
-
-.phoneNumberInput {
-  flex: 1.5;
-  padding: 6px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  font-size: 13px;
-}
-
-.deletePhone {
-  background: #fef2f2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
-  border-radius: 4px;
-  padding: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.deletePhone:hover {
-  background: #fecaca;
-}
-
-.addPhone {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: #f0f9ff;
-  color: #0369a1;
-  border: 1px solid #bae6fd;
-  border-radius: 6px;
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: all 0.2s;
-}
-
-.addPhone:hover {
-  background: #e0f2fe;
-}
-
-.phoneDisplayList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.phoneDisplay {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  background: #f8fafc;
-  border-radius: 6px;
-  border-left: 3px solid #7c3aed;
-}
-
-.phoneName {
-  font-weight: 600;
-  color: #6b7280;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  min-width: 80px;
-}
-
-.phoneNumber {
-  font-weight: 500;
-  color: #374151;
-  font-size: 14px;
-}
-
-.textareaField {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  resize: vertical;
-  min-height: 60px;
-}
-
-.textareaField:focus {
-  outline: none;
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
-}
-
-.phoneList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  max-width: 300px;
+  max-width: 280px;
+  overflow: hidden;
 }
 
 .phoneItemContainer {
@@ -366,31 +408,39 @@
   padding: 8px;
   border-radius: 8px;
   border: 1px solid var(--border-color);
+  flex-wrap: wrap;
 }
 
 .phoneInputGroup {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   flex: 1;
-}
-
-.phoneNameInput,
-.phoneNumberInput {
-  padding: 6px 8px;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
-  font-size: 13px;
-  background: #f8fafc;
+  min-width: 0;
 }
 
 .phoneNameInput {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 12px;
+  background: #f8fafc;
   font-weight: 500;
   color: var(--text-dark);
+  min-width: 80px;
 }
 
 .phoneNumberInput {
+  flex: 1.2;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 12px;
+  background: #f8fafc;
   font-family: 'Courier New', monospace;
+  min-width: 100px;
 }
 
 .phoneNameInput:focus,
@@ -398,6 +448,93 @@
   outline: none;
   border-color: var(--primary-color);
   background: white;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.phoneNameInput:disabled,
+.phoneNumberInput:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Enhanced placeholder text for phones */
+.phoneNameInput::placeholder {
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.phoneNumberInput::placeholder {
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.deletePhone {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  padding: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deletePhone:hover:not(:disabled) {
+  background: #fecaca;
+  border-color: #f87171;
+}
+
+.deletePhone:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.addPhone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #dbeafe;
+  color: var(--primary-color);
+  border: 1px dashed var(--primary-color);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+}
+
+.addPhone:hover:not(:disabled) {
+  background: #bfdbfe;
+}
+
+.addPhone:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.teacherSection .addPhone {
+  background: #f0fdf4;
+  color: var(--success-color);
+  border-color: var(--success-color);
+}
+
+.teacherSection .addPhone:hover:not(:disabled) {
+  background: #dcfce7;
+}
+
+.staffSection .addPhone {
+  background: #fef7ff;
+  color: var(--staff-color);
+  border-color: var(--staff-color);
+}
+
+.staffSection .addPhone:hover:not(:disabled) {
+  background: #fae8ff;
 }
 
 .phoneDisplayList {
@@ -405,7 +542,7 @@
   flex-direction: column;
   gap: 8px;
   width: 100%;
-  max-width: 300px;
+  max-width: 280px;
 }
 
 .phoneDisplay {
@@ -431,67 +568,31 @@
   font-size: 13px;
 }
 
-.deletePhone {
-  background: #fee2e2;
-  color: #dc2626;
-  border: none;
-  padding: 4px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.deletePhone:hover {
-  background: #fecaca;
-}
-
-.addPhone {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 1px dashed;
+/* Max phones note */
+.maxPhonesNote {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
   padding: 8px 12px;
   border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 14px;
+  text-align: center;
+  color: #0369a1;
+  font-size: 13px;
   font-weight: 500;
+  margin-top: 4px;
 }
 
-.addPhone {
-  background: #dbeafe;
-  color: var(--primary-color);
-  border-color: var(--primary-color);
+/* Phone count display */
+.phoneCount {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 4px 0;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 8px;
+  font-style: italic;
 }
 
-.addPhone:hover {
-  background: #bfdbfe;
-}
-
-.teacherSection .addPhone {
-  background: #f0fdf4;
-  color: var(--success-color);
-  border-color: var(--success-color);
-}
-
-.teacherSection .addPhone:hover {
-  background: #dcfce7;
-}
-
-.staffSection .addPhone {
-  background: #fef7ff;
-  color: var(--staff-color);
-  border-color: var(--staff-color);
-}
-
-.staffSection .addPhone:hover {
-  background: #fae8ff;
-}
-
+/* Status badges */
 .statusBadge {
   padding: 4px 8px;
   border-radius: 12px;
@@ -521,6 +622,16 @@
 .statusBadge.studying {
   background: #dbeafe;
   color: #1e40af;
+}
+
+.statusBadge.working {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.statusBadge.resigned {
+  background: #fef2f2;
+  color: #dc2626;
 }
 
 /* Responsive Design */
@@ -575,6 +686,37 @@
     max-width: 100%;
   }
 
+  .phoneList {
+    max-width: 100%;
+  }
+
+  .phoneItemContainer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .phoneInputGroup {
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+  
+  .phoneNameInput,
+  .phoneNumberInput {
+    width: 100%;
+    min-width: auto;
+    flex: none;
+  }
+  
+  .deletePhone {
+    align-self: flex-end;
+    margin-top: 4px;
+    width: 32px;
+    height: 32px;
+  }
+
   .actionButtons {
     flex-direction: column;
   }
@@ -585,12 +727,37 @@
     justify-content: center;
   }
 
-  .phoneItem {
-    padding: 8px;
+  .selectField {
+    font-size: 13px;
+    padding: 10px 32px 10px 12px;
+  }
+  
+  .errorAlert {
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+  
+  .dropdownLoadingContent {
+    padding: 16px;
+    margin: 0 16px;
+  }
+  
+  .dropdownLoadingContent p {
+    font-size: 13px;
   }
 
-  .phoneInput {
-    padding: 8px;
+  .maxPhonesNote {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+  
+  .phoneCount {
+    font-size: 11px;
+  }
+  
+  .phoneNameInput::placeholder,
+  .phoneNumberInput::placeholder {
+    font-size: 11px;
   }
 }
 
@@ -615,24 +782,26 @@
   .infoRow {
     padding: 12px 0;
   }
-}
 
-@media (max-width: 768px) {
-  .phoneInputGroup {
-    flex-direction: column;
+  .selectField {
+    font-size: 12px;
+    padding: 8px 28px 8px 10px;
+    background-size: 14px;
+    background-position: right 6px center;
+    padding-right: 28px;
   }
   
-  .phoneNameInput,
-  .phoneNumberInput {
-    width: 100%;
+  .errorAlert {
+    font-size: 12px;
+    padding: 8px 12px;
+    margin: 0 -16px 16px -16px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
   }
   
-  .phoneItemContainer {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .deletePhone {
-    align-self: flex-end;
+  .dropdownLoadingOverlay {
+    border-radius: 0;
+    margin: 0 -16px;
   }
 }

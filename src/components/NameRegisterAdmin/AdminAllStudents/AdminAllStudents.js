@@ -44,7 +44,6 @@ function AdminAllStudents() {
     validateId
   } = useStudents();
 
-  // แก้ไข: เพิ่ม fetchStudents และ rowsPerPage เป็น parameters
   const {
     searchQuery,
     setSearchQuery,
@@ -109,7 +108,6 @@ function AdminAllStudents() {
     fetchStudents
   });
 
-  // แก้ไข: กลับมาใช้ client-side pagination
   const sortedStudents = useMemo(() => {
     return getFilteredAndSortedStudents(students);
   }, [getFilteredAndSortedStudents, students]);
@@ -149,9 +147,28 @@ function AdminAllStudents() {
     }
   };
 
+  const studentStats = useMemo(() => {
+    const filteredStudents = getFilteredAndSortedStudents(students);
+    const totalStudents = filteredStudents.length;
+    const activeStudents = filteredStudents.filter(s => s.isActive).length;
+    const graduatedCount = filteredStudents.filter(s => s.isGraduated).length;
+    const availableYears = new Set(filteredStudents.map(s => s.academicYear)).size;
+
+    return {
+      total: totalStudents,
+      active: activeStudents,
+      graduated: graduatedCount,
+      availableYears: availableYears
+    };
+  }, [getFilteredAndSortedStudents, students]);
+
   useEffect(() => {
     loadFacultiesAndDepartments();
   }, [loadFacultiesAndDepartments]);
+
+  useEffect(() => {
+    fetchStudents({ includeGraduated: true });
+  }, [fetchStudents]);
 
   useEffect(() => {
     if (departmentFromURL && departments.length > 0) {
@@ -164,16 +181,6 @@ function AdminAllStudents() {
     }
   }, [departmentFromURL, departments.length, setFacultyFilter, setDepartmentFilter]);
 
-  useEffect(() => {
-    const params = {
-      facultyFilter,
-      departmentFilter,
-      academicYearFilter,
-      searchQuery
-    };
-    fetchStudents(params);
-  }, [fetchStudents, facultyFilter, departmentFilter, academicYearFilter, searchQuery]);
-
   if (loading) {
     return (
       <div className={styles.container}>
@@ -185,7 +192,7 @@ function AdminAllStudents() {
         <main className={`${styles.mainContent} ${isMobile ? styles.mobileContent : ""} ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}>
           <div className={styles.loadingContainer}>
             <Loader className={styles.spinner} />
-            <p>กำลังโหลดข้อมูل...</p>
+            <p>กำลังโหลดข้อมูล...</p>
           </div>
         </main>
       </div>
@@ -222,14 +229,7 @@ function AdminAllStudents() {
                 onClick={() => {
                   setError(null);
                   setSecurityAlert(null);
-                  fetchStudents({
-                    currentPage,
-                    rowsPerPage,
-                    facultyFilter,
-                    departmentFilter,
-                    academicYearFilter,
-                    searchQuery
-                  });
+                  fetchStudents({ includeGraduated: true });
                 }}
                 disabled={loading}
               >
@@ -287,8 +287,8 @@ function AdminAllStudents() {
                 <span className={styles.statItem}>
                   <GraduationCap className={styles.iconSmall} />
                   {departmentFromURL ?
-                    `ของสาขา: ${students.length} คน` :
-                    `ทั้งหมด: ${students.length} คน`
+                    `ของสาขา: ${studentStats.total} คน` :
+                    `ทั้งหมด: ${studentStats.total} คน`
                   }
                 </span>
                 {departmentFromURL && (
@@ -380,6 +380,9 @@ function AdminAllStudents() {
           />
           <div className={styles.resultsSummary}>
             <span>พบ {sortedStudents.length} รายการ</span>
+            <span className={styles.pageInfo}>
+              (แสดงหน้า {currentPage} จาก {totalPages} หน้า)
+            </span>
             {sortBy && (
               <span className={styles.searchSummary}>
                 เรียงตาม{sortBy === 'name' ? 'ชื่อ-นามสกุล' :
@@ -393,15 +396,22 @@ function AdminAllStudents() {
                 ({sortOrder === 'asc' ? 'น้อยไปมาก' : 'มากไปน้อย'})
               </span>
             )}
-            {(academicYearFilter || studentYearFilter || yearRangeFilter) && (
+            {(academicYearFilter || studentYearFilter || yearRangeFilter || statusFilter || facultyFilter || departmentFilter) && (
               <span className={styles.filterSummary}>
+                {facultyFilter && `คณะ: ${facultyFilter} `}
+                {departmentFilter && `สาขา: ${departmentFilter} `}
                 {academicYearFilter && `ปีการศึกษา: ${academicYearFilter} `}
                 {studentYearFilter && `ชั้นปี: ${studentYearFilter} `}
                 {yearRangeFilter && `ช่วง: ${yearRangeFilter === 'current' ? 'ปีปัจจุบัน' :
                   yearRangeFilter === 'recent' ? '3 ปีล่าสุด' :
                     yearRangeFilter === 'old' ? 'มากกว่า 3 ปี' :
                       yearRangeFilter === 'graduated_eligible' ? 'ควรจบแล้ว' : ''
-                  }`}
+                  } `}
+                {statusFilter && `สถานะ: ${statusFilter === 'active' ? 'ใช้งาน' :
+                  statusFilter === 'inactive' ? 'ระงับ' :
+                    statusFilter === 'graduated' ? 'สำเร็จการศึกษา' :
+                      statusFilter === 'not_graduated' ? 'ยังไม่สำเร็จการศึกษา' : statusFilter
+                  } `}
               </span>
             )}
             {departmentFromURL && (

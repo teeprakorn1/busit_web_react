@@ -1,47 +1,131 @@
 import React, { useState, useEffect } from 'react';
-import { User, Edit, Save, X, Plus, Trash2, Loader } from 'lucide-react';
+import { User, Edit, Save, X, Plus, Trash2, Loader, AlertCircle, RefreshCw } from 'lucide-react';
 import styles from './ProfileForms.module.css';
 
-const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
+const StudentProfileForm = ({ 
+  userData, 
+  onUpdate, 
+  loading = false,
+  faculties,
+  departments,
+  teachers,
+  dropdownLoading,
+  dropdownError,
+  loadDropdownData,
+  retryLoadDropdownData,
+  handleAssignmentChange,
+  formatDateForInput,
+  formatDateForSubmit
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     code: '',
     firstName: '',
     lastName: '',
     phone: '',
-    otherPhones: [{ name: '', phone: '' }],
+    otherPhones: [],
     academicYear: '',
     birthdate: '',
     religion: '',
     medicalProblem: '',
-    department: '',
-    faculty: '',
-    advisor: '',
+    departmentId: '',
+    facultyId: '',
+    advisorId: '',
     isGraduated: false
   });
 
+  const [filteredDepartments, setFilteredDepartments] = useState([]);
+  const [filteredTeachers, setFilteredTeachers] = useState([]);
+
   // Update formData when userData changes
   useEffect(() => {
-    if (userData?.student) {
-      setFormData({
+    if (userData?.student && userData?.department) {
+      const initialData = {
         code: userData.student.code || '',
         firstName: userData.student.firstName || '',
         lastName: userData.student.lastName || '',
         phone: userData.student.phone || '',
         otherPhones: userData.student.otherPhones && userData.student.otherPhones.length > 0 
-          ? userData.student.otherPhones 
-          : [{ name: '', phone: '' }],
+          ? userData.student.otherPhones.slice(0, 2) // จำกัดเพียง 2 เบอร์
+          : [],
         academicYear: userData.student.academicYear || '',
-        birthdate: userData.student.birthdate || '',
+        birthdate: formatDateForInput(userData.student.birthdate),
         religion: userData.student.religion || '',
         medicalProblem: userData.student.medicalProblem || '',
-        department: userData.student.department || '',
-        faculty: userData.student.faculty || '',
-        advisor: userData.student.advisor || '',
+        departmentId: userData.department.id || '',
+        facultyId: userData.department.faculty?.id || '',
+        advisorId: '',
         isGraduated: userData.student.isGraduated || false
-      });
+      };
+
+      // หา advisor ID หากมีข้อมูล advisor และมี departmentId
+      if (userData.student.advisor && userData.department.id && teachers.length > 0) {
+        const advisor = teachers.find(teacher => teacher.Teacher_Name === userData.student.advisor);
+        if (advisor) {
+          initialData.advisorId = advisor.Teacher_ID.toString();
+        }
+      }
+
+      setFormData(initialData);
     }
-  }, [userData]);
+  }, [userData, formatDateForInput, teachers]);
+
+  // Load dropdown data when editing starts
+  useEffect(() => {
+    if (isEditing) {
+      loadDropdownData();
+    }
+  }, [isEditing, loadDropdownData]);
+
+  // Filter departments when faculty changes
+  useEffect(() => {
+    if (formData.facultyId) {
+      const filtered = departments.filter(dept => dept.Faculty_ID === parseInt(formData.facultyId));
+      setFilteredDepartments(filtered);
+      
+      if (formData.departmentId && !filtered.find(dept => dept.Department_ID === parseInt(formData.departmentId))) {
+        setFormData(prev => ({ ...prev, departmentId: '', advisorId: '' }));
+        setFilteredTeachers([]);
+      }
+    } else {
+      setFilteredDepartments([]);
+      setFilteredTeachers([]);
+    }
+  }, [formData.facultyId, formData.departmentId, departments]);
+
+  // Filter teachers when department changes
+  useEffect(() => {
+    if (formData.departmentId) {
+      const selectedDept = departments.find(dept => dept.Department_ID === parseInt(formData.departmentId));
+      if (selectedDept) {
+        const filtered = teachers.filter(teacher => 
+          teacher.Department_Name === selectedDept.Department_Name
+        );
+        setFilteredTeachers(filtered);
+        
+        if (formData.advisorId && !filtered.find(teacher => teacher.Teacher_ID === parseInt(formData.advisorId))) {
+          setFormData(prev => ({ ...prev, advisorId: '' }));
+        }
+      }
+    } else {
+      setFilteredTeachers([]);
+    }
+  }, [formData.departmentId, formData.advisorId, teachers, departments]);
+
+  // Set advisor ID after teachers are loaded
+  useEffect(() => {
+    if (teachers.length > 0 && userData?.student?.advisor && !formData.advisorId && formData.departmentId) {
+      const advisorName = userData.student.advisor;
+      const advisor = teachers.find(teacher => teacher.Teacher_Name === advisorName);
+      if (advisor) {
+        // ตรวจสอบว่าอาจารย์อยู่ในภาควิชาที่เลือกหรือไม่
+        const selectedDept = departments.find(dept => dept.Department_ID === parseInt(formData.departmentId));
+        if (selectedDept && advisor.Department_Name === selectedDept.Department_Name) {
+          setFormData(prev => ({ ...prev, advisorId: advisor.Teacher_ID.toString() }));
+        }
+      }
+    }
+  }, [teachers, userData?.student?.advisor, formData.advisorId, formData.departmentId, departments]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -61,69 +145,107 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
   };
 
   const addOtherPhone = () => {
-    setFormData(prev => ({
-      ...prev,
-      otherPhones: [...prev.otherPhones, { name: '', phone: '' }]
-    }));
+    // ตรวจสอบจำนวนเบอร์ที่มีอยู่ในปัจจุบัน
+    const currentPhoneCount = formData.otherPhones.length;
+    
+    // จำกัดให้มีได้สูงสุด 2 เบอร์เท่านั้น
+    if (currentPhoneCount < 2) {
+      setFormData(prev => ({
+        ...prev,
+        otherPhones: [...prev.otherPhones, { name: '', phone: '' }]
+      }));
+    }
   };
 
   const removeOtherPhone = (index) => {
-    if (formData.otherPhones.length > 1) {
-      const newOtherPhones = formData.otherPhones.filter((_, i) => i !== index);
-      setFormData(prev => ({
-        ...prev,
-        otherPhones: newOtherPhones
-      }));
-    }
+    // ลบเบอร์ที่เลือก
+    const newOtherPhones = formData.otherPhones.filter((_, i) => i !== index);
+    setFormData(prev => ({
+      ...prev,
+      otherPhones: newOtherPhones
+    }));
   };
 
   const handleSave = async () => {
     if (!onUpdate || loading) return;
 
-    // Filter out empty other phones but keep at least one empty entry for UI
-    const filteredOtherPhones = formData.otherPhones.filter(item =>
-      item.name.trim() !== '' || item.phone.trim() !== ''
-    );
-
-    // If no valid phones, add empty entry
-    const updatedOtherPhones = filteredOtherPhones.length > 0 
-      ? filteredOtherPhones 
-      : [{ name: '', phone: '' }];
-
-    const updatedData = {
-      student: {
-        ...formData,
-        otherPhones: updatedOtherPhones
-      }
-    };
-
     try {
+      const currentDeptId = userData?.department?.id;
+      const currentAdvisorName = userData?.student?.advisor;
+      const newAdvisorName = teachers.find(t => t.Teacher_ID === parseInt(formData.advisorId))?.Teacher_Name;
+
+      const departmentChanged = currentDeptId !== parseInt(formData.departmentId);
+      const advisorChanged = currentAdvisorName !== newAdvisorName;
+
+      if (departmentChanged || advisorChanged) {
+        // ตรวจสอบว่ามีข้อมูลที่จำเป็นครบถ้วน และต้องมีทั้งสองค่า
+        if (!formData.departmentId || !formData.advisorId) {
+          console.error('Missing department or advisor data:', {
+            departmentId: formData.departmentId,
+            advisorId: formData.advisorId
+          });
+          alert('กรุณาเลือกภาควิชาและอาจารย์ที่ปรึกษาให้ครบถ้วน');
+          return;
+        }
+
+        // ตรวจสอบว่าอาจารย์ที่เลือกอยู่ในภาควิชาที่เลือกหรือไม่
+        const selectedDept = departments.find(dept => dept.Department_ID === parseInt(formData.departmentId));
+        const selectedTeacher = teachers.find(teacher => teacher.Teacher_ID === parseInt(formData.advisorId));
+        
+        if (selectedDept && selectedTeacher && selectedTeacher.Department_Name !== selectedDept.Department_Name) {
+          alert('อาจารย์ที่เลือกไม่ได้อยู่ในภาควิชาที่เลือก กรุณาตรวจสอบอีกครั้ง');
+          return;
+        }
+
+        await handleAssignmentChange(formData.departmentId, formData.advisorId);
+      }
+
+      const filteredOtherPhones = formData.otherPhones.filter(item =>
+        item.name.trim() !== '' || item.phone.trim() !== ''
+      );
+
+      // ส่งข้อมูลตามที่มีจริง
+      const updatedOtherPhones = filteredOtherPhones;
+
+      const updatedData = {
+        student: {
+          code: formData.code,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          otherPhones: updatedOtherPhones,
+          academicYear: formData.academicYear,
+          birthdate: formatDateForSubmit(formData.birthdate),
+          religion: formData.religion,
+          medicalProblem: formData.medicalProblem,
+          isGraduated: formData.isGraduated
+        }
+      };
+
       await onUpdate(updatedData);
       setIsEditing(false);
     } catch (error) {
       console.error('Update error:', error);
-      // Error handling is done in parent component
     }
   };
 
   const handleCancel = () => {
-    // Reset form data to original values
-    if (userData?.student) {
+    if (userData?.student && userData?.department) {
       setFormData({
         code: userData.student.code || '',
         firstName: userData.student.firstName || '',
         lastName: userData.student.lastName || '',
         phone: userData.student.phone || '',
         otherPhones: userData.student.otherPhones && userData.student.otherPhones.length > 0 
-          ? userData.student.otherPhones 
-          : [{ name: '', phone: '' }],
+          ? userData.student.otherPhones.slice(0, 2) // จำกัดเพียง 2 เบอร์
+          : [],
         academicYear: userData.student.academicYear || '',
-        birthdate: userData.student.birthdate || '',
+        birthdate: formatDateForInput(userData.student.birthdate),
         religion: userData.student.religion || '',
         medicalProblem: userData.student.medicalProblem || '',
-        department: userData.student.department || '',
-        faculty: userData.student.faculty || '',
-        advisor: userData.student.advisor || '',
+        departmentId: userData.department.id || '',
+        facultyId: userData.department.faculty?.id || '',
+        advisorId: teachers.find(t => t.Teacher_Name === userData.student.advisor)?.Teacher_ID?.toString() || '',
         isGraduated: userData.student.isGraduated || false
       });
     }
@@ -154,7 +276,7 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
               <button 
                 className={styles.saveButton} 
                 onClick={handleSave}
-                disabled={loading}
+                disabled={loading || dropdownLoading}
               >
                 {loading ? (
                   <Loader size={16} className={styles.spinningIcon} />
@@ -166,7 +288,7 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
               <button 
                 className={styles.cancelButton} 
                 onClick={handleCancel}
-                disabled={loading}
+                disabled={loading || dropdownLoading}
               >
                 <X size={16} /> ยกเลิก
               </button>
@@ -183,6 +305,38 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
         </div>
       </div>
 
+      {dropdownError && (
+        <div className={styles.errorAlert}>
+          <AlertCircle size={16} />
+          <span>{dropdownError}</span>
+          <button 
+            onClick={retryLoadDropdownData} 
+            className={styles.retryButton}
+            disabled={dropdownLoading}
+            style={{
+              marginLeft: '10px',
+              padding: '4px 8px',
+              fontSize: '12px',
+              border: '1px solid #dc3545',
+              background: 'transparent',
+              color: '#dc3545',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+          >
+            {dropdownLoading ? (
+              <Loader size={12} className={styles.spinningIcon} />
+            ) : (
+              <RefreshCw size={12} />
+            )}
+            ลองใหม่
+          </button>
+        </div>
+      )}
+
       <div className={styles.infoGrid}>
         <div className={styles.infoSection}>
           <h4>ข้อมูลพื้นฐาน</h4>
@@ -196,7 +350,7 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
                   value={formData.code}
                   onChange={handleChange}
                   className={styles.inputField}
-                  disabled={loading}
+                  disabled={loading || dropdownLoading}
                 />
               ) : (
                 <span className={styles.value}>{userData.student?.code || '-'}</span>
@@ -211,7 +365,7 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
                   value={formData.firstName}
                   onChange={handleChange}
                   className={styles.inputField}
-                  disabled={loading}
+                  disabled={loading || dropdownLoading}
                   required
                 />
               ) : (
@@ -227,7 +381,7 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
                   value={formData.lastName}
                   onChange={handleChange}
                   className={styles.inputField}
-                  disabled={loading}
+                  disabled={loading || dropdownLoading}
                   required
                 />
               ) : (
@@ -243,7 +397,7 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
                   value={formData.phone}
                   onChange={handleChange}
                   className={styles.inputField}
-                  disabled={loading}
+                  disabled={loading || dropdownLoading}
                 />
               ) : (
                 <span className={styles.value}>{userData.student?.phone || '-'}</span>
@@ -258,7 +412,7 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
                   value={formData.birthdate}
                   onChange={handleChange}
                   className={styles.inputField}
-                  disabled={loading}
+                  disabled={loading || dropdownLoading}
                 />
               ) : (
                 <span className={styles.value}>
@@ -274,7 +428,7 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
                   value={formData.religion}
                   onChange={handleChange}
                   className={styles.selectField}
-                  disabled={loading}
+                  disabled={loading || dropdownLoading}
                 >
                   <option value="">เลือกศาสนา</option>
                   <option value="พุทธ">พุทธ</option>
@@ -303,7 +457,7 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
                   className={styles.inputField}
                   min="2000"
                   max="2030"
-                  disabled={loading}
+                  disabled={loading || dropdownLoading}
                 />
               ) : (
                 <span className={styles.value}>{userData.student?.academicYear || '-'}</span>
@@ -312,16 +466,20 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
             <div className={styles.infoRow}>
               <span className={styles.label}>คณะ:</span>
               {isEditing ? (
-                <input
-                  type="text"
-                  name="faculty"
-                  value={formData.faculty}
+                <select
+                  name="facultyId"
+                  value={formData.facultyId}
                   onChange={handleChange}
-                  className={styles.inputField}
-                  disabled={loading}
-                  readOnly
-                  title="ข้อมูลนี้ไม่สามารถแก้ไขได้"
-                />
+                  className={styles.selectField}
+                  disabled={loading || dropdownLoading}
+                >
+                  <option value="">เลือกคณะ</option>
+                  {faculties.map(faculty => (
+                    <option key={faculty.Faculty_ID} value={faculty.Faculty_ID}>
+                      {faculty.Faculty_Name}
+                    </option>
+                  ))}
+                </select>
               ) : (
                 <span className={styles.value}>{userData.student?.faculty || '-'}</span>
               )}
@@ -329,16 +487,20 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
             <div className={styles.infoRow}>
               <span className={styles.label}>สาขาวิชา:</span>
               {isEditing ? (
-                <input
-                  type="text"
-                  name="department"
-                  value={formData.department}
+                <select
+                  name="departmentId"
+                  value={formData.departmentId}
                   onChange={handleChange}
-                  className={styles.inputField}
-                  disabled={loading}
-                  readOnly
-                  title="ข้อมูลนี้ไม่สามารถแก้ไขได้"
-                />
+                  className={styles.selectField}
+                  disabled={loading || dropdownLoading || !formData.facultyId}
+                >
+                  <option value="">เลือกสาขาวิชา</option>
+                  {filteredDepartments.map(department => (
+                    <option key={department.Department_ID} value={department.Department_ID}>
+                      {department.Department_Name}
+                    </option>
+                  ))}
+                </select>
               ) : (
                 <span className={styles.value}>{userData.student?.department || '-'}</span>
               )}
@@ -346,16 +508,20 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
             <div className={styles.infoRow}>
               <span className={styles.label}>อาจารย์ที่ปรึกษา:</span>
               {isEditing ? (
-                <input
-                  type="text"
-                  name="advisor"
-                  value={formData.advisor}
+                <select
+                  name="advisorId"
+                  value={formData.advisorId}
                   onChange={handleChange}
-                  className={styles.inputField}
-                  disabled={loading}
-                  readOnly
-                  title="ข้อมูลนี้ไม่สามารถแก้ไขได้"
-                />
+                  className={styles.selectField}
+                  disabled={loading || dropdownLoading || !formData.departmentId}
+                >
+                  <option value="">เลือกอาจารย์ที่ปรึกษา</option>
+                  {filteredTeachers.map(teacher => (
+                    <option key={teacher.Teacher_ID} value={teacher.Teacher_ID}>
+                      {teacher.Display_Name}
+                    </option>
+                  ))}
+                </select>
               ) : (
                 <span className={styles.value}>{userData.student?.advisor || '-'}</span>
               )}
@@ -370,7 +536,7 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
                     checked={formData.isGraduated}
                     onChange={handleChange}
                     className={styles.checkboxField}
-                    disabled={loading}
+                    disabled={loading || dropdownLoading}
                   />
                   จบการศึกษาแล้ว
                 </label>
@@ -419,10 +585,11 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
           <h4>ข้อมูลติดต่อเพิ่มเติม</h4>
           <div className={styles.infoCard}>
             <div className={styles.infoRow}>
-              <span className={styles.label}>เบอร์โทรศัพท์อื่นๆ:</span>
+              <span className={styles.label}>เบอร์โทรศัพท์อื่นๆ (สูงสุด 2 เบอร์):</span>
               {isEditing ? (
                 <div className={styles.phoneList}>
-                  {formData.otherPhones.map((item, index) => (
+                  {/* แสดงช่องกรอกข้อมูลเมื่อมี otherPhones */}
+                  {formData.otherPhones.length > 0 && formData.otherPhones.map((item, index) => (
                     <div key={index} className={styles.phoneItemContainer}>
                       <div className={styles.phoneInputGroup}>
                         <input
@@ -430,8 +597,8 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
                           value={item.name}
                           onChange={(e) => handleOtherPhoneChange(index, 'name', e.target.value)}
                           className={styles.phoneNameInput}
-                          placeholder="ชื่อ (เช่น บ้าน, ที่ทำงาน)"
-                          disabled={loading}
+                          placeholder={`ชื่อเบอร์ที่ ${index + 1} (เช่น บ้าน, ที่ทำงาน)`}
+                          disabled={loading || dropdownLoading}
                         />
                         <input
                           type="tel"
@@ -439,40 +606,64 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
                           onChange={(e) => handleOtherPhoneChange(index, 'phone', e.target.value)}
                           className={styles.phoneNumberInput}
                           placeholder="หมายเลขโทรศัพท์"
-                          disabled={loading}
+                          disabled={loading || dropdownLoading}
                         />
                       </div>
-                      {formData.otherPhones.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeOtherPhone(index)}
-                          className={styles.deletePhone}
-                          disabled={loading}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeOtherPhone(index)}
+                        className={styles.deletePhone}
+                        disabled={loading || dropdownLoading}
+                        title="ลบเบอร์นี้"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   ))}
-                  <button
-                    type="button"
-                    onClick={addOtherPhone}
-                    className={styles.addPhone}
-                    disabled={loading}
-                  >
-                    <Plus size={14} /> เพิ่มหมายเลข
-                  </button>
+                  
+                  {/* แสดงปุ่มเพิ่มเฉพาะเมื่อมีน้อยกว่า 2 เบอร์ */}
+                  {formData.otherPhones.length < 2 && (
+                    <button
+                      type="button"
+                      onClick={addOtherPhone}
+                      className={styles.addPhone}
+                      disabled={loading || dropdownLoading}
+                      title="เพิ่มเบอร์โทรศัพท์ (สูงสุด 2 เบอร์)"
+                    >
+                      <Plus size={14} /> เพิ่มหมายเลข ({formData.otherPhones.length}/2)
+                    </button>
+                  )}
+                  
+                  {/* แสดงข้อความเมื่อครบ 2 เบอร์แล้ว */}
+                  {formData.otherPhones.length >= 2 && (
+                    <div className={styles.maxPhonesNote}>
+                      <span>ครบจำนวนเบอร์โทรศัพท์แล้ว (2/2)</span>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className={styles.phoneDisplayList}>
                   {userData.student?.otherPhones?.filter(item =>
                     item.name?.trim() !== '' || item.phone?.trim() !== ''
-                  ).map((item, index) => (
-                    <div key={index} className={styles.phoneDisplay}>
-                      <span className={styles.phoneName}>{item.name || 'ไม่ระบุ'}:</span>
-                      <span className={styles.phoneNumber}>{item.phone || '-'}</span>
-                    </div>
-                  )) || <span className={styles.value}>-</span>}
+                  ).length > 0 ? (
+                    <>
+                      {userData.student.otherPhones.filter(item =>
+                        item.name?.trim() !== '' || item.phone?.trim() !== ''
+                      ).slice(0, 2).map((item, index) => (
+                        <div key={index} className={styles.phoneDisplay}>
+                          <span className={styles.phoneName}>{item.name || `เบอร์ที่ ${index + 1}`}:</span>
+                          <span className={styles.phoneNumber}>{item.phone || '-'}</span>
+                        </div>
+                      ))}
+                      <div className={styles.phoneCount}>
+                        จำนวนเบอร์: {userData.student.otherPhones.filter(item =>
+                          item.name?.trim() !== '' || item.phone?.trim() !== ''
+                        ).length}/2
+                      </div>
+                    </>
+                  ) : (
+                    <span className={styles.value}>-</span>
+                  )}
                 </div>
               )}
             </div>
@@ -492,7 +683,7 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
                   className={styles.textareaField}
                   rows={3}
                   placeholder="ระบุปัญหาสุขภาพหรือโรคประจำตัว (ถ้ามี)"
-                  disabled={loading}
+                  disabled={loading || dropdownLoading}
                 />
               ) : (
                 <span className={styles.value}>{userData.student?.medicalProblem || 'ไม่มี'}</span>
@@ -501,6 +692,15 @@ const StudentProfileForm = ({ userData, onUpdate, loading = false }) => {
           </div>
         </div>
       </div>
+
+      {dropdownLoading && (
+        <div className={styles.dropdownLoadingOverlay}>
+          <div className={styles.dropdownLoadingContent}>
+            <Loader className={styles.spinner} />
+            <p>กำลังโหลดข้อมูล dropdown...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -17,14 +17,43 @@ export const useFilters = (fetchStudents, rowsPerPage = 10) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // แก้ไข setCurrentPage ให้ไม่เรียก fetchStudents (ใช้ client-side pagination)
   const setCurrentPage = useCallback((page) => {
     setCurrentPageState(page);
-    // ไม่เรียก fetchStudents เพราะใช้ client-side pagination
+  }, []);
+
+  const matchesSearchQuery = useCallback((student, query) => {
+    if (!query) return true;
+
+    const searchTerms = query.toLowerCase().trim().split(/\s+/);
+    const searchFields = [
+      student.firstName?.toLowerCase() || '',
+      student.lastName?.toLowerCase() || '',
+      student.code?.toLowerCase() || '',
+      student.email?.toLowerCase() || '',
+      student.department?.toLowerCase() || '',
+      student.faculty?.toLowerCase() || '',
+      student.academicYear?.toString() || '',
+      student.studentYear?.toLowerCase() || ''
+    ];
+
+    const firstName = student.firstName?.toLowerCase() || '';
+    const lastName = student.lastName?.toLowerCase() || '';
+    const nameVariations = [
+      `${firstName} ${lastName}`.trim(),
+      `${lastName} ${firstName}`.trim(),
+      firstName,
+      lastName
+    ].filter(Boolean);
+
+    searchFields.push(...nameVariations);
+    return searchTerms.every(term =>
+      searchFields.some(field => field.includes(term))
+    );
   }, []);
 
   const getFilteredAndSortedStudents = useCallback((students) => {
     if (!Array.isArray(students)) return [];
+
     const filtered = academicYearUtils.filterByYearCriteria(students, {
       academicYear: academicYearFilter,
       studentYear: studentYearFilter,
@@ -33,17 +62,7 @@ export const useFilters = (fetchStudents, rowsPerPage = 10) => {
       if (!student) return false;
 
       const query = searchQuery.toLowerCase().trim();
-      const matchesSearch = !query || [
-        student.firstName,
-        student.lastName,
-        student.code,
-        student.email,
-        student.department,
-        student.academicYear?.toString(),
-        student.studentYear
-      ].some(field =>
-        field && field.toString().toLowerCase().includes(query)
-      );
+      const matchesSearch = matchesSearchQuery(student, query);
 
       const matchesFaculty = !facultyFilter || student.faculty === facultyFilter;
       const matchesDepartment = !departmentFilter || student.department === departmentFilter;
@@ -72,38 +91,38 @@ export const useFilters = (fetchStudents, rowsPerPage = 10) => {
           bValue = `${b.firstName} ${b.lastName}`.toLowerCase();
           break;
         case 'code':
-          aValue = a.code;
-          bValue = b.code;
+          aValue = a.code || '';
+          bValue = b.code || '';
           break;
         case 'email':
-          aValue = a.email.toLowerCase();
-          bValue = b.email.toLowerCase();
+          aValue = (a.email || '').toLowerCase();
+          bValue = (b.email || '').toLowerCase();
           break;
         case 'academicYear':
-          aValue = parseInt(a.academicYear);
-          bValue = parseInt(b.academicYear);
+          aValue = parseInt(a.academicYear) || 0;
+          bValue = parseInt(b.academicYear) || 0;
           break;
         case 'studentYear':
           const getYearNumber = (yearStr) => {
             if (yearStr === 'ยังไม่เริ่มเรียน') return -1;
             if (yearStr === 'มากกว่าปี 4') return 5;
-            const match = yearStr.match(/ปี (\d+)/);
+            const match = yearStr?.match(/ปี (\d+)/);
             return match ? parseInt(match[1]) : 0;
           };
           aValue = getYearNumber(a.studentYear);
           bValue = getYearNumber(b.studentYear);
           break;
         case 'department':
-          aValue = a.department.toLowerCase();
-          bValue = b.department.toLowerCase();
+          aValue = (a.department || '').toLowerCase();
+          bValue = (b.department || '').toLowerCase();
           break;
         case 'faculty':
-          aValue = a.faculty.toLowerCase();
-          bValue = b.faculty.toLowerCase();
+          aValue = (a.faculty || '').toLowerCase();
+          bValue = (b.faculty || '').toLowerCase();
           break;
         case 'regisTime':
-          aValue = new Date(a.regisTime);
-          bValue = new Date(b.regisTime);
+          aValue = new Date(a.regisTime || 0);
+          bValue = new Date(b.regisTime || 0);
           break;
         default:
           return 0;
@@ -119,7 +138,7 @@ export const useFilters = (fetchStudents, rowsPerPage = 10) => {
     });
   }, [
     searchQuery, facultyFilter, departmentFilter, academicYearFilter,
-    studentYearFilter, yearRangeFilter, statusFilter, sortBy, sortOrder
+    studentYearFilter, yearRangeFilter, statusFilter, sortBy, sortOrder, matchesSearchQuery
   ]);
 
   const sortConfig = useMemo(() => ({
@@ -142,7 +161,7 @@ export const useFilters = (fetchStudents, rowsPerPage = 10) => {
     setStatusFilter("");
     setSortBy("");
     setSortOrder("asc");
-    setCurrentPageState(1); // ใช้ setCurrentPageState แทน setCurrentPage เพื่อไม่ให้เรียก fetchStudents
+    setCurrentPageState(1);
     navigate({
       pathname: location.pathname,
       search: ""

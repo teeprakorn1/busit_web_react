@@ -6,7 +6,7 @@ export const useFilters = (fetchTeachers, rowsPerPage = 10) => {
   const [facultyFilter, setFacultyFilter] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [resignedFilter, setResignedFilter] = useState("active");
+  const [resignedFilter, setResignedFilter] = useState("all");
   const [deanFilter, setDeanFilter] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
@@ -14,28 +14,38 @@ export const useFilters = (fetchTeachers, rowsPerPage = 10) => {
 
   const navigate = useNavigate();
   const location = useLocation();
-
-  // แก้ไข setCurrentPage ให้เรียก fetchTeachers ใหม่
   const setCurrentPage = useCallback((page) => {
     setCurrentPageState(page);
-    
-    // เรียก fetchTeachers ใหม่ด้วย parameters ปัจจุบัน
-    if (fetchTeachers) {
-      const params = {
-        currentPage: page,
-        rowsPerPage,
-        facultyFilter,
-        departmentFilter,
-        searchQuery,
-        includeResigned: resignedFilter === 'all' || resignedFilter === 'resigned'
-      };
-      
-      // ใช้ setTimeout เพื่อให้ state อัปเดตก่อน
-      setTimeout(() => {
-        fetchTeachers(params);
-      }, 0);
-    }
-  }, [fetchTeachers, rowsPerPage, facultyFilter, departmentFilter, searchQuery, resignedFilter]);
+  }, []);
+
+  const matchesSearchQuery = useCallback((teacher, query) => {
+    if (!query) return true;
+
+    const searchTerms = query.toLowerCase().trim().split(/\s+/);
+    const searchFields = [
+      teacher.firstName?.toLowerCase() || '',
+      teacher.lastName?.toLowerCase() || '',
+      teacher.fullName?.toLowerCase() || '',
+      teacher.code?.toLowerCase() || '',
+      teacher.email?.toLowerCase() || '',
+      teacher.department?.toLowerCase() || '',
+      teacher.faculty?.toLowerCase() || ''
+    ];
+
+    const firstName = teacher.firstName?.toLowerCase() || '';
+    const lastName = teacher.lastName?.toLowerCase() || '';
+    const nameVariations = [
+      `${firstName} ${lastName}`.trim(),
+      `${lastName} ${firstName}`.trim(),
+      firstName,
+      lastName
+    ].filter(Boolean);
+
+    searchFields.push(...nameVariations);
+    return searchTerms.every(term => 
+      searchFields.some(field => field.includes(term))
+    );
+  }, []);
 
   const getFilteredAndSortedTeachers = useCallback((teachers) => {
     if (!Array.isArray(teachers)) return [];
@@ -44,20 +54,9 @@ export const useFilters = (fetchTeachers, rowsPerPage = 10) => {
       if (!teacher) return false;
 
       const query = searchQuery.toLowerCase().trim();
-      const matchesSearch = !query || [
-        teacher.firstName,
-        teacher.lastName,
-        teacher.code,
-        teacher.email,
-        teacher.department,
-        teacher.faculty
-      ].some(field =>
-        field && field.toString().toLowerCase().includes(query)
-      );
-
-      const matchesFaculty = !facultyFilter || teacher.faculty === facultyFilter;
+      const matchesSearch = matchesSearchQuery(teacher, query);
+      const matchesFaculty = !facultyFilter || teacher.faculty === facultyFilter; 
       const matchesDepartment = !departmentFilter || teacher.department === departmentFilter;
-
       let matchesStatus = true;
       if (statusFilter === 'active') {
         matchesStatus = teacher.isActive;
@@ -84,6 +83,7 @@ export const useFilters = (fetchTeachers, rowsPerPage = 10) => {
     });
 
     if (!sortBy) return filtered;
+    
     return [...filtered].sort((a, b) => {
       let aValue, bValue;
 
@@ -93,24 +93,24 @@ export const useFilters = (fetchTeachers, rowsPerPage = 10) => {
           bValue = `${b.firstName} ${b.lastName}`.toLowerCase();
           break;
         case 'code':
-          aValue = a.code;
-          bValue = b.code;
+          aValue = (a.code || '').toLowerCase();
+          bValue = (b.code || '').toLowerCase();
           break;
         case 'email':
-          aValue = a.email.toLowerCase();
-          bValue = b.email.toLowerCase();
+          aValue = (a.email || '').toLowerCase();
+          bValue = (b.email || '').toLowerCase();
           break;
         case 'department':
-          aValue = a.department.toLowerCase();
-          bValue = b.department.toLowerCase();
+          aValue = (a.department || '').toLowerCase();
+          bValue = (b.department || '').toLowerCase();
           break;
         case 'faculty':
-          aValue = a.faculty.toLowerCase();
-          bValue = b.faculty.toLowerCase();
+          aValue = (a.faculty || '').toLowerCase();
+          bValue = (b.faculty || '').toLowerCase();
           break;
         case 'regisTime':
-          aValue = new Date(a.regisTime);
-          bValue = new Date(b.regisTime);
+          aValue = new Date(a.regisTime || 0);
+          bValue = new Date(b.regisTime || 0);
           break;
         case 'position':
           aValue = a.isDean ? 1 : 0;
@@ -130,7 +130,7 @@ export const useFilters = (fetchTeachers, rowsPerPage = 10) => {
     });
   }, [
     searchQuery, facultyFilter, departmentFilter, statusFilter, 
-    resignedFilter, deanFilter, sortBy, sortOrder
+    resignedFilter, deanFilter, sortBy, sortOrder, matchesSearchQuery
   ]);
 
   const sortConfig = useMemo(() => ({
@@ -148,11 +148,12 @@ export const useFilters = (fetchTeachers, rowsPerPage = 10) => {
     setFacultyFilter("");
     setDepartmentFilter("");
     setStatusFilter("");
-    setResignedFilter("active");
+    setResignedFilter("all");
     setDeanFilter("");
     setSortBy("");
     setSortOrder("asc");
-    setCurrentPageState(1); // ใช้ setCurrentPageState แทน setCurrentPage เพื่อไม่ให้เรียก fetchTeachers
+    setCurrentPageState(1);
+    
     navigate({
       pathname: location.pathname,
       search: ""
@@ -162,7 +163,7 @@ export const useFilters = (fetchTeachers, rowsPerPage = 10) => {
   const hasActiveFilters = useMemo(() => {
     return !!(
       searchQuery || facultyFilter || departmentFilter ||
-      statusFilter || (resignedFilter !== "active") || deanFilter || sortBy
+      statusFilter || (resignedFilter !== "all") || deanFilter || sortBy
     );
   }, [
     searchQuery, facultyFilter, departmentFilter, statusFilter,

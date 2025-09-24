@@ -68,34 +68,9 @@ export const useTeachers = () => {
       setLoading(true);
       setError(null);
       setSecurityAlert(null);
-
-      // แก้ไข: ลบ page และ limit parameters ออก
       const teacherParams = {
-        includeResigned: params.includeResigned || false
+        includeResigned: params.includeResigned !== undefined ? params.includeResigned : true
       };
-
-      if (params.facultyFilter && faculties.length > 0) {
-        const sanitizedFaculty = sanitizeInput(params.facultyFilter);
-        const selectedFaculty = faculties.find(f => f.Faculty_Name === sanitizedFaculty);
-        if (selectedFaculty) {
-          teacherParams.facultyId = selectedFaculty.Faculty_ID;
-        }
-      }
-
-      if (params.departmentFilter && departments.length > 0) {
-        const sanitizedDepartment = sanitizeInput(params.departmentFilter);
-        const selectedDepartment = departments.find(d => d.Department_Name === sanitizedDepartment);
-        if (selectedDepartment) {
-          teacherParams.departmentId = selectedDepartment.Department_ID;
-        }
-      }
-
-      if (params.searchQuery) {
-        const sanitizedQuery = sanitizeInput(params.searchQuery);
-        if (sanitizedQuery.length >= 2 && sanitizedQuery.length <= 100) {
-          teacherParams.search = sanitizedQuery;
-        }
-      }
 
       const teachersRes = await axios.get(getApiUrl(process.env.REACT_APP_API_ADMIN_TEACHERS_GET), {
         withCredentials: true,
@@ -133,7 +108,6 @@ export const useTeachers = () => {
           imageUrl: getProfileImageUrl(teacher.Users?.Users_ImageFile),
           isActive: Boolean(teacher.Users?.Users_IsActive)
         }));
-
         setTeachers(transformedTeachers);
       } else {
         setError('ไม่สามารถโหลดข้อมูลอาจารย์ได้: ' + (teachersRes.data?.message || 'Unknown error'));
@@ -177,7 +151,7 @@ export const useTeachers = () => {
     } finally {
       setLoading(false);
     }
-  }, [faculties, departments, navigate]);
+  }, [navigate]);
 
   const loadFacultiesAndDepartments = useCallback(async () => {
     try {

@@ -16,7 +16,7 @@ const formatDate = (date) => {
 
 const getDepartmentDisplay = (department) => {
   const departmentMap = {
-    'วิทยาการคอมพิวเตอร์': 'คอมพิวเตอร์',
+    'วิทยาการคอมพิวเตอร์': 'วิทคอม',
     'เทคโนโลยีสารสนเทศ': 'สารสนเทศ',
     'การตลาด': 'การตลาด',
     'การจัดการ': 'การจัดการ',
@@ -155,7 +155,7 @@ function TeacherTable({
                 </td>
                 <td>
                   <span className={styles.eventTag} title={teacher.faculty}>
-                    {teacher.faculty === "คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ"
+                    {teacher.faculty === "บริหารธุรกิจและเทคโนโลยีสารสนเทศ"
                       ? "บธ.สท."
                       : "ศิลปศาสตร์"}
                   </span>

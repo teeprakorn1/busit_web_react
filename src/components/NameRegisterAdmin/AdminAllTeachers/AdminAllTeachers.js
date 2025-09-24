@@ -41,7 +41,6 @@ function AdminAllTeachers() {
     validateId
   } = useTeachers();
 
-  // แก้ไข: เพิ่ม fetchTeachers และ rowsPerPage เป็น parameters
   const {
     searchQuery,
     setSearchQuery,
@@ -103,7 +102,6 @@ function AdminAllTeachers() {
     fetchTeachers
   });
 
-  // แก้ไข: กลับมาใช้ client-side pagination
   const sortedTeachers = useMemo(() => {
     return getFilteredAndSortedTeachers(teachers);
   }, [getFilteredAndSortedTeachers, teachers]);
@@ -138,11 +136,12 @@ function AdminAllTeachers() {
   }, [searchParams, departments, validateId]);
 
   const teacherStats = useMemo(() => {
-    const totalTeachers = teachers.length;
-    const activeTeachers = teachers.filter(t => t.isActive).length;
-    const deanCount = teachers.filter(t => t.isDean).length;
-    const resignedCount = teachers.filter(t => t.isResigned).length;
-    const facultyCount = departmentFromURL ? 1 : new Set(teachers.map(t => t.faculty)).size;
+    const filteredTeachers = getFilteredAndSortedTeachers(teachers);
+    const totalTeachers = filteredTeachers.length;
+    const activeTeachers = filteredTeachers.filter(t => t.isActive).length;
+    const deanCount = filteredTeachers.filter(t => t.isDean).length;
+    const resignedCount = filteredTeachers.filter(t => t.isResigned).length;
+    const facultyCount = departmentFromURL ? 1 : new Set(filteredTeachers.map(t => t.faculty)).size;
 
     return {
       total: totalTeachers,
@@ -151,11 +150,15 @@ function AdminAllTeachers() {
       resigned: resignedCount,
       faculties: facultyCount
     };
-  }, [teachers, departmentFromURL]);
+  }, [getFilteredAndSortedTeachers, teachers, departmentFromURL]);
 
   useEffect(() => {
     loadFacultiesAndDepartments();
   }, [loadFacultiesAndDepartments]);
+
+  useEffect(() => {
+    fetchTeachers({ includeResigned: true });
+  }, [fetchTeachers]);
 
   useEffect(() => {
     if (departmentFromURL && departments.length > 0) {
@@ -167,16 +170,6 @@ function AdminAllTeachers() {
       }, 100);
     }
   }, [departmentFromURL, departments.length, setFacultyFilter, setDepartmentFilter]);
-
-  useEffect(() => {
-    const params = {
-      facultyFilter,
-      departmentFilter,
-      searchQuery,
-      includeResigned: resignedFilter === 'all' || resignedFilter === 'resigned'
-    };
-    fetchTeachers(params);
-  }, [fetchTeachers, facultyFilter, departmentFilter, searchQuery, resignedFilter]);
 
   if (loading) {
     return (
@@ -226,12 +219,7 @@ function AdminAllTeachers() {
                 onClick={() => {
                   setError(null);
                   setSecurityAlert(null);
-                  fetchTeachers({
-                    facultyFilter,
-                    departmentFilter,
-                    searchQuery,
-                    includeResigned: resignedFilter === 'all' || resignedFilter === 'resigned'
-                  });
+                  fetchTeachers({ includeResigned: true });
                 }}
                 disabled={loading}
               >
@@ -361,7 +349,7 @@ function AdminAllTeachers() {
             setCurrentPage={setCurrentPage}
             onAddTeacher={handleAddTeacher}
           />
-          
+
           <div className={styles.resultsSummary}>
             <span>พบ {sortedTeachers.length} รายการ</span>
             <span className={styles.pageInfo}>
@@ -378,12 +366,12 @@ function AdminAllTeachers() {
                 ({sortOrder === 'asc' ? 'น้อยไปมาก' : 'มากไปน้อย'})
               </span>
             )}
-            {(facultyFilter || departmentFilter || statusFilter || resignedFilter || deanFilter) && (
+            {(facultyFilter || departmentFilter || statusFilter || resignedFilter !== 'all' || deanFilter) && (
               <span className={styles.filterSummary}>
                 {facultyFilter && `คณะ: ${facultyFilter} `}
                 {departmentFilter && `สาขา: ${departmentFilter} `}
                 {statusFilter && `สถานะ: ${statusFilter === 'active' ? 'ใช้งาน' : 'ระงับ'} `}
-                {resignedFilter && `การลาออก: ${resignedFilter === 'active' ? 'ยังไม่ลาออก' : resignedFilter === 'resigned' ? 'ลาออกแล้ว' : 'ทั้งหมด'} `}
+                {resignedFilter !== 'all' && `การลาออก: ${resignedFilter === 'active' ? 'ยังไม่ลาออก' : resignedFilter === 'resigned' ? 'ลาออกแล้ว' : 'ทั้งหมด'} `}
                 {deanFilter && `ตำแหน่ง: ${deanFilter === 'dean' ? 'คณบดี' : 'อาจารย์ทั่วไป'} `}
               </span>
             )}

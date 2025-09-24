@@ -14,7 +14,7 @@ const getFacultyDisplay = (faculty) => {
 
 const getDepartmentDisplay = (department) => {
   const departmentMap = {
-    'วิทยาการคอมพิวเตอร์': 'คอมพิวเตอร์',
+    'วิทยาการคอมพิวเตอร์': 'วิทคอม',
     'เทคโนโลยีสารสนเทศ': 'สารสนเทศ',
     'การตลาด': 'การตลาด',
     'การตลาด (2 ปี ต่อเนื่อง)': 'การตลาด (2ปี)',

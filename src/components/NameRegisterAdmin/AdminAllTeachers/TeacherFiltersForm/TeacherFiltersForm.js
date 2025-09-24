@@ -1,9 +1,85 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef, useEffect, memo } from 'react';
 import { Plus, Upload, X } from 'lucide-react';
 import { useUserPermissions } from '../hooks/useUserPermissions';
 import styles from './TeacherFiltersForm.module.css';
 
-const TeacherFiltersForm = ({
+const SearchInput = memo(({ value, onChange, placeholder, className, ariaLabel }) => {
+  const inputRef = useRef(null);
+  const selectionRef = useRef({ start: 0, end: 0 });
+  const isComposingRef = useRef(false);
+
+  const handleBeforeInput = useCallback(() => {
+    if (inputRef.current && !isComposingRef.current) {
+      selectionRef.current = {
+        start: inputRef.current.selectionStart || 0,
+        end: inputRef.current.selectionEnd || 0
+      };
+    }
+  }, []);
+
+  const handleChange = useCallback((e) => {
+    const newValue = e.target.value;
+    const input = e.target;
+
+    if (!isComposingRef.current) {
+      selectionRef.current = {
+        start: input.selectionStart || 0,
+        end: input.selectionEnd || 0
+      };
+    }
+
+    onChange(newValue);
+  }, [onChange]);
+
+  const handleCompositionStart = useCallback(() => {
+    isComposingRef.current = true;
+  }, []);
+
+  const handleCompositionEnd = useCallback(() => {
+    isComposingRef.current = false;
+  }, []);
+
+  useEffect(() => {
+    if (inputRef.current && document.activeElement === inputRef.current) {
+      const input = inputRef.current;
+      const { start, end } = selectionRef.current;
+      const maxPos = value.length;
+      const safeStart = Math.min(start, maxPos);
+      const safeEnd = Math.min(end, maxPos);
+
+      requestAnimationFrame(() => {
+        try {
+          if (input === document.activeElement) {
+            input.setSelectionRange(safeStart, safeEnd);
+          }
+        } catch (error) {
+          console.error("requestAnimationFrame Error");
+        }
+      });
+    }
+  }, [value]);
+
+  return (
+    <input
+      ref={inputRef}
+      type="text"
+      placeholder={placeholder}
+      value={value}
+      onChange={handleChange}
+      onBeforeInput={handleBeforeInput}
+      onCompositionStart={handleCompositionStart}
+      onCompositionEnd={handleCompositionEnd}
+      className={className}
+      aria-label={ariaLabel}
+      autoComplete="off"
+      spellCheck="false"
+    />
+  );
+});
+
+SearchInput.displayName = 'SearchInput';
+
+const TeacherFiltersForm = memo(({
   searchQuery,
   setSearchQuery,
   facultyFilter,
@@ -29,57 +105,47 @@ const TeacherFiltersForm = ({
   onAddTeacher
 }) => {
   const permissions = useUserPermissions();
-
-  // ฟังก์ชันสำหรับ reset page โดยไม่เรียก API
   const resetToFirstPage = useCallback(() => {
     if (setCurrentPage) {
       setCurrentPage(1);
     }
   }, [setCurrentPage]);
 
-  // Handle search with just state update (no API call)
-  const handleSearchChange = useCallback((e) => {
-    setSearchQuery(e.target.value);
+  const handleSearchChange = useCallback((newValue) => {
+    setSearchQuery(newValue);
     resetToFirstPage();
   }, [setSearchQuery, resetToFirstPage]);
 
-  // Handle faculty filter change (no immediate API call)
   const handleFacultyChange = useCallback((e) => {
     setFacultyFilter(e.target.value);
-    setDepartmentFilter(""); // Reset department when faculty changes
+    setDepartmentFilter("");
     resetToFirstPage();
   }, [setFacultyFilter, setDepartmentFilter, resetToFirstPage]);
 
-  // Handle department filter change (no immediate API call)
   const handleDepartmentChange = useCallback((e) => {
     setDepartmentFilter(e.target.value);
     resetToFirstPage();
   }, [setDepartmentFilter, resetToFirstPage]);
 
-  // Handle status filter change (no immediate API call)
   const handleStatusChange = useCallback((e) => {
     setStatusFilter(e.target.value);
     resetToFirstPage();
   }, [setStatusFilter, resetToFirstPage]);
 
-  // Handle resigned filter change (no immediate API call)
   const handleResignedChange = useCallback((e) => {
     setResignedFilter(e.target.value);
     resetToFirstPage();
   }, [setResignedFilter, resetToFirstPage]);
 
-  // Handle dean filter change (no immediate API call)
   const handleDeanChange = useCallback((e) => {
     setDeanFilter(e.target.value);
     resetToFirstPage();
   }, [setDeanFilter, resetToFirstPage]);
 
-  // Handle sort by change (no API call needed for sorting)
   const handleSortByChange = useCallback((e) => {
     setSortBy(e.target.value);
   }, [setSortBy]);
 
-  // Handle sort order change (no API call needed for sorting)
   const handleSortOrderChange = useCallback((e) => {
     setSortOrder(e.target.value);
   }, [setSortOrder]);
@@ -120,13 +186,12 @@ const TeacherFiltersForm = ({
         </div>
       )}
 
-      <input
-        type="text"
-        placeholder="ค้นหา ชื่อ, รหัส, อีเมล, สาขา, คณะ..."
+      <SearchInput
         value={searchQuery}
         onChange={handleSearchChange}
+        placeholder="ค้นหา ชื่อ, รหัส, อีเมล, สาขา, คณะ..."
         className={styles.teachersSearch}
-        aria-label="ค้นหาข้อมูล"
+        ariaLabel="ค้นหาข้อมูล"
       />
 
       <select
@@ -204,9 +269,9 @@ const TeacherFiltersForm = ({
         onChange={handleResignedChange}
         aria-label="กรองตามการลาออก"
       >
+        <option value="all">ทั้งหมด</option>
         <option value="active">ยังไม่ลาออก</option>
         <option value="resigned">ลาออกแล้ว</option>
-        <option value="all">ทั้งหมด</option>
       </select>
 
       <select
@@ -221,7 +286,7 @@ const TeacherFiltersForm = ({
       </select>
 
       {(searchQuery || facultyFilter || departmentFilter || statusFilter ||
-        resignedFilter !== "active" || deanFilter || sortBy) && (
+        resignedFilter !== "all" || deanFilter || sortBy) && (
           <button
             className={styles.resetButton}
             onClick={resetFilters}
@@ -233,6 +298,8 @@ const TeacherFiltersForm = ({
         )}
     </div>
   );
-};
+});
+
+TeacherFiltersForm.displayName = 'TeacherFiltersForm';
 
 export default TeacherFiltersForm;

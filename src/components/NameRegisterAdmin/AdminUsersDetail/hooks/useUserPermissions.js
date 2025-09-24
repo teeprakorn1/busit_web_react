@@ -56,6 +56,7 @@ export const useUserPermissions = () => {
             canEditTeachers: isStaff,
             canEditStaff: isStaff,
             canEditUserData: isStaff,
+            canEditUsers: isStaff,
             canAddStudents: isStaff,
             canAddTeachers: isStaff,
             canAddStaff: isStaff,

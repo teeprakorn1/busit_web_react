@@ -1,30 +1,39 @@
-import React, { useState } from 'react';
-import { User, Edit, Save, X, Plus, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Edit, Save, X, Plus, Trash2, Loader } from 'lucide-react';
 import styles from './ProfileForms.module.css';
 
-const StaffProfileForm = ({ userData, onUpdate }) => {
+const StaffProfileForm = ({ userData, onUpdate, loading = false }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    code: userData.staff?.code || '',
-    firstName: userData.staff?.firstName || '',
-    lastName: userData.staff?.lastName || '',
-    phone: userData.staff?.phone || '',
-    otherPhones: userData.staff?.otherPhones || [{ name: '', phone: '' }],
-    birthdate: userData.staff?.birthdate || '',
-    religion: userData.staff?.religion || '',
-    position: userData.staff?.position || '',
-    department: userData.staff?.department || '',
-    responsibilities: userData.staff?.responsibilities || '',
-    startDate: userData.staff?.startDate || '',
-    workLocation: userData.staff?.workLocation || '',
-    employeeType: userData.staff?.employeeType || ''
+    code: '',
+    firstName: '',
+    lastName: '',
+    phone: '',
+    otherPhones: [],
+    isResigned: false
   });
 
+  // Update formData when userData changes
+  useEffect(() => {
+    if (userData?.staff) {
+      setFormData({
+        code: userData.staff.code || '',
+        firstName: userData.staff.firstName || '',
+        lastName: userData.staff.lastName || '',
+        phone: userData.staff.phone || '',
+        otherPhones: userData.staff.otherPhones && userData.staff.otherPhones.length > 0 
+          ? userData.staff.otherPhones.slice(0, 2) // จำกัดเพียง 2 เบอร์
+          : [],
+        isResigned: userData.staff.isResigned || false
+      });
+    }
+  }, [userData]);
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
 
@@ -38,55 +47,74 @@ const StaffProfileForm = ({ userData, onUpdate }) => {
   };
 
   const addOtherPhone = () => {
-    setFormData(prev => ({
-      ...prev,
-      otherPhones: [...prev.otherPhones, { name: '', phone: '' }]
-    }));
-  };
-
-  const removeOtherPhone = (index) => {
-    if (formData.otherPhones.length > 1) {
-      const newOtherPhones = formData.otherPhones.filter((_, i) => i !== index);
+    // จำกัดให้มีได้สูงสุด 2 เบอร์เท่านั้น
+    if (formData.otherPhones.length < 2) {
       setFormData(prev => ({
         ...prev,
-        otherPhones: newOtherPhones
+        otherPhones: [...prev.otherPhones, { name: '', phone: '' }]
       }));
     }
   };
 
-  const handleSave = () => {
+  const removeOtherPhone = (index) => {
+    const newOtherPhones = formData.otherPhones.filter((_, i) => i !== index);
+    setFormData(prev => ({
+      ...prev,
+      otherPhones: newOtherPhones
+    }));
+  };
+
+  const handleSave = async () => {
+    if (!onUpdate || loading) return;
+
+    // Filter out empty other phones
     const filteredOtherPhones = formData.otherPhones.filter(item =>
       item.name.trim() !== '' || item.phone.trim() !== ''
     );
+
     const updatedData = {
-      ...formData,
-      otherPhones: filteredOtherPhones.length > 0 ? filteredOtherPhones : [{ name: '', phone: '' }]
+      staff: {
+        ...formData,
+        otherPhones: filteredOtherPhones
+      }
     };
 
-    onUpdate({
-      staff: updatedData
-    });
-    setIsEditing(false);
+    try {
+      await onUpdate(updatedData);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Update error:', error);
+      // Error handling is done in parent component
+    }
   };
 
   const handleCancel = () => {
-    setFormData({
-      code: userData.staff?.code || '',
-      firstName: userData.staff?.firstName || '',
-      lastName: userData.staff?.lastName || '',
-      phone: userData.staff?.phone || '',
-      otherPhones: userData.staff?.otherPhones || [{ name: '', phone: '' }],
-      birthdate: userData.staff?.birthdate || '',
-      religion: userData.staff?.religion || '',
-      position: userData.staff?.position || '',
-      department: userData.staff?.department || '',
-      responsibilities: userData.staff?.responsibilities || '',
-      startDate: userData.staff?.startDate || '',
-      workLocation: userData.staff?.workLocation || '',
-      employeeType: userData.staff?.employeeType || ''
-    });
+    // Reset form data to original values
+    if (userData?.staff) {
+      setFormData({
+        code: userData.staff.code || '',
+        firstName: userData.staff.firstName || '',
+        lastName: userData.staff.lastName || '',
+        phone: userData.staff.phone || '',
+        otherPhones: userData.staff.otherPhones && userData.staff.otherPhones.length > 0 
+          ? userData.staff.otherPhones.slice(0, 2) // จำกัดเพียง 2 เบอร์
+          : [],
+        isResigned: userData.staff.isResigned || false
+      });
+    }
     setIsEditing(false);
   };
+
+  if (!userData) {
+    return (
+      <div className={styles.profileContent}>
+        <div className={styles.loadingContainer}>
+          <Loader className={styles.spinner} />
+          <p>กำลังโหลดข้อมูล...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.profileContent}>
@@ -98,15 +126,32 @@ const StaffProfileForm = ({ userData, onUpdate }) => {
         <div className={styles.actionButtons}>
           {isEditing ? (
             <>
-              <button className={styles.saveButton} onClick={handleSave}>
-                <Save size={16} /> บันทึก
+              <button 
+                className={styles.saveButton} 
+                onClick={handleSave}
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader size={16} className={styles.spinningIcon} />
+                ) : (
+                  <Save size={16} />
+                )}
+                {loading ? 'กำลังบันทึก...' : 'บันทึก'}
               </button>
-              <button className={styles.cancelButton} onClick={handleCancel}>
+              <button 
+                className={styles.cancelButton} 
+                onClick={handleCancel}
+                disabled={loading}
+              >
                 <X size={16} /> ยกเลิก
               </button>
             </>
           ) : (
-            <button className={styles.editButton} onClick={() => setIsEditing(true)}>
+            <button 
+              className={styles.editButton} 
+              onClick={() => setIsEditing(true)}
+              disabled={loading}
+            >
               <Edit size={16} /> แก้ไข
             </button>
           )}
@@ -126,6 +171,7 @@ const StaffProfileForm = ({ userData, onUpdate }) => {
                   value={formData.code}
                   onChange={handleChange}
                   className={styles.inputField}
+                  disabled={loading}
                 />
               ) : (
                 <span className={styles.value}>{userData.staff?.code || '-'}</span>
@@ -140,6 +186,8 @@ const StaffProfileForm = ({ userData, onUpdate }) => {
                   value={formData.firstName}
                   onChange={handleChange}
                   className={styles.inputField}
+                  disabled={loading}
+                  required
                 />
               ) : (
                 <span className={styles.value}>{userData.staff?.firstName || '-'}</span>
@@ -154,6 +202,8 @@ const StaffProfileForm = ({ userData, onUpdate }) => {
                   value={formData.lastName}
                   onChange={handleChange}
                   className={styles.inputField}
+                  disabled={loading}
+                  required
                 />
               ) : (
                 <span className={styles.value}>{userData.staff?.lastName || '-'}</span>
@@ -168,48 +218,51 @@ const StaffProfileForm = ({ userData, onUpdate }) => {
                   value={formData.phone}
                   onChange={handleChange}
                   className={styles.inputField}
+                  disabled={loading}
                 />
               ) : (
                 <span className={styles.value}>{userData.staff?.phone || '-'}</span>
               )}
             </div>
+          </div>
+        </div>
+
+        <div className={`${styles.infoSection} ${styles.staffSection}`}>
+          <h4>ข้อมูลการทำงาน</h4>
+          <div className={styles.infoCard}>
             <div className={styles.infoRow}>
-              <span className={styles.label}>วันเกิด:</span>
-              {isEditing ? (
-                <input
-                  type="date"
-                  name="birthdate"
-                  value={formData.birthdate}
-                  onChange={handleChange}
-                  className={styles.inputField}
-                />
-              ) : (
-                <span className={styles.value}>
-                  {userData.staff?.birthdate ? new Date(userData.staff.birthdate).toLocaleDateString('th-TH') : '-'}
-                </span>
-              )}
+              <span className={styles.label}>วันที่เริ่มงาน:</span>
+              <span className={styles.value}>
+                {userData.staff?.regisTime ? new Date(userData.staff.regisTime).toLocaleDateString('th-TH', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                }) : '-'}
+              </span>
             </div>
             <div className={styles.infoRow}>
-              <span className={styles.label}>ศาสนา:</span>
+              <span className={styles.label}>สถานะการลาออก:</span>
               {isEditing ? (
-                <select
-                  name="religion"
-                  value={formData.religion}
-                  onChange={handleChange}
-                  className={styles.selectField}
-                >
-                  <option value="">เลือกศาสนา</option>
-                  <option value="พุทธ">พุทธ</option>
-                  <option value="คริสต์">คริสต์</option>
-                  <option value="อิสลาม">อิสลาม</option>
-                  <option value="อื่นๆ">อื่นๆ</option>
-                </select>
+                <label className={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    name="isResigned"
+                    checked={formData.isResigned}
+                    onChange={handleChange}
+                    className={styles.checkboxField}
+                    disabled={loading}
+                  />
+                  ลาออกแล้ว
+                </label>
               ) : (
-                <span className={styles.value}>{userData.staff?.religion || '-'}</span>
+                <span className={`${styles.value} ${styles.statusBadge} ${userData.staff?.isResigned ? styles.resigned : styles.working}`}>
+                  {userData.staff?.isResigned ? 'ลาออกแล้ว' : 'ปฏิบัติงาน'}
+                </span>
               )}
             </div>
           </div>
         </div>
+
         <div className={`${styles.infoSection} ${styles.staffSection}`}>
           <h4>ข้อมูลระบบ</h4>
           <div className={styles.infoCard}>
@@ -241,14 +294,16 @@ const StaffProfileForm = ({ userData, onUpdate }) => {
             </div>
           </div>
         </div>
+
         <div className={`${styles.infoSection} ${styles.staffSection}`}>
           <h4>ข้อมูลติดต่อเพิ่มเติม</h4>
           <div className={styles.infoCard}>
             <div className={styles.infoRow}>
-              <span className={styles.label}>เบอร์โทรศัพท์อื่นๆ:</span>
+              <span className={styles.label}>เบอร์โทรศัพท์อื่นๆ (สูงสุด 2 เบอร์):</span>
               {isEditing ? (
                 <div className={styles.phoneList}>
-                  {formData.otherPhones.map((item, index) => (
+                  {/* แสดงช่องกรอกข้อมูลเมื่อมี otherPhones */}
+                  {formData.otherPhones.length > 0 && formData.otherPhones.map((item, index) => (
                     <div key={index} className={styles.phoneItemContainer}>
                       <div className={styles.phoneInputGroup}>
                         <input
@@ -256,7 +311,8 @@ const StaffProfileForm = ({ userData, onUpdate }) => {
                           value={item.name}
                           onChange={(e) => handleOtherPhoneChange(index, 'name', e.target.value)}
                           className={styles.phoneNameInput}
-                          placeholder="ชื่อ (เช่น บ้าน, ที่ทำงาน)"
+                          placeholder={`ชื่อเบอร์ที่ ${index + 1} (เช่น บ้าน, ที่ทำงาน)`}
+                          disabled={loading}
                         />
                         <input
                           type="tel"
@@ -264,37 +320,64 @@ const StaffProfileForm = ({ userData, onUpdate }) => {
                           onChange={(e) => handleOtherPhoneChange(index, 'phone', e.target.value)}
                           className={styles.phoneNumberInput}
                           placeholder="หมายเลขโทรศัพท์"
+                          disabled={loading}
                         />
                       </div>
-                      {formData.otherPhones.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeOtherPhone(index)}
-                          className={styles.deletePhone}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeOtherPhone(index)}
+                        className={styles.deletePhone}
+                        disabled={loading}
+                        title="ลบเบอร์นี้"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   ))}
-                  <button
-                    type="button"
-                    onClick={addOtherPhone}
-                    className={styles.addPhone}
-                  >
-                    <Plus size={14} /> เพิ่มหมายเลข
-                  </button>
+                  
+                  {/* แสดงปุ่มเพิ่มเฉพาะเมื่อมีน้อยกว่า 2 เบอร์ */}
+                  {formData.otherPhones.length < 2 && (
+                    <button
+                      type="button"
+                      onClick={addOtherPhone}
+                      className={styles.addPhone}
+                      disabled={loading}
+                      title="เพิ่มเบอร์โทรศัพท์ (สูงสุด 2 เบอร์)"
+                    >
+                      <Plus size={14} /> เพิ่มหมายเลข ({formData.otherPhones.length}/2)
+                    </button>
+                  )}
+                  
+                  {/* แสดงข้อความเมื่อครบ 2 เบอร์แล้ว */}
+                  {formData.otherPhones.length >= 2 && (
+                    <div className={styles.maxPhonesNote}>
+                      <span>ครบจำนวนเบอร์โทรศัพท์แล้ว (2/2)</span>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className={styles.phoneDisplayList}>
                   {userData.staff?.otherPhones?.filter(item =>
                     item.name?.trim() !== '' || item.phone?.trim() !== ''
-                  ).map((item, index) => (
-                    <div key={index} className={styles.phoneDisplay}>
-                      <span className={styles.phoneName}>{item.name || 'ไม่ระบุ'}:</span>
-                      <span className={styles.phoneNumber}>{item.phone || '-'}</span>
-                    </div>
-                  )) || <span className={styles.value}>-</span>}
+                  ).length > 0 ? (
+                    <>
+                      {userData.staff.otherPhones.filter(item =>
+                        item.name?.trim() !== '' || item.phone?.trim() !== ''
+                      ).slice(0, 2).map((item, index) => (
+                        <div key={index} className={styles.phoneDisplay}>
+                          <span className={styles.phoneName}>{item.name || `เบอร์ที่ ${index + 1}`}:</span>
+                          <span className={styles.phoneNumber}>{item.phone || '-'}</span>
+                        </div>
+                      ))}
+                      <div className={styles.phoneCount}>
+                        จำนวนเบอร์: {userData.staff.otherPhones.filter(item =>
+                          item.name?.trim() !== '' || item.phone?.trim() !== ''
+                        ).length}/2
+                      </div>
+                    </>
+                  ) : (
+                    <span className={styles.value}>-</span>
+                  )}
                 </div>
               )}
             </div>

@@ -79,14 +79,45 @@ const detectUserTypeFromPath = (pathname) => {
   return 'student';
 };
 
+// ฟังก์ชันแปลงวันที่
+const formatDateForInput = (dateString) => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    return date.toISOString().split('T')[0];
+  } catch (error) {
+    return '';
+  }
+};
+
+const formatDateForSubmit = (dateString) => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString + 'T00:00:00.000Z');
+    if (isNaN(date.getTime())) return '';
+    return date.toISOString();
+  } catch (error) {
+    return '';
+  }
+};
+
 const useAdminUserDetail = (id) => {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [error, setError] = useState(null);
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [passwordChangeLoading, setPasswordChangeLoading] = useState(false);
   const [securityAlert, setSecurityAlert] = useState(null);
   const [imageLoadErrors, setImageLoadErrors] = useState(new Set());
   const [imageUrls, setImageUrls] = useState(new Map());
+
+  // Dropdown states
+  const [faculties, setFaculties] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [teachers, setTeachers] = useState([]);
+  const [dropdownLoading, setDropdownLoading] = useState(false);
+  const [dropdownError, setDropdownError] = useState('');
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -122,6 +153,81 @@ const useAdminUserDetail = (id) => {
       return null;
     }
   }, [imageLoadErrors, imageUrls]);
+
+  // ฟังก์ชันโหลดข้อมูล dropdown
+  const loadDropdownData = useCallback(async () => {
+    setDropdownLoading(true);
+    setDropdownError('');
+
+    try {
+      const requestConfig = {
+        withCredentials: true,
+        timeout: 15000,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Cache-Control': 'no-cache'
+        }
+      };
+
+      const requests = [
+        axios.get(getApiUrl('/api/admin/faculties'), requestConfig)
+          .catch(error => ({ error, type: 'faculties' })),
+        axios.get(getApiUrl('/api/admin/departments'), requestConfig)
+          .catch(error => ({ error, type: 'departments' })),
+        axios.get(getApiUrl('/api/admin/teacher-advisors'), requestConfig)
+          .catch(error => ({ error, type: 'teachers' }))
+      ];
+
+      const [facultiesRes, departmentsRes, teachersRes] = await Promise.all(requests);
+
+      if (facultiesRes.error) {
+        console.error('Failed to load faculties:', facultiesRes.error);
+      } else if (facultiesRes.data?.status) {
+        setFaculties(facultiesRes.data.data || []);
+      }
+
+      if (departmentsRes.error) {
+        console.error('Failed to load departments:', departmentsRes.error);
+      } else if (departmentsRes.data?.status) {
+        setDepartments(departmentsRes.data.data || []);
+      }
+
+      if (teachersRes.error) {
+        console.error('Failed to load teachers:', teachersRes.error);
+        const teachersError = teachersRes.error;
+
+        if (teachersError.response?.status === 401) {
+          setDropdownError('กรุณาเข้าสู่ระบบใหม่');
+        } else if (teachersError.response?.status === 403) {
+          setDropdownError('ไม่มีสิทธิ์เข้าถึงข้อมูลอาจารย์');
+        } else if (teachersError.response?.status === 400) {
+          setDropdownError('ข้อมูลการร้องขอไม่ถูกต้อง กรุณาลองใหม่');
+        } else if (teachersError.code === 'ECONNABORTED') {
+          setDropdownError('การเชื่อมต่อหมดเวลา กรุณาลองใหม่');
+        } else {
+          setDropdownError('ไม่สามารถโหลดข้อมูลอาจารย์ได้ กรุณาลองใหม่อีกครั้ง');
+        }
+      } else if (teachersRes.data?.status) {
+        setTeachers(teachersRes.data.data || []);
+      }
+
+      if (!facultiesRes.error && !departmentsRes.error && (!facultiesRes.data?.status || !departmentsRes.data?.status)) {
+        setDropdownError('ไม่สามารถโหลดข้อมูลคณะและสาขาได้');
+      }
+
+    } catch (error) {
+      console.error('Unexpected error loading dropdown data:', error);
+      setDropdownError('เกิดข้อผิดพลาดในการโหลดข้อมูล กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setDropdownLoading(false);
+    }
+  }, []);
+
+  const retryLoadDropdownData = useCallback(() => {
+    setDropdownError('');
+    loadDropdownData();
+  }, [loadDropdownData]);
 
   useEffect(() => {
     return () => {
@@ -324,6 +430,21 @@ const useAdminUserDetail = (id) => {
           };
         }
 
+        if (userType === 'staff') {
+          sanitizedData[userType] = {
+            ...sanitizedData[userType],
+            isResigned: formData.isResigned || false
+          };
+        }
+
+        if (userType === 'student') {
+          sanitizedData[userType] = {
+            ...sanitizedData[userType],
+            academicYear: formData.academicYear || null,
+            isGraduated: formData.isGraduated || false
+          };
+        }
+
         if (!sanitizedData[userType].firstName || !sanitizedData[userType].lastName) {
           throw new Error('ชื่อและนามสกุลเป็นข้อมูลที่จำเป็น');
         }
@@ -357,7 +478,7 @@ const useAdminUserDetail = (id) => {
 
       const response = await axios.put(getApiUrl(apiEndpoint), sanitizedData, {
         withCredentials: true,
-        timeout: 15000,
+        timeout: 30000,
         headers: {
           'Content-Type': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
@@ -415,6 +536,112 @@ const useAdminUserDetail = (id) => {
     }
   }, [userData?.userType, id, fetchUserData, validateAndSanitizeId, navigate]);
 
+  const handleAssignmentChange = useCallback(async (departmentId, advisorId) => {
+    if (!departmentId || !advisorId) {
+      throw new Error('ข้อมูลภาควิชาและอาจารย์ที่ปรึกษาจำเป็นต้องมี');
+    }
+
+    const validatedId = validateAndSanitizeId(id);
+
+    await axios.put(getApiUrl(`/api/admin/students/${validatedId}/assignment`), {
+      Department_ID: parseInt(departmentId),
+      Teacher_ID: parseInt(advisorId)
+    }, { withCredentials: true });
+  }, [id, validateAndSanitizeId]);
+
+  const handlePasswordChange = useCallback(async (newPassword) => {
+    try {
+      setPasswordChangeLoading(true);
+      setError(null);
+      setSecurityAlert(null);
+
+      if (!newPassword || typeof newPassword !== 'string') {
+        throw new Error('รหัสผ่านใหม่ไม่ถูกต้อง');
+      }
+
+      if (!userData?.Users_ID) {
+        throw new Error('ไม่พบข้อมูล Users_ID สำหรับการเปลี่ยนรหัสผ่าน');
+      }
+
+      const validatePassword = (password) => {
+        if (password.length < 8) {
+          return false;
+        }
+
+        if (!/[a-zA-Z]/.test(password)) {
+          return false;
+        }
+
+        if (!/[0-9]/.test(password)) {
+          return false;
+        }
+
+        return true;
+      };
+
+      if (!validatePassword(newPassword)) {
+        throw new Error('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร ประกอบด้วยตัวอักษรอย่างน้อย 1 ตัว และตัวเลขอย่างน้อย 1 ตัว');
+      }
+
+      const response = await axios.put(getApiUrl(`/api/admin/users/${userData.Users_ID}/change-password`), {
+        newPassword: sanitizeInput(newPassword)
+      }, {
+        withCredentials: true,
+        timeout: 15000,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        validateStatus: (status) => status >= 200 && status < 300
+      });
+
+      if (response.data && response.data.status) {
+        return { success: true, message: 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว' };
+      } else {
+        throw new Error(response.data?.message || 'ไม่สามารถเปลี่ยนรหัสผ่านได้');
+      }
+
+    } catch (err) {
+      console.error('Change password error:', err);
+
+      let errorMessage = 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน';
+
+      if (axios.isAxiosError(err)) {
+        if (err.code === 'ECONNABORTED') {
+          errorMessage = 'การเชื่อมต่อหมดเวลา กรุณาลองใหม่อีกครั้ง';
+        } else if (err.response) {
+          switch (err.response.status) {
+            case 400:
+              errorMessage = err.response.data?.message || 'รหัสผ่านไม่ถูกต้องตามเงื่อนไข';
+              break;
+            case 401:
+              errorMessage = 'กรุณาเข้าสู่ระบบใหม่';
+              setTimeout(() => navigate('/login'), 2000);
+              break;
+            case 403:
+              errorMessage = 'ไม่มีสิทธิ์เปลี่ยนรหัสผ่านของผู้ใช้นี้';
+              setSecurityAlert('การเปลี่ยนรหัสผ่านถูกปฏิเสธ - ไม่มีสิทธิ์เพียงพอ');
+              break;
+            case 404:
+              errorMessage = 'ไม่พบข้อมูลผู้ใช้ที่ต้องการเปลี่ยนรหัสผ่าน';
+              break;
+            case 429:
+              errorMessage = 'คำขอเกินจำนวนที่กำหนด กรุณารอสักครู่';
+              break;
+            default:
+              errorMessage = err.response.data?.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ';
+          }
+        }
+      } else {
+        errorMessage = err.message || errorMessage;
+      }
+
+      throw new Error(errorMessage);
+    } finally {
+      setPasswordChangeLoading(false);
+    }
+  }, [userData?.Users_ID, navigate]);
+
   const handleGoBack = useCallback(() => {
     const userType = userData?.userType;
 
@@ -464,16 +691,28 @@ const useAdminUserDetail = (id) => {
     userData,
     error,
     updateLoading,
+    passwordChangeLoading,
     securityAlert,
     imageLoadErrors,
     imageUrls,
+    faculties,
+    departments,
+    teachers,
+    dropdownLoading,
+    dropdownError,
     handleUserDataUpdate,
+    handlePasswordChange,
+    handleAssignmentChange,
     handleGoBack,
     retryFetch,
     handleImageError,
     shouldLoadImage,
     loadImageWithCredentials,
+    loadDropdownData,
+    retryLoadDropdownData,
     getProfileImageUrl,
+    formatDateForInput,
+    formatDateForSubmit,
     setError,
     setSecurityAlert
   };
