@@ -1,105 +1,18 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 
-const sanitizeInput = (input) => {
-  if (typeof input !== 'string') return input;
-  return input.replace(/[<>"'&]/g, '').trim();
-};
-
-const validateId = (id) => {
-  const numId = parseInt(id, 10);
-  return !isNaN(numId) && numId > 0 && numId <= 2147483647;
-};
-
-const validateUserType = (userType) => {
-  const allowedTypes = ['student', 'teacher', 'staff'];
-  return allowedTypes.includes(userType);
-};
-
-const getApiUrl = (endpoint) => {
-  const protocol = process.env.REACT_APP_SERVER_PROTOCOL;
-  const baseUrl = process.env.REACT_APP_SERVER_BASE_URL;
-  const port = process.env.REACT_APP_SERVER_PORT;
-
-  if (!protocol || !baseUrl || !port) {
-    throw new Error('Missing required environment variables');
-  }
-
-  return `${protocol}${baseUrl}${port}${endpoint}`;
-};
-
-const getProfileImageUrl = (filename) => {
-  if (!filename || filename === 'undefined' || filename.trim() === '') {
-    return null;
-  }
-
-  if (!filename.match(/^[a-zA-Z0-9._-]+$/)) {
-    return null;
-  }
-
-  const allowedExt = ['.jpg', '.jpeg', '.png'];
-  const ext = filename.substring(filename.lastIndexOf('.')).toLowerCase();
-
-  if (!allowedExt.includes(ext)) {
-    return null;
-  }
-
-  return getApiUrl(`${process.env.REACT_APP_API_ADMIN_IMAGES_GET}${filename}`);
-};
-
-const fetchImageWithCredentials = async (imageUrl) => {
-  try {
-    const response = await fetch(imageUrl, {
-      method: 'GET',
-      credentials: 'include',
-      mode: 'cors',
-      headers: {
-        'Accept': 'image/*',
-        'Cache-Control': 'no-cache'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const blob = await response.blob();
-    return URL.createObjectURL(blob);
-  } catch (error) {
-    console.error('Failed to fetch image:', error);
-    return null;
-  }
-};
+import useImageLoader from './useImageLoader';
+import useDropdownData from './useDropdownData';
+import useValidation from './useValidation';
+import useDateFormatter from './useDateFormatter';
+import useApiClient from './useApiClient';
+import useSingleFetch from './useSingleFetch';
 
 const detectUserTypeFromPath = (pathname) => {
   if (pathname.includes('/student-')) return 'student';
   if (pathname.includes('/teacher-')) return 'teacher';
   if (pathname.includes('/staff-')) return 'staff';
   return 'student';
-};
-
-// ฟังก์ชันแปลงวันที่
-const formatDateForInput = (dateString) => {
-  if (!dateString) return '';
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '';
-    return date.toISOString().split('T')[0];
-  } catch (error) {
-    return '';
-  }
-};
-
-const formatDateForSubmit = (dateString) => {
-  if (!dateString) return '';
-  try {
-    const date = new Date(dateString + 'T00:00:00.000Z');
-    if (isNaN(date.getTime())) return '';
-    return date.toISOString();
-  } catch (error) {
-    return '';
-  }
 };
 
 const useAdminUserDetail = (id) => {
@@ -109,282 +22,146 @@ const useAdminUserDetail = (id) => {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [passwordChangeLoading, setPasswordChangeLoading] = useState(false);
   const [securityAlert, setSecurityAlert] = useState(null);
-  const [imageLoadErrors, setImageLoadErrors] = useState(new Set());
-  const [imageUrls, setImageUrls] = useState(new Map());
-
-  // Dropdown states
-  const [faculties, setFaculties] = useState([]);
-  const [departments, setDepartments] = useState([]);
-  const [teachers, setTeachers] = useState([]);
-  const [dropdownLoading, setDropdownLoading] = useState(false);
-  const [dropdownError, setDropdownError] = useState('');
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleImageError = useCallback((filename) => {
-    setImageLoadErrors(prev => new Set([...prev, filename]));
-  }, []);
+  const {
+    imageLoadErrors,
+    imageUrls,
+    loadingImages,
+    handleImageError,
+    shouldLoadImage,
+    loadImageWithCredentials,
+    preloadImage,
+    getCachedImageUrl,
+    getProfileImageUrl,
+    clearImageCache
+  } = useImageLoader();
 
-  const shouldLoadImage = useCallback((filename) => {
-    return filename && !imageLoadErrors.has(filename);
-  }, [imageLoadErrors]);
+  const {
+    faculties,
+    departments,
+    teachers,
+    dropdownLoading,
+    dropdownError,
+    loadDropdownData,
+    retryLoadDropdownData
+  } = useDropdownData();
 
-  const loadImageWithCredentials = useCallback(async (filename) => {
-    if (!filename || imageLoadErrors.has(filename) || imageUrls.has(filename)) {
-      return imageUrls.get(filename) || null;
-    }
+  const {
+    validateAndSanitizeId,
+    validatePassword,
+    validateUserData,
+    sanitizeUserData,
+    validateUserType,
+    sanitizeInput
+  } = useValidation();
 
-    const imageUrl = getProfileImageUrl(filename);
-    if (!imageUrl) return null;
+  const {
+    formatDateForInput,
+    formatDateForSubmit
+  } = useDateFormatter();
 
-    try {
-      const blobUrl = await fetchImageWithCredentials(imageUrl);
-      if (blobUrl) {
-        setImageUrls(prev => new Map(prev.set(filename, blobUrl)));
-        return blobUrl;
-      } else {
-        setImageLoadErrors(prev => new Set([...prev, filename]));
-        return null;
-      }
-    } catch (error) {
-      console.error('Error loading image:', error);
-      setImageLoadErrors(prev => new Set([...prev, filename]));
-      return null;
-    }
-  }, [imageLoadErrors, imageUrls]);
+  const {
+    handleApiError,
+    fetchUserData: apiFetchUserData,
+    updateUserData: apiUpdateUserData,
+    changePassword: apiChangePassword,
+    updateStudentAssignment
+  } = useApiClient();
 
-  // ฟังก์ชันโหลดข้อมูล dropdown
-  const loadDropdownData = useCallback(async () => {
-    setDropdownLoading(true);
-    setDropdownError('');
-
-    try {
-      const requestConfig = {
-        withCredentials: true,
-        timeout: 15000,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'Cache-Control': 'no-cache'
-        }
-      };
-
-      const requests = [
-        axios.get(getApiUrl('/api/admin/faculties'), requestConfig)
-          .catch(error => ({ error, type: 'faculties' })),
-        axios.get(getApiUrl('/api/admin/departments'), requestConfig)
-          .catch(error => ({ error, type: 'departments' })),
-        axios.get(getApiUrl('/api/admin/teacher-advisors'), requestConfig)
-          .catch(error => ({ error, type: 'teachers' }))
-      ];
-
-      const [facultiesRes, departmentsRes, teachersRes] = await Promise.all(requests);
-
-      if (facultiesRes.error) {
-        console.error('Failed to load faculties:', facultiesRes.error);
-      } else if (facultiesRes.data?.status) {
-        setFaculties(facultiesRes.data.data || []);
-      }
-
-      if (departmentsRes.error) {
-        console.error('Failed to load departments:', departmentsRes.error);
-      } else if (departmentsRes.data?.status) {
-        setDepartments(departmentsRes.data.data || []);
-      }
-
-      if (teachersRes.error) {
-        console.error('Failed to load teachers:', teachersRes.error);
-        const teachersError = teachersRes.error;
-
-        if (teachersError.response?.status === 401) {
-          setDropdownError('กรุณาเข้าสู่ระบบใหม่');
-        } else if (teachersError.response?.status === 403) {
-          setDropdownError('ไม่มีสิทธิ์เข้าถึงข้อมูลอาจารย์');
-        } else if (teachersError.response?.status === 400) {
-          setDropdownError('ข้อมูลการร้องขอไม่ถูกต้อง กรุณาลองใหม่');
-        } else if (teachersError.code === 'ECONNABORTED') {
-          setDropdownError('การเชื่อมต่อหมดเวลา กรุณาลองใหม่');
-        } else {
-          setDropdownError('ไม่สามารถโหลดข้อมูลอาจารย์ได้ กรุณาลองใหม่อีกครั้ง');
-        }
-      } else if (teachersRes.data?.status) {
-        setTeachers(teachersRes.data.data || []);
-      }
-
-      if (!facultiesRes.error && !departmentsRes.error && (!facultiesRes.data?.status || !departmentsRes.data?.status)) {
-        setDropdownError('ไม่สามารถโหลดข้อมูลคณะและสาขาได้');
-      }
-
-    } catch (error) {
-      console.error('Unexpected error loading dropdown data:', error);
-      setDropdownError('เกิดข้อผิดพลาดในการโหลดข้อมูล กรุณาลองใหม่อีกครั้ง');
-    } finally {
-      setDropdownLoading(false);
-    }
-  }, []);
-
-  const retryLoadDropdownData = useCallback(() => {
-    setDropdownError('');
-    loadDropdownData();
-  }, [loadDropdownData]);
-
-  useEffect(() => {
-    return () => {
-      imageUrls.forEach(blobUrl => {
-        if (blobUrl && blobUrl.startsWith('blob:')) {
-          URL.revokeObjectURL(blobUrl);
-        }
-      });
-    };
-  }, [imageUrls]);
-
-  const validateAndSanitizeId = useCallback((rawId) => {
-    if (!rawId) {
-      throw new Error('ไม่พบรหัสผู้ใช้');
-    }
-
-    const sanitizedId = sanitizeInput(rawId.toString());
-
-    if (!validateId(sanitizedId)) {
-      throw new Error('รหัสผู้ใช้ไม่ถูกต้อง');
-    }
-
-    return parseInt(sanitizedId, 10);
-  }, []);
-
+  const { singleFetch } = useSingleFetch();
   const fetchUserData = useCallback(async () => {
+    const fetchKey = `user-${id}`;
+
     try {
-      setLoading(true);
-      setError(null);
-      setSecurityAlert(null);
+      await singleFetch(fetchKey, async () => {
+        setLoading(true);
+        setError(null);
+        setSecurityAlert(null);
 
-      let validatedId;
-      try {
-        validatedId = validateAndSanitizeId(id);
-      } catch (validationError) {
-        setError(validationError.message);
-        setLoading(false);
-        return;
-      }
-      let userType = 'student';
-      if (location.state?.userData?.userType) {
-        const stateUserType = sanitizeInput(location.state.userData.userType);
-        if (validateUserType(stateUserType)) {
-          userType = stateUserType;
+        let validatedId;
+        try {
+          validatedId = validateAndSanitizeId(id);
+        } catch (validationError) {
+          setError(validationError.message);
+          setLoading(false);
+          return;
         }
-      } else {
-        userType = detectUserTypeFromPath(location.pathname);
-      }
 
-      let apiEndpoint = '';
-      switch (userType) {
-        case 'student':
-          apiEndpoint = `/api/admin/students/${validatedId}`;
-          break;
-        case 'teacher':
-          apiEndpoint = `/api/admin/teachers/${validatedId}`;
-          break;
-        case 'staff':
-          apiEndpoint = `/api/admin/staff/${validatedId}`;
-          break;
-        default:
-          apiEndpoint = `/api/admin/students/${validatedId}`;
-      }
+        let userType = 'student';
+        if (location.state?.userData?.userType) {
+          const stateUserType = sanitizeInput(location.state.userData.userType);
+          if (validateUserType(stateUserType)) {
+            userType = stateUserType;
+          }
+        } else {
+          userType = detectUserTypeFromPath(location.pathname);
+        }
 
-      const response = await axios.get(getApiUrl(apiEndpoint), {
-        withCredentials: true,
-        timeout: 15000,
-        headers: {
-          'Cache-Control': 'no-cache',
-          'X-Requested-With': 'XMLHttpRequest',
-          'Content-Type': 'application/json'
-        },
-        validateStatus: (status) => {
-          return status >= 200 && status < 300;
+        const response = await apiFetchUserData(validatedId, userType);
+
+        if (response && response.status) {
+          const receivedData = response.data;
+          if (!receivedData || typeof receivedData !== 'object') {
+            throw new Error('ข้อมูลที่ได้รับไม่ถูกต้อง');
+          }
+
+          if (receivedData.id !== validatedId) {
+            setSecurityAlert('ตรวจพบการพยายามเข้าถึงข้อมูลไม่ถูกต้อง');
+            throw new Error('ข้อมูลไม่ตรงกับที่ร้องขอ');
+          }
+
+          let processedData = { ...receivedData };
+          if (userType === 'teacher' && receivedData.teacher) {
+            processedData = {
+              ...receivedData,
+              userType: 'teacher',
+              teacher: {
+                ...receivedData.teacher,
+                position: receivedData.teacher.isDean ? 'คณบดี' : 'อาจารย์',
+                isResigned: receivedData.teacher.isResigned || false,
+                isDean: receivedData.teacher.isDean || false
+              }
+            };
+          }
+
+          processedData.imageUrl = getProfileImageUrl(processedData.imageFile);
+          processedData.originalImageFile = processedData.imageFile;
+          setUserData(processedData);
+
+          if (processedData.imageFile) {
+            preloadImage(processedData.imageFile);
+          }
+        } else {
+          setError(response?.message || 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้');
         }
       });
-
-      if (response.data && response.data.status) {
-        const receivedData = response.data.data;
-        if (!receivedData || typeof receivedData !== 'object') {
-          throw new Error('ข้อมูลที่ได้รับไม่ถูกต้อง');
-        }
-
-        if (receivedData.id !== validatedId) {
-          setSecurityAlert('ตรวจพบการพยายามเข้าถึงข้อมูลไม่ถูกต้อง');
-          throw new Error('ข้อมูลไม่ตรงกับที่ร้องขอ');
-        }
-        let processedData = { ...receivedData };
-        if (userType === 'teacher' && receivedData.teacher) {
-          processedData = {
-            ...receivedData,
-            userType: 'teacher',
-            teacher: {
-              ...receivedData.teacher,
-              position: receivedData.teacher.isDean ? 'คณบดี' : 'อาจารย์',
-              isResigned: receivedData.teacher.isResigned || false,
-              isDean: receivedData.teacher.isDean || false
-            }
-          };
-        }
-
-        processedData.imageUrl = getProfileImageUrl(processedData.imageFile);
-        processedData.originalImageFile = processedData.imageFile;
-        setUserData(processedData);
-
-        if (processedData.imageFile) {
-          loadImageWithCredentials(processedData.imageFile);
-        }
-      } else {
-        setError(response.data?.message || 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้');
-      }
 
     } catch (err) {
-      console.error('Fetch user data error:', err);
-
-      let errorMessage = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
-
-      if (axios.isAxiosError(err)) {
-        if (err.code === 'ECONNABORTED') {
-          errorMessage = 'การเชื่อมต่อหมดเวลา กรุณาลองใหม่อีกครั้ง';
-        } else if (err.response) {
-          switch (err.response.status) {
-            case 400:
-              errorMessage = 'ข้อมูลที่ร้องขอไม่ถูกต้อง';
-              break;
-            case 401:
-              errorMessage = 'กรุณาเข้าสู่ระบบใหม่';
-              setTimeout(() => navigate('/login'), 2000);
-              break;
-            case 403:
-              errorMessage = 'ไม่มีสิทธิ์เข้าถึงข้อมูลนี้';
-              setSecurityAlert('การเข้าถึงถูกปฏิเสธ - ไม่มีสิทธิ์เพียงพอ');
-              break;
-            case 404:
-              errorMessage = 'ไม่พบข้อมูลผู้ใช้ที่ต้องการ';
-              break;
-            case 429:
-              errorMessage = 'คำขอเกินจำนวนที่กำหนด กรุณารอสักครู่แล้วลองใหม่';
-              break;
-            case 500:
-            case 502:
-            case 503:
-              errorMessage = 'เซิร์ฟเวอร์ขัดข้อง กรุณาลองใหม่อีกครั้ง';
-              break;
-            default:
-              errorMessage = err.response.data?.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ';
-          }
-        } else if (err.request) {
-          errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้';
-        }
-      }
-
+      const errorMessage = handleApiError(err, 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
       setError(errorMessage);
+
+      if (err.response?.status === 403) {
+        setSecurityAlert('การเข้าถึงถูกปฏิเสธ - ไม่มีสิทธิ์เพียงพอ');
+      }
     } finally {
       setLoading(false);
     }
-  }, [id, location.state, location.pathname, validateAndSanitizeId, navigate, loadImageWithCredentials]);
+  }, [
+    id,
+    singleFetch,
+    location.state,
+    location.pathname,
+    validateAndSanitizeId,
+    apiFetchUserData,
+    handleApiError,
+    getProfileImageUrl,
+    preloadImage,
+    validateUserType,
+    sanitizeInput
+  ]);
 
   const handleUserDataUpdate = useCallback(async (updatedData) => {
     try {
@@ -392,162 +169,43 @@ const useAdminUserDetail = (id) => {
       setError(null);
       setSecurityAlert(null);
 
-      if (!updatedData || typeof updatedData !== 'object') {
-        throw new Error('ข้อมูลที่ส่งไม่ถูกต้อง');
+      const userType = userData?.userType;
+      const validation = validateUserData(updatedData, userType);
+
+      if (!validation.isValid) {
+        throw new Error(validation.message);
       }
 
       const validatedId = validateAndSanitizeId(id);
-      const userType = userData?.userType;
+      const sanitizedData = sanitizeUserData(updatedData, userType);
+      const response = await apiUpdateUserData(validatedId, userType, sanitizedData);
 
-      if (!validateUserType(userType)) {
-        throw new Error('ประเภทผู้ใช้ไม่ถูกต้อง');
-      }
-
-      const sanitizedData = {};
-      if (updatedData[userType]) {
-        const formData = updatedData[userType];
-        sanitizedData[userType] = {
-          ...formData,
-          firstName: sanitizeInput(formData.firstName || ''),
-          lastName: sanitizeInput(formData.lastName || ''),
-          code: sanitizeInput(formData.code || ''),
-          phone: sanitizeInput(formData.phone || ''),
-          religion: sanitizeInput(formData.religion || ''),
-          medicalProblem: sanitizeInput(formData.medicalProblem || ''),
-          otherPhones: Array.isArray(formData.otherPhones)
-            ? formData.otherPhones.map(phone => ({
-              name: sanitizeInput(phone.name || ''),
-              phone: sanitizeInput(phone.phone || '')
-            }))
-            : []
-        };
-
-        if (userType === 'teacher') {
-          sanitizedData[userType] = {
-            ...sanitizedData[userType],
-            isDean: formData.position === 'คณบดี' || formData.isDean,
-            isResigned: formData.isResigned || false
-          };
-        }
-
-        if (userType === 'staff') {
-          sanitizedData[userType] = {
-            ...sanitizedData[userType],
-            isResigned: formData.isResigned || false
-          };
-        }
-
-        if (userType === 'student') {
-          sanitizedData[userType] = {
-            ...sanitizedData[userType],
-            academicYear: formData.academicYear || null,
-            isGraduated: formData.isGraduated || false
-          };
-        }
-
-        if (!sanitizedData[userType].firstName || !sanitizedData[userType].lastName) {
-          throw new Error('ชื่อและนามสกุลเป็นข้อมูลที่จำเป็น');
-        }
-
-        const phoneRegex = /^[0-9-+\s()]*$/;
-        if (sanitizedData[userType].phone && !phoneRegex.test(sanitizedData[userType].phone)) {
-          throw new Error('หมายเลขโทรศัพท์ไม่ถูกต้อง');
-        }
-
-        for (const phone of sanitizedData[userType].otherPhones) {
-          if (phone.phone && !phoneRegex.test(phone.phone)) {
-            throw new Error('หมายเลขโทรศัพท์เพิ่มเติมไม่ถูกต้อง');
-          }
-        }
-      }
-
-      let apiEndpoint = '';
-      switch (userType) {
-        case 'student':
-          apiEndpoint = `/api/admin/students/${validatedId}`;
-          break;
-        case 'teacher':
-          apiEndpoint = `/api/admin/teachers/${validatedId}`;
-          break;
-        case 'staff':
-          apiEndpoint = `/api/admin/staff/${validatedId}`;
-          break;
-        default:
-          throw new Error('ประเภทผู้ใช้ไม่ถูกต้อง');
-      }
-
-      const response = await axios.put(getApiUrl(apiEndpoint), sanitizedData, {
-        withCredentials: true,
-        timeout: 30000,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        validateStatus: (status) => status >= 200 && status < 300
-      });
-
-      if (response.data && response.data.status) {
+      if (response && response.status) {
         await fetchUserData();
       } else {
-        setError(response.data?.message || 'ไม่สามารถอัพเดทข้อมูลได้');
+        setError(response?.message || 'ไม่สามารถอัพเดทข้อมูลได้');
       }
 
     } catch (err) {
-      console.error('Update user data error:', err);
-
-      let errorMessage = 'เกิดข้อผิดพลาดในการอัพเดทข้อมูล';
-
-      if (axios.isAxiosError(err)) {
-        if (err.code === 'ECONNABORTED') {
-          errorMessage = 'การเชื่อมต่อหมดเวลา กรุณาลองใหม่อีกครั้ง';
-        } else if (err.response) {
-          switch (err.response.status) {
-            case 400:
-              errorMessage = 'ข้อมูลที่ส่งไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง';
-              break;
-            case 401:
-              errorMessage = 'กรุณาเข้าสู่ระบบใหม่';
-              setTimeout(() => navigate('/login'), 2000);
-              break;
-            case 403:
-              errorMessage = 'ไม่มีสิทธิ์แก้ไขข้อมูลนี้';
-              setSecurityAlert('การแก้ไขถูกปฏิเสธ - ไม่มีสิทธิ์เพียงพอ');
-              break;
-            case 404:
-              errorMessage = 'ไม่พบข้อมูลผู้ใช้ที่ต้องการแก้ไข';
-              break;
-            case 422:
-              errorMessage = 'ข้อมูลที่ส่งไม่ผ่านการตรวจสอบ';
-              break;
-            case 429:
-              errorMessage = 'คำขอเกินจำนวนที่กำหนด กรุณารอสักครู่';
-              break;
-            default:
-              errorMessage = err.response.data?.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ';
-          }
-        }
-      } else {
-        errorMessage = err.message || errorMessage;
-      }
-
+      const errorMessage = handleApiError(err, 'เกิดข้อผิดพลาดในการอัพเดทข้อมูล');
       setError(errorMessage);
+
+      if (err.response?.status === 403) {
+        setSecurityAlert('การแก้ไขถูกปฏิเสธ - ไม่มีสิทธิ์เพียงพอ');
+      }
     } finally {
       setUpdateLoading(false);
     }
-  }, [userData?.userType, id, fetchUserData, validateAndSanitizeId, navigate]);
-
-  const handleAssignmentChange = useCallback(async (departmentId, advisorId) => {
-    if (!departmentId || !advisorId) {
-      throw new Error('ข้อมูลภาควิชาและอาจารย์ที่ปรึกษาจำเป็นต้องมี');
-    }
-
-    const validatedId = validateAndSanitizeId(id);
-
-    await axios.put(getApiUrl(`/api/admin/students/${validatedId}/assignment`), {
-      Department_ID: parseInt(departmentId),
-      Teacher_ID: parseInt(advisorId)
-    }, { withCredentials: true });
-  }, [id, validateAndSanitizeId]);
+  }, [
+    userData?.userType,
+    id,
+    fetchUserData,
+    validateAndSanitizeId,
+    validateUserData,
+    sanitizeUserData,
+    apiUpdateUserData,
+    handleApiError
+  ]);
 
   const handlePasswordChange = useCallback(async (newPassword) => {
     try {
@@ -563,84 +221,47 @@ const useAdminUserDetail = (id) => {
         throw new Error('ไม่พบข้อมูล Users_ID สำหรับการเปลี่ยนรหัสผ่าน');
       }
 
-      const validatePassword = (password) => {
-        if (password.length < 8) {
-          return false;
-        }
-
-        if (!/[a-zA-Z]/.test(password)) {
-          return false;
-        }
-
-        if (!/[0-9]/.test(password)) {
-          return false;
-        }
-
-        return true;
-      };
-
-      if (!validatePassword(newPassword)) {
-        throw new Error('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร ประกอบด้วยตัวอักษรอย่างน้อย 1 ตัว และตัวเลขอย่างน้อย 1 ตัว');
+      const passwordValidation = validatePassword(newPassword);
+      if (!passwordValidation.isValid) {
+        throw new Error(passwordValidation.message);
       }
 
-      const response = await axios.put(getApiUrl(`/api/admin/users/${userData.Users_ID}/change-password`), {
-        newPassword: sanitizeInput(newPassword)
-      }, {
-        withCredentials: true,
-        timeout: 15000,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        validateStatus: (status) => status >= 200 && status < 300
-      });
+      const sanitizedPassword = sanitizeInput(newPassword);
+      const response = await apiChangePassword(userData.Users_ID, sanitizedPassword);
 
-      if (response.data && response.data.status) {
+      if (response && response.status) {
         return { success: true, message: 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว' };
       } else {
-        throw new Error(response.data?.message || 'ไม่สามารถเปลี่ยนรหัสผ่านได้');
+        throw new Error(response?.message || 'ไม่สามารถเปลี่ยนรหัสผ่านได้');
       }
 
     } catch (err) {
-      console.error('Change password error:', err);
+      const errorMessage = handleApiError(err, 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน');
 
-      let errorMessage = 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน';
-
-      if (axios.isAxiosError(err)) {
-        if (err.code === 'ECONNABORTED') {
-          errorMessage = 'การเชื่อมต่อหมดเวลา กรุณาลองใหม่อีกครั้ง';
-        } else if (err.response) {
-          switch (err.response.status) {
-            case 400:
-              errorMessage = err.response.data?.message || 'รหัสผ่านไม่ถูกต้องตามเงื่อนไข';
-              break;
-            case 401:
-              errorMessage = 'กรุณาเข้าสู่ระบบใหม่';
-              setTimeout(() => navigate('/login'), 2000);
-              break;
-            case 403:
-              errorMessage = 'ไม่มีสิทธิ์เปลี่ยนรหัสผ่านของผู้ใช้นี้';
-              setSecurityAlert('การเปลี่ยนรหัสผ่านถูกปฏิเสธ - ไม่มีสิทธิ์เพียงพอ');
-              break;
-            case 404:
-              errorMessage = 'ไม่พบข้อมูลผู้ใช้ที่ต้องการเปลี่ยนรหัสผ่าน';
-              break;
-            case 429:
-              errorMessage = 'คำขอเกินจำนวนที่กำหนด กรุณารอสักครู่';
-              break;
-            default:
-              errorMessage = err.response.data?.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ';
-          }
-        }
-      } else {
-        errorMessage = err.message || errorMessage;
+      if (err.response?.status === 403) {
+        setSecurityAlert('การเปลี่ยนรหัสผ่านถูกปฏิเสธ - ไม่มีสิทธิ์เพียงพอ');
       }
 
       throw new Error(errorMessage);
     } finally {
       setPasswordChangeLoading(false);
     }
-  }, [userData?.Users_ID, navigate]);
+  }, [
+    userData?.Users_ID,
+    validatePassword,
+    sanitizeInput,
+    apiChangePassword,
+    handleApiError
+  ]);
+
+  const handleAssignmentChange = useCallback(async (departmentId, advisorId) => {
+    if (!departmentId || !advisorId) {
+      throw new Error('ข้อมูลภาควิชาและอาจารย์ที่ปรึกษาจำเป็นต้องมี');
+    }
+
+    const validatedId = validateAndSanitizeId(id);
+    await updateStudentAssignment(validatedId, departmentId, advisorId);
+  }, [id, validateAndSanitizeId, updateStudentAssignment]);
 
   const handleGoBack = useCallback(() => {
     const userType = userData?.userType;
@@ -663,7 +284,7 @@ const useAdminUserDetail = (id) => {
       default:
         navigate('/name-register');
     }
-  }, [navigate, userData?.userType]);
+  }, [navigate, userData?.userType, validateUserType]);
 
   const retryFetch = useCallback(() => {
     setError(null);
@@ -695,22 +316,29 @@ const useAdminUserDetail = (id) => {
     securityAlert,
     imageLoadErrors,
     imageUrls,
+    loadingImages,
+    handleImageError,
+    shouldLoadImage,
+    loadImageWithCredentials,
+    preloadImage,
+    getCachedImageUrl,
+    getProfileImageUrl,
+    clearImageCache,
+    isLoading: filename => loadingImages?.has(filename) || false,
+    hasError: filename => imageLoadErrors?.has(filename) || false,
+    isLoaded: filename => imageUrls?.has(filename) || false,
     faculties,
     departments,
     teachers,
     dropdownLoading,
     dropdownError,
+    loadDropdownData,
+    retryLoadDropdownData,
     handleUserDataUpdate,
     handlePasswordChange,
     handleAssignmentChange,
     handleGoBack,
     retryFetch,
-    handleImageError,
-    shouldLoadImage,
-    loadImageWithCredentials,
-    loadDropdownData,
-    retryLoadDropdownData,
-    getProfileImageUrl,
     formatDateForInput,
     formatDateForSubmit,
     setError,

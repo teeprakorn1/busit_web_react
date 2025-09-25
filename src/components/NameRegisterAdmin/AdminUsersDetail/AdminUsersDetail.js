@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, AlertCircle, Shield, Lock, CheckCircle } from 'lucide-react';
-import { FiBell } from 'react-icons/fi';
 
 import Navbar from '../../NavigationBar/NavigationBar';
 import StudentProfileForm from './forms/StudentProfileForm';
@@ -19,11 +18,6 @@ import { useUserPermissions } from './hooks/useUserPermissions';
 
 import styles from './AdminUsersDetail.module.css';
 
-const sanitizeInput = (input) => {
-  if (typeof input !== 'string') return input;
-  return input.replace(/[<>"'&]/g, '').trim();
-};
-
 function AdminUsersDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -39,7 +33,8 @@ function AdminUsersDetail() {
     passwordChangeLoading,
     securityAlert,
     imageUrls,
-    // เพิ่ม dropdown states และฟังก์ชันใหม่
+    getCachedImageUrl,
+    clearImageCache,
     faculties,
     departments,
     teachers,
@@ -63,16 +58,12 @@ function AdminUsersDetail() {
     isMobile,
     sidebarOpen,
     setSidebarOpen,
-    notifyOpen,
-    setNotifyOpen,
     activeTab,
-    handleTabChange,
-    notifications
+    handleTabChange
   } = useUIState();
 
   const { userInfo, formatRegisterDate } = useUserUtils(userData);
 
-  // Permission check - redirect if not staff
   useEffect(() => {
     if (permissions.userType !== null) {
       if (!permissions.isStaff || !permissions.canAccessAdminFeatures) {
@@ -83,12 +74,17 @@ function AdminUsersDetail() {
   }, [permissions, navigate]);
 
   useEffect(() => {
-    if (userData?.imageFile && shouldLoadImage(userData.imageFile)) {
-      loadImageWithCredentials(userData.imageFile);
-    }
-  }, [userData?.imageFile, shouldLoadImage, loadImageWithCredentials]);
+    if (userData?.imageFile) {
+      if (userData.originalImageFile && userData.originalImageFile !== userData.imageFile && clearImageCache) {
+        clearImageCache(userData.originalImageFile);
+      }
 
-  // Clear success message after 5 seconds
+      if (shouldLoadImage && shouldLoadImage(userData.imageFile)) {
+        loadImageWithCredentials(userData.imageFile);
+      }
+    }
+  }, [userData?.imageFile, userData?.originalImageFile, shouldLoadImage, loadImageWithCredentials, clearImageCache]);
+
   useEffect(() => {
     if (successMessage) {
       const timer = setTimeout(() => {
@@ -110,7 +106,6 @@ function AdminUsersDetail() {
         setSuccessMessage(result.message || 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว');
       }
     } catch (error) {
-      // Error will be handled by the modal component
       throw error;
     }
   };
@@ -132,9 +127,8 @@ function AdminUsersDetail() {
     switch (userData.userType) {
       case 'student':
         return (
-          <StudentProfileForm 
+          <StudentProfileForm
             {...commonProps}
-            // เพิ่ม props ใหม่สำหรับ dropdown และการจัดการข้อมูล
             faculties={faculties}
             departments={departments}
             teachers={teachers}
@@ -180,84 +174,50 @@ function AdminUsersDetail() {
     }
   };
 
-  const renderNotificationDropdown = () => (
-    <div className={styles.notifyWrapper}>
-      <button
-        className={styles.notifyButton}
-        onClick={() => setNotifyOpen(!notifyOpen)}
-        aria-label="การแจ้งเตือน"
-      >
-        <FiBell size={24} />
-        {notifications.length > 0 && (
-          <span className={styles.badge}>{notifications.length}</span>
-        )}
-      </button>
 
-      {notifyOpen && (
-        <div className={styles.notifyDropdown}>
-          <div className={styles.notifyHeader}>
-            <h4>การแจ้งเตือน</h4>
-          </div>
-          {notifications.length > 0 ? (
-            notifications.map((notification, index) => (
-              <div key={index} className={styles.notifyItem}>
-                <span className={styles.notifyDot}></span>
-                {sanitizeInput(notification)}
-              </div>
-            ))
-          ) : (
-            <div className={styles.noNotifications}>
-              ไม่มีการแจ้งเตือน
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
 
   const renderUserProfileCard = () => {
     if (!userInfo) return null;
 
-    const displayImageUrl = userInfo.imageFile ? imageUrls.get(userInfo.imageFile) : null;
-    const hasValidImage = displayImageUrl && shouldLoadImage(userInfo.imageFile);
+    const hasImageFile = userInfo.imageFile && userInfo.imageFile.trim() !== '';
+    const cachedImageUrl = getCachedImageUrl ? getCachedImageUrl(userInfo.imageFile) : null;
+    const shouldShowImage = hasImageFile && cachedImageUrl;
 
     return (
       <div className={styles.profileCard}>
         <div className={styles.profileHeader}>
           <div className={styles.profileAvatar}>
-            {hasValidImage ? (
-              <img 
-                src={displayImageUrl} 
+            {shouldShowImage && (
+              <img
+                src={cachedImageUrl}
                 alt={`รูปโปรไฟล์ของ ${userInfo.displayName}`}
                 className={styles.profileImage}
                 onError={(e) => {
-                  console.error('Image load error for:', userInfo.imageFile);
-                  handleImageError(userInfo.imageFile);
                   e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
-                }}
-                onLoad={(e) => {
-                  e.target.style.display = 'block';
-                  if (e.target.nextSibling) {
-                    e.target.nextSibling.style.display = 'none';
+                  const fallback = e.target.parentElement.querySelector('.fallback-avatar');
+                  if (fallback) {
+                    fallback.style.display = 'flex';
                   }
                 }}
                 style={{ display: 'block' }}
               />
-            ) : null}
-            <div 
-              className={styles.defaultAvatar}
-              style={{ 
-                display: (!hasValidImage) ? 'flex' : 'none' 
+            )}
+
+            <div
+              className={`${styles.defaultAvatar} fallback-avatar`}
+              style={{
+                display: !shouldShowImage ? 'flex' : 'none'
               }}
             >
               <User size={48} />
             </div>
           </div>
+
           <div className={styles.profileInfo}>
             <div className={styles.profileInfoContent}>
               <h2>{userInfo.displayName}</h2>
               <p className={styles.userCode}>{userInfo.userCode}</p>
+
               <div className={styles.profileMeta}>
                 <span className={`${styles.statusBadge} ${userInfo.isActive ? styles.active : styles.inactive}`}>
                   {userInfo.isActive ? 'ใช้งาน' : 'ระงับ'}
@@ -271,6 +231,7 @@ function AdminUsersDetail() {
                   </span>
                 )}
               </div>
+
               {userInfo.regisTime && (
                 <div className={styles.registerInfo}>
                   <span className={styles.registerLabel}>สมัครสมาชิกเมื่อ:</span>
@@ -280,14 +241,13 @@ function AdminUsersDetail() {
                 </div>
               )}
             </div>
-            
-            {/* Action Buttons - ย้ายไปด้านขวา */}
+
             <div className={styles.profileActions}>
               {permissions.canExportData && (
                 <ExportExcelButton userData={userData} />
               )}
               {permissions.canEditUsers && (
-                <button 
+                <button
                   className={styles.changePasswordButton}
                   onClick={handleChangePassword}
                   disabled={passwordChangeLoading}
@@ -340,7 +300,7 @@ function AdminUsersDetail() {
       <div className={styles.successBanner}>
         <CheckCircle size={16} />
         <span>{successMessage}</span>
-        <button 
+        <button
           className={styles.closeSuccess}
           onClick={() => setSuccessMessage('')}
           aria-label="ปิดข้อความ"
@@ -389,8 +349,8 @@ function AdminUsersDetail() {
             <button className={styles.backButton} onClick={handleGoBack}>
               <ArrowLeft size={16} /> กลับไปหน้ารายชื่อ
             </button>
-            <button 
-              className={styles.retryButton} 
+            <button
+              className={styles.retryButton}
               onClick={retryFetch}
               disabled={loading}
             >
@@ -434,8 +394,8 @@ function AdminUsersDetail() {
           <Shield className={styles.errorIcon} />
           <h2>ไม่มีสิทธิ์เข้าถึง</h2>
           <p>คุณไม่มีสิทธิ์ในการเข้าถึงหน้านี้ เฉพาะเจ้าหน้าที่เท่านั้นที่สามารถดูข้อมูลผู้ใช้รายบุคคลได้</p>
-          <button 
-            className={styles.backButton} 
+          <button
+            className={styles.backButton}
             onClick={() => navigate('/dashboard')}
           >
             <ArrowLeft size={16} /> กลับไปหน้าหลัก
@@ -453,7 +413,6 @@ function AdminUsersDetail() {
     </div>
   );
 
-  // Early returns for permission checks
   if (permissions.userType === null) {
     return renderPermissionLoadingState();
   }
@@ -462,7 +421,6 @@ function AdminUsersDetail() {
     return renderUnauthorizedState();
   }
 
-  // Early returns for different states
   if (loading) return renderLoadingState();
   if (error) return renderErrorState();
   if (!userData) return renderNoDataState();
@@ -479,10 +437,8 @@ function AdminUsersDetail() {
           ${isMobile ? styles.mobileContent : ""} 
           ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}
       >
-        {/* Success Message */}
         {renderSuccessMessage()}
 
-        {/* Security Alert */}
         {securityAlert && (
           <div className={styles.securityBanner}>
             <Shield size={16} />
@@ -490,7 +446,6 @@ function AdminUsersDetail() {
           </div>
         )}
 
-        {/* Header */}
         <div className={styles.headerBar}>
           <div className={styles.headerLeft}>
             <button className={styles.backButton} onClick={handleGoBack}>
@@ -506,22 +461,16 @@ function AdminUsersDetail() {
             </div>
           </div>
           <div className={styles.headerRight}>
-            {renderNotificationDropdown()}
           </div>
         </div>
 
-        {/* User Profile Card */}
         {renderUserProfileCard()}
-
-        {/* Navigation Tabs */}
         {renderTabNavigation()}
 
-        {/* Tab Content */}
         <div className={styles.tabContent}>
           {renderTabContent()}
         </div>
 
-        {/* Update Loading Indicator */}
         {updateLoading && (
           <div className={styles.updateOverlay}>
             <div className={styles.updateSpinner}>
@@ -531,7 +480,6 @@ function AdminUsersDetail() {
           </div>
         )}
 
-        {/* Change Password Modal */}
         {showPasswordModal && (
           <ChangePasswordModal
             userData={userData}
