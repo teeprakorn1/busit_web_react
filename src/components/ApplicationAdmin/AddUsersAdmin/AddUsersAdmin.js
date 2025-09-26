@@ -483,7 +483,7 @@ function AddUsersAdmin() {
                 </button>
               </div>
             )}
-            <h1 className={styles.heading}>เพิ่มข้อมูลผู้ใช้</h1>
+            <h1 className={styles.heading}>เพิ่มบัญชีนักศึกษา/อาจารย์</h1>
             <div className={styles.headerRight}>
               <div className={styles.notifyWrapper}>
                 <button

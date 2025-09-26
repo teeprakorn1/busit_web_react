@@ -105,6 +105,115 @@ export const stringToBoolean = (value) => {
     return stringValue === 'true';
 };
 
+// เพิ่มฟังก์ชันสำหรับ Staff
+export const validateStaffForm = (data) => {
+  const errors = {};
+
+  // ตรวจสอบอีเมล
+  if (!data.email || data.email.trim() === '') {
+    errors.email = 'กรุณากรอกอีเมล';
+  } else if (!isValidEmail(data.email)) {
+    errors.email = 'รูปแบบอีเมลไม่ถูกต้อง';
+  }
+
+  // ตรวจสอบรหัสผ่าน
+  if (!data.password || data.password.trim() === '') {
+    errors.password = 'กรุณากรอกรหัสผ่าน';
+  } else if (data.password.length < 8) {
+    errors.password = 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร';
+  }
+
+  // ตรวจสอบยืนยันรหัสผ่าน
+  if (!data.confirmPassword || data.confirmPassword.trim() === '') {
+    errors.confirmPassword = 'กรุณายืนยันรหัสผ่าน';
+  } else if (data.password !== data.confirmPassword) {
+    errors.confirmPassword = 'รหัสผ่านไม่ตรงกัน';
+  }
+
+  // ตรวจสอบรหัสเจ้าหน้าที่
+  if (!data.code || data.code.trim() === '') {
+    errors.code = 'กรุณากรอกรหัสเจ้าหน้าที่';
+  } else if (!/^\d{12}-\d{1}$/.test(data.code)) {
+    errors.code = 'รูปแบบรหัสเจ้าหน้าที่ไม่ถูกต้อง (ตัวอย่าง: 026530461001-6)';
+  }
+
+  // ตรวจสอบชื่อ
+  if (!data.firstName || data.firstName.trim() === '') {
+    errors.firstName = 'กรุณากรอกชื่อจริง';
+  } else if (!isValidName(data.firstName)) {
+    errors.firstName = 'ชื่อต้องมีอย่างน้อย 2 ตัวอักษร และเป็นภาษาไทยหรืออังกฤษเท่านั้น';
+  }
+
+  // ตรวจสอบนามสกุล
+  if (!data.lastName || data.lastName.trim() === '') {
+    errors.lastName = 'กรุณากรอกนามสกุล';
+  } else if (!isValidName(data.lastName)) {
+    errors.lastName = 'นามสกุลต้องมีอย่างน้อย 2 ตัวอักษร และเป็นภาษาไทยหรืออังกฤษเท่านั้น';
+  }
+
+  // ตรวจสอบเบอร์โทรศัพท์ (ถ้ามี)
+  if (data.phone && data.phone.trim() !== '') {
+    if (!isValidThaiPhone(data.phone)) {
+      errors.phone = 'เบอร์โทรศัพท์ต้องเป็นเลข 10 หลัก เริ่มต้นด้วย 0';
+    }
+  }
+
+  return errors;
+};
+
+// ฟังก์ชันตรวจสอบข้อมูล CSV สำหรับเจ้าหน้าที่
+export const validateStaffCSVData = (data) => {
+  const errors = [];
+
+  // ตรวจสอบข้อมูลจำเป็น
+  const requiredFields = [
+    { field: 'Users_Email', name: 'อีเมล' },
+    { field: 'Users_Password', name: 'รหัสผ่าน' },
+    { field: 'Staff_Code', name: 'รหัสเจ้าหน้าที่' },
+    { field: 'Staff_FirstName', name: 'ชื่อจริง' },
+    { field: 'Staff_LastName', name: 'นามสกุล' }
+  ];
+
+  requiredFields.forEach(({ field, name }) => {
+    if (!data[field] || data[field].toString().trim() === '') {
+      errors.push(`${name} จำเป็นต้องกรอก`);
+    }
+  });
+
+  // ตรวจสอบรูปแบบอีเมล
+  if (data.Users_Email && !isValidEmail(data.Users_Email)) {
+    errors.push('รูปแบบอีเมลไม่ถูกต้อง');
+  }
+
+  // ตรวจสอบความแข็งแกร่งรหัสผ่าน
+  if (data.Users_Password && !isStrongPassword(data.Users_Password)) {
+    errors.push('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร และมีทั้งตัวอักษรและตัวเลข');
+  }
+
+  // ตรวจสอบรูปแบบรหัสเจ้าหน้าที่
+  if (data.Staff_Code && !/^\d{12}-\d{1}$/.test(data.Staff_Code)) {
+    errors.push('รูปแบบรหัสเจ้าหน้าที่ไม่ถูกต้อง (ต้องเป็น 12 หลัก ตามด้วย - และเลข 1 หลัก)');
+  }
+
+  // ตรวจสอบชื่อ
+  if (data.Staff_FirstName && !isValidName(data.Staff_FirstName)) {
+    errors.push('ชื่อจริงไม่ถูกต้อง');
+  }
+
+  if (data.Staff_LastName && !isValidName(data.Staff_LastName)) {
+    errors.push('นามสกุลไม่ถูกต้อง');
+  }
+
+  // ตรวจสอบเบอร์โทรศัพท์ (ถ้ามี)
+  if (data.Staff_Phone && data.Staff_Phone.toString().trim() !== '') {
+    if (!isValidThaiPhone(data.Staff_Phone)) {
+      errors.push('เบอร์โทรศัพท์ไม่ถูกต้อง');
+    }
+  }
+
+  return errors;
+};
+
 export const validateUserForm = (formData, userType) => {
     const errors = {};
 

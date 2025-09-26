@@ -9,9 +9,14 @@
   --text-muted: #6b7280;
   --card-bg: #ffffff;
   --shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+
+  --success-color: #16a34a;
+  --success-hover: #15803d;
+  --danger-color: #dc2626;
+  --danger-hover: #b91c1c;
 }
 
-/* Main Container */
+/* ---------- Layout ---------- */
 .container {
   height: 100vh;
   display: flex;
@@ -35,7 +40,7 @@
   margin-left: 0;
 }
 
-/* Header */
+/* ---------- Header ---------- */
 .headerBar {
   display: flex;
   align-items: center;
@@ -56,7 +61,6 @@
   transition: padding-left 0.3s ease;
 }
 
-/* Header Right */
 .headerRight {
   display: flex;
   align-items: center;
@@ -65,7 +69,7 @@
   justify-content: flex-end;
 }
 
-/* Notify */
+/* ---------- Notify ---------- */
 .notifyWrapper {
   position: relative;
 }
@@ -120,41 +124,350 @@
   border-radius: 6px;
 }
 
-/* Dashboard Section */
-.dashboardSection {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
-}
-
-.card {
-  background: var(--card-bg);
-  padding: 24px;
-  border-radius: 14px;
-  box-shadow: var(--shadow);
-  font-size: 18px;
-  font-weight: 500;
-  color: var(--text-dark);
+/* ---------- Back Button ---------- */
+.backButtonWrapper {
   display: flex;
   align-items: center;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.backButton:hover {
+  background: #e5e7eb;
+  transform: translateX(-2px);
+}
+
+/* ---------- Buttons ---------- */
+.buttonWrapper {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+
+.formButton {
+  display: inline-block;
+  width: 100%;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #3b82f6, #0e56f1);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+}
+
+.formButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+}
+
+.formButton:hover {
+  background: linear-gradient(135deg, #2563eb, #0e56f1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
+}
+
+.formButton:hover::before {
+  left: 100%;
+}
+
+.formButton:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.25);
+}
+
+.formButton:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.formButton:disabled::before {
+  display: none;
+}
+
+/* ---------- Loading States ---------- */
+.loadingWrapper {
+  display: flex;
   justify-content: center;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-.card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+.loading {
+  background: white;
+  padding: 2rem 3rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  font-size: 1.1rem;
+  color: #4a5568;
+  text-align: center;
+  font-weight: 500;
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
-/* Responsive */
+@keyframes pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* Import Loading Overlay */
+.importLoadingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(30, 30, 30, 0.9));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(8px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.importLoadingModal {
+  background: linear-gradient(135deg, #ffffff, #f8f9fa);
+  border-radius: 20px;
+  padding: 2.5rem;
+  max-width: 450px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    0 10px 20px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: slideUp 0.4s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.importLoadingModal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: shimmer 2s infinite;
+}
+
+.importLoadingContent h3 {
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.importLoadingContent p {
+  color: #6c757d;
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Enhanced Spinner */
+.importLoadingSpinner {
+  width: 50px;
+  height: 50px;
+  margin: 0 auto 1.5rem;
+  position: relative;
+}
+
+.importLoadingSpinner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 4px solid #e9ecef;
+  border-top: 4px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.importLoadingSpinner::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 34px;
+  height: 34px;
+  border: 3px solid transparent;
+  border-top: 3px solid #28a745;
+  border-radius: 50%;
+  animation: spin 1.5s linear infinite reverse;
+}
+
+/* Progress Section */
+.progressInfo {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  border: 1px solid #e9ecef;
+}
+
+.progressText {
+  color: #495057;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.progressBar {
+  width: 100%;
+  height: 12px;
+  background: linear-gradient(to right, #e9ecef, #dee2e6);
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 1rem 0;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(135deg, #28a745, #20c997, #17a2b8);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.progressFill::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: progressShimmer 2s infinite;
+}
+
+.progressPercentage {
+  color: #28a745;
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-top: 0.5rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.importWarning {
+  background: linear-gradient(135deg, #fff3cd, #fef7e0);
+  border: 1px solid #ffeaa7;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-top: 1.5rem;
+  color: #856404;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  position: relative;
+}
+
+.importWarning::before {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff3cd;
+  padding: 0 8px;
+  font-size: 1rem;
+}
+
+.importWarning strong {
+  color: #b45309;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes progressShimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* ---------- Responsive ---------- */
 @media (max-width: 768px) {
   .mainContent {
     margin-left: 0;
     padding: 15px 20px;
-  }
-
-  .dashboardSection {
-    grid-template-columns: 1fr;
   }
 
   .headerBar {
@@ -171,5 +484,27 @@
   .heading {
     padding-left: 50px;
     font-size: 22px;
+  }
+
+  .buttonWrapper {
+    justify-content: center;
+  }
+
+  .importLoadingModal {
+    padding: 2rem;
+    max-width: 90%;
+    margin: 1rem;
+  }
+  
+  .importLoadingContent h3 {
+    font-size: 1.3rem;
+  }
+  
+  .progressInfo {
+    padding: 1rem;
+  }
+  
+  .importWarning {
+    font-size: 0.8rem;
   }
 }

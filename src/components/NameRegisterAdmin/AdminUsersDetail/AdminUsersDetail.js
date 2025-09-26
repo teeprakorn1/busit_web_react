@@ -1,13 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, User, AlertCircle, Shield, Lock, CheckCircle } from 'lucide-react';
 
 import Navbar from '../../NavigationBar/NavigationBar';
-import StudentProfileForm from './forms/StudentProfileForm';
-import TeacherProfileForm from './forms/TeacherProfileForm';
 import StaffProfileForm from './forms/StaffProfileForm';
-import RecentActivitiesForm from './activityForms/RecentActivitiesForm';
-import IncompleteActivitiesForm from './activityForms/IncompleteActivitiesForm';
 import ExportExcelButton from './utils/ExportExcelButton';
 import ChangePasswordModal from './modals/ChangePasswordModal';
 
@@ -18,9 +14,10 @@ import { useUserPermissions } from './hooks/useUserPermissions';
 
 import styles from './AdminUsersDetail.module.css';
 
-function AdminUsersDetail() {
+function AdminStaffDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const permissions = useUserPermissions();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -35,23 +32,13 @@ function AdminUsersDetail() {
     imageUrls,
     getCachedImageUrl,
     clearImageCache,
-    faculties,
-    departments,
-    teachers,
-    dropdownLoading,
-    dropdownError,
     handleUserDataUpdate,
     handlePasswordChange,
-    handleAssignmentChange,
-    handleGoBack,
+    handleGoBack: originalHandleGoBack,
     retryFetch,
     handleImageError,
     shouldLoadImage,
-    loadImageWithCredentials,
-    loadDropdownData,
-    retryLoadDropdownData,
-    formatDateForInput,
-    formatDateForSubmit
+    loadImageWithCredentials
   } = useAdminUserDetail(id);
 
   const {
@@ -63,6 +50,11 @@ function AdminUsersDetail() {
   } = useUIState();
 
   const { userInfo, formatRegisterDate } = useUserUtils(userData);
+
+  // Override handleGoBack สำหรับ staff
+  const handleGoBack = () => {
+    navigate('/staff-management/staff-name');
+  };
 
   useEffect(() => {
     if (permissions.userType !== null) {
@@ -121,60 +113,30 @@ function AdminUsersDetail() {
       handleImageError,
       shouldLoadImage,
       loadImageWithCredentials,
-      canEdit: permissions.canEditStudents
+      canEdit: permissions.canEditStaff
     };
 
-    switch (userData.userType) {
-      case 'student':
-        return (
-          <StudentProfileForm
-            {...commonProps}
-            faculties={faculties}
-            departments={departments}
-            teachers={teachers}
-            dropdownLoading={dropdownLoading}
-            dropdownError={dropdownError}
-            loadDropdownData={loadDropdownData}
-            retryLoadDropdownData={retryLoadDropdownData}
-            handleAssignmentChange={handleAssignmentChange}
-            formatDateForInput={formatDateForInput}
-            formatDateForSubmit={formatDateForSubmit}
-          />
-        );
-      case 'teacher':
-        return <TeacherProfileForm {...commonProps} />;
-      case 'staff':
-        return <StaffProfileForm {...commonProps} />;
-      default:
-        return (
-          <div className={styles.unsupportedType}>
-            <AlertCircle size={48} />
-            <h3>ประเภทผู้ใช้ไม่รองรับ</h3>
-            <p>ระบบไม่สามารถแสดงข้อมูลประเภทผู้ใช้นี้ได้</p>
-          </div>
-        );
+    if (userData.userType === 'staff') {
+      return <StaffProfileForm {...commonProps} />;
     }
+
+    return (
+      <div className={styles.unsupportedType}>
+        <AlertCircle size={48} />
+        <h3>ประเภทผู้ใช้ไม่รองรับ</h3>
+        <p>ระบบไม่สามารถแสดงข้อมูลประเภทผู้ใช้นี้ได้</p>
+      </div>
+    );
   };
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'profile':
         return renderProfileForm();
-      case 'activities':
-        return (
-          <div className={styles.activitiesContainer}>
-            <RecentActivitiesForm userData={userData} />
-            {userData.userType === 'student' && (
-              <IncompleteActivitiesForm userData={userData} />
-            )}
-          </div>
-        );
       default:
         return renderProfileForm();
     }
   };
-
-
 
   const renderUserProfileCard = () => {
     if (!userInfo) return null;
@@ -225,9 +187,9 @@ function AdminUsersDetail() {
                 <span className={`${styles.typeBadge} ${styles[userInfo.userType]}`}>
                   {userInfo.userTypeDisplay}
                 </span>
-                {userInfo.userType === 'student' && userData.student && (
-                  <span className={`${styles.statusBadge} ${userData.student.isGraduated ? styles.graduated : styles.studying}`}>
-                    {userData.student.isGraduated ? 'จบการศึกษา' : 'กำลังศึกษา'}
+                {userData.staff && (
+                  <span className={`${styles.statusBadge} ${userData.staff.isResigned ? styles.resigned : styles.working}`}>
+                    {userData.staff.isResigned ? 'ลาออกแล้ว' : 'ปฏิบัติงาน'}
                   </span>
                 )}
               </div>
@@ -281,15 +243,6 @@ function AdminUsersDetail() {
         <User size={16} />
         <span>ข้อมูลส่วนตัว</span>
       </button>
-      {(userData?.userType === 'student' || userData?.userType === 'teacher') && (
-        <button
-          className={`${styles.tabButton} ${activeTab === 'activities' ? styles.active : ''}`}
-          onClick={() => handleTabChange('activities')}
-        >
-          <User size={16} />
-          <span>กิจกรรม</span>
-        </button>
-      )}
     </div>
   );
 
@@ -372,7 +325,7 @@ function AdminUsersDetail() {
       <main className={`${styles.mainContent} ${isMobile ? styles.mobileContent : ""} ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}>
         <div className={styles.errorContainer}>
           <AlertCircle className={styles.errorIcon} />
-          <h2>ไม่พบข้อมูลผู้ใช้</h2>
+          <h2>ไม่พบข้อมูลเจ้าหน้าที่</h2>
           <p>กรุณาตรวจสอบการเชื่อมโยงหรือลองใหม่อีกครั้ง</p>
           <button className={styles.backButton} onClick={handleGoBack}>
             <ArrowLeft size={16} /> กลับไปหน้ารายชื่อ
@@ -393,7 +346,7 @@ function AdminUsersDetail() {
         <div className={styles.errorContainer}>
           <Shield className={styles.errorIcon} />
           <h2>ไม่มีสิทธิ์เข้าถึง</h2>
-          <p>คุณไม่มีสิทธิ์ในการเข้าถึงหน้านี้ เฉพาะเจ้าหน้าที่เท่านั้นที่สามารถดูข้อมูลผู้ใช้รายบุคคลได้</p>
+          <p>คุณไม่มีสิทธิ์ในการเข้าถึงหน้านี้ เฉพาะเจ้าหน้าที่เท่านั้นที่สามารถดูข้อมูลเจ้าหน้าที่รายบุคคลได้</p>
           <button
             className={styles.backButton}
             onClick={() => navigate('/dashboard')}
@@ -452,15 +405,13 @@ function AdminUsersDetail() {
               <ArrowLeft size={20} />
             </button>
             <div>
-              <h1 className={styles.heading}>ข้อมูลผู้ใช้งานรายบุคคล</h1>
+              <h1 className={styles.heading}>ข้อมูลเจ้าหน้าที่รายบุคคล</h1>
               <div className={styles.breadcrumb}>
-                <span>รายชื่อ{userInfo?.userTypeDisplay}</span>
+                <span>รายชื่อเจ้าหน้าที่</span>
                 <span className={styles.breadcrumbSeparator}>&gt;</span>
                 <span className={styles.breadcrumbCurrent}>ข้อมูลรายบุคคล</span>
               </div>
             </div>
-          </div>
-          <div className={styles.headerRight}>
           </div>
         </div>
 
@@ -493,4 +444,4 @@ function AdminUsersDetail() {
   );
 }
 
-export default AdminUsersDetail;
+export default AdminStaffDetail;

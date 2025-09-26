@@ -56,11 +56,11 @@ function App() {
         <Route path='/name-register/users-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
         <Route path='/name-register/student-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
         <Route path='/name-register/teacher-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
-        <Route path='/name-register/staff-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
 
         {/* Staff Management Redirects */}
         <Route path='/staff-management/add-staff' element={<ProtectedRoute><AddStaffAdmin /></ProtectedRoute>} />
         <Route path='/staff-management/staff-name' element={<ProtectedRoute><AdminAllStaff /></ProtectedRoute>} />
+        <Route path="/staff-management/staff-detail/:id" element={<AdminUsersDetail />} />
 
         {/* 404 Page */}
         <Route path="*" element={<NotFoundPage />} />
