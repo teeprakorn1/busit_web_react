@@ -79,7 +79,6 @@ function AddUsersAdmin() {
   const [alertMessage, setAlertMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // เพิ่ม state สำหรับ CSV import loading
   const [isImportLoading, setIsImportLoading] = useState(false);
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
 
@@ -156,7 +155,7 @@ function AddUsersAdmin() {
 
     setIsImportLoading(true);
     setImportProgress({ current: 0, total: validData.length });
-    setModalOpen(false); // ปิด modal ก่อนเริ่ม import
+    setModalOpen(false);
 
     try {
       let successCount = 0;
@@ -165,8 +164,6 @@ function AddUsersAdmin() {
 
       for (let i = 0; i < validData.length; i++) {
         const record = validData[i];
-
-        // อัปเดต progress
         setImportProgress({ current: i + 1, total: validData.length });
 
         try {
@@ -189,7 +186,6 @@ function AddUsersAdmin() {
           errors.push(`แถวที่ ${i + 1}: ${errorMessage}`);
         }
 
-        // หน่วงเวลาเล็กน้อยเพื่อให้ UI อัปเดตได้
         if (i % 10 === 0) {
           await new Promise(resolve => setTimeout(resolve, 50));
         }

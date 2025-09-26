@@ -264,7 +264,7 @@ function AddStaffAdmin() {
 
       if (response.data.status) {
         const successTimestampName = generateTimestampName('Successfully added', 'form');
-        const timestampTypeId = 18; // timestamp_website_add_staff
+        const timestampTypeId = 18;
         await insertTimestamp(successTimestampName, timestampTypeId);
 
         setAlertMessage(`เพิ่มเจ้าหน้าที่สำเร็จ!`);
