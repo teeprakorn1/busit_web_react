@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, AlertCircle, Shield, Lock, CheckCircle } from 'lucide-react';
+import { FiBell } from 'react-icons/fi';
 
 import Navbar from '../../NavigationBar/NavigationBar';
+import StudentProfileForm from './forms/StudentProfileForm';
+import TeacherProfileForm from './forms/TeacherProfileForm';
 import StaffProfileForm from './forms/StaffProfileForm';
+import RecentActivitiesForm from './activityForms/RecentActivitiesForm';
+import IncompleteActivitiesForm from './activityForms/IncompleteActivitiesForm';
 import ExportExcelButton from './utils/ExportExcelButton';
 import ChangePasswordModal from './modals/ChangePasswordModal';
 
@@ -14,10 +19,14 @@ import { useUserPermissions } from './hooks/useUserPermissions';
 
 import styles from './AdminUsersDetail.module.css';
 
+const sanitizeInput = (input) => {
+  if (typeof input !== 'string') return input;
+  return input.replace(/[<>"'&]/g, '').trim();
+};
+
 function AdminStaffDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const permissions = useUserPermissions();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -30,30 +39,51 @@ function AdminStaffDetail() {
     passwordChangeLoading,
     securityAlert,
     imageUrls,
+    // เพิ่ม dropdown states และฟังก์ชันใหม่
+    faculties,
+    departments,
+    teachers,
+    dropdownLoading,
+    dropdownError,
     getCachedImageUrl,
     clearImageCache,
     handleUserDataUpdate,
     handlePasswordChange,
-    handleGoBack: originalHandleGoBack,
+    handleAssignmentChange,
     retryFetch,
     handleImageError,
     shouldLoadImage,
-    loadImageWithCredentials
+    loadImageWithCredentials,
+    loadDropdownData,
+    retryLoadDropdownData,
+    formatDateForInput,
+    formatDateForSubmit
   } = useAdminUserDetail(id);
 
   const {
     isMobile,
     sidebarOpen,
     setSidebarOpen,
+    notifyOpen,
+    setNotifyOpen,
     activeTab,
-    handleTabChange
+    handleTabChange,
+    notifications
   } = useUIState();
 
   const { userInfo, formatRegisterDate } = useUserUtils(userData);
 
-  // Override handleGoBack สำหรับ staff
+  // Dynamic handleGoBack based on userType
   const handleGoBack = () => {
-    navigate('/staff-management/staff-name');
+    if (userData?.userType === 'student') {
+      navigate('/name-register/student-name');
+    } else if (userData?.userType === 'teacher') {
+      navigate('/name-register/teacher-name');
+    } else if (userData?.userType === 'staff') {
+      navigate('/staff-management/staff-name');
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   useEffect(() => {
@@ -113,30 +143,96 @@ function AdminStaffDetail() {
       handleImageError,
       shouldLoadImage,
       loadImageWithCredentials,
-      canEdit: permissions.canEditStaff
+      canEdit: userData.userType === 'staff' ? permissions.canEditStaff : 
+               userData.userType === 'teacher' ? permissions.canEditTeachers :
+               userData.userType === 'student' ? permissions.canEditStudents : false
     };
 
-    if (userData.userType === 'staff') {
-      return <StaffProfileForm {...commonProps} />;
+    switch (userData.userType) {
+      case 'student':
+        return (
+          <StudentProfileForm 
+            {...commonProps}
+            // เพิ่ม props ใหม่สำหรับ dropdown และการจัดการข้อมูล
+            faculties={faculties}
+            departments={departments}
+            teachers={teachers}
+            dropdownLoading={dropdownLoading}
+            dropdownError={dropdownError}
+            loadDropdownData={loadDropdownData}
+            retryLoadDropdownData={retryLoadDropdownData}
+            handleAssignmentChange={handleAssignmentChange}
+            formatDateForInput={formatDateForInput}
+            formatDateForSubmit={formatDateForSubmit}
+          />
+        );
+      case 'teacher':
+        return <TeacherProfileForm {...commonProps} />;
+      case 'staff':
+        return <StaffProfileForm {...commonProps} />;
+      default:
+        return (
+          <div className={styles.unsupportedType}>
+            <AlertCircle size={48} />
+            <h3>ประเภทผู้ใช้ไม่รองรับ</h3>
+            <p>ระบบไม่สามารถแสดงข้อมูลประเภทผู้ใช้นี้ได้</p>
+          </div>
+        );
     }
-
-    return (
-      <div className={styles.unsupportedType}>
-        <AlertCircle size={48} />
-        <h3>ประเภทผู้ใช้ไม่รองรับ</h3>
-        <p>ระบบไม่สามารถแสดงข้อมูลประเภทผู้ใช้นี้ได้</p>
-      </div>
-    );
   };
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'profile':
         return renderProfileForm();
+      case 'activities':
+        return (
+          <div className={styles.activitiesContainer}>
+            <RecentActivitiesForm userData={userData} />
+            {userData.userType === 'student' && (
+              <IncompleteActivitiesForm userData={userData} />
+            )}
+          </div>
+        );
       default:
         return renderProfileForm();
     }
   };
+
+  const renderNotificationDropdown = () => (
+    <div className={styles.notifyWrapper}>
+      <button
+        className={styles.notifyButton}
+        onClick={() => setNotifyOpen(!notifyOpen)}
+        aria-label="การแจ้งเตือน"
+      >
+        <FiBell size={24} />
+        {notifications.length > 0 && (
+          <span className={styles.badge}>{notifications.length}</span>
+        )}
+      </button>
+
+      {notifyOpen && (
+        <div className={styles.notifyDropdown}>
+          <div className={styles.notifyHeader}>
+            <h4>การแจ้งเตือน</h4>
+          </div>
+          {notifications.length > 0 ? (
+            notifications.map((notification, index) => (
+              <div key={index} className={styles.notifyItem}>
+                <span className={styles.notifyDot}></span>
+                {sanitizeInput(notification)}
+              </div>
+            ))
+          ) : (
+            <div className={styles.noNotifications}>
+              ไม่มีการแจ้งเตือน
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 
   const renderUserProfileCard = () => {
     if (!userInfo) return null;
@@ -155,6 +251,8 @@ function AdminStaffDetail() {
                 alt={`รูปโปรไฟล์ของ ${userInfo.displayName}`}
                 className={styles.profileImage}
                 onError={(e) => {
+                  console.error('Image load error for:', userInfo.imageFile);
+                  handleImageError && handleImageError(userInfo.imageFile);
                   e.target.style.display = 'none';
                   const fallback = e.target.parentElement.querySelector('.fallback-avatar');
                   if (fallback) {
@@ -187,7 +285,12 @@ function AdminStaffDetail() {
                 <span className={`${styles.typeBadge} ${styles[userInfo.userType]}`}>
                   {userInfo.userTypeDisplay}
                 </span>
-                {userData.staff && (
+                {userData.userType === 'student' && userData.student && (
+                  <span className={`${styles.statusBadge} ${userData.student.isGraduated ? styles.graduated : styles.studying}`}>
+                    {userData.student.isGraduated ? 'จบการศึกษา' : 'กำลังศึกษา'}
+                  </span>
+                )}
+                {userData.userType === 'staff' && userData.staff && (
                   <span className={`${styles.statusBadge} ${userData.staff.isResigned ? styles.resigned : styles.working}`}>
                     {userData.staff.isResigned ? 'ลาออกแล้ว' : 'ปฏิบัติงาน'}
                   </span>
@@ -243,6 +346,15 @@ function AdminStaffDetail() {
         <User size={16} />
         <span>ข้อมูลส่วนตัว</span>
       </button>
+      {(userData?.userType === 'student' || userData?.userType === 'teacher') && (
+        <button
+          className={`${styles.tabButton} ${activeTab === 'activities' ? styles.active : ''}`}
+          onClick={() => handleTabChange('activities')}
+        >
+          <User size={16} />
+          <span>กิจกรรม</span>
+        </button>
+      )}
     </div>
   );
 
@@ -325,7 +437,7 @@ function AdminStaffDetail() {
       <main className={`${styles.mainContent} ${isMobile ? styles.mobileContent : ""} ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}>
         <div className={styles.errorContainer}>
           <AlertCircle className={styles.errorIcon} />
-          <h2>ไม่พบข้อมูลเจ้าหน้าที่</h2>
+          <h2>ไม่พบข้อมูลผู้ใช้</h2>
           <p>กรุณาตรวจสอบการเชื่อมโยงหรือลองใหม่อีกครั้ง</p>
           <button className={styles.backButton} onClick={handleGoBack}>
             <ArrowLeft size={16} /> กลับไปหน้ารายชื่อ
@@ -346,7 +458,7 @@ function AdminStaffDetail() {
         <div className={styles.errorContainer}>
           <Shield className={styles.errorIcon} />
           <h2>ไม่มีสิทธิ์เข้าถึง</h2>
-          <p>คุณไม่มีสิทธิ์ในการเข้าถึงหน้านี้ เฉพาะเจ้าหน้าที่เท่านั้นที่สามารถดูข้อมูลเจ้าหน้าที่รายบุคคลได้</p>
+          <p>คุณไม่มีสิทธิ์ในการเข้าถึงหน้านี้ เฉพาะเจ้าหน้าที่เท่านั้นที่สามารถดูข้อมูลผู้ใช้รายบุคคลได้</p>
           <button
             className={styles.backButton}
             onClick={() => navigate('/dashboard')}
@@ -405,13 +517,23 @@ function AdminStaffDetail() {
               <ArrowLeft size={20} />
             </button>
             <div>
-              <h1 className={styles.heading}>ข้อมูลเจ้าหน้าที่รายบุคคล</h1>
+              <h1 className={styles.heading}>
+                {userData.userType === 'staff' ? 'ข้อมูลเจ้าหน้าที่รายบุคคล' : 'ข้อมูลผู้ใช้งานรายบุคคล'}
+              </h1>
               <div className={styles.breadcrumb}>
-                <span>รายชื่อเจ้าหน้าที่</span>
+                <span>
+                  {userData.userType === 'staff' 
+                    ? 'รายชื่อเจ้าหน้าที่' 
+                    : `รายชื่อ${userInfo?.userTypeDisplay}`
+                  }
+                </span>
                 <span className={styles.breadcrumbSeparator}>&gt;</span>
                 <span className={styles.breadcrumbCurrent}>ข้อมูลรายบุคคล</span>
               </div>
             </div>
+          </div>
+          <div className={styles.headerRight}>
+            {renderNotificationDropdown()}
           </div>
         </div>
 
