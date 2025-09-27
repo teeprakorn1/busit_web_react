@@ -1,0 +1,391 @@
+/* DataEditTable.module.css */
+:root {
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
+  --text-dark: #1f2937;
+  --text-muted: #6b7280;
+  --background: #ffffff;
+  --border: #e5e7eb;
+  --neutral-bg: #f8fafc;
+  --success-color: #10b981;
+  --success-light: #d1fae5;
+}
+
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--background);
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border);
+  position: relative;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--background);
+  border-radius: 12px;
+  overflow: hidden;
+  min-width: 1200px;
+  pointer-events: auto;
+}
+
+.table th, .table td {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 14px;
+  color: var(--text-dark);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.table th {
+  background: var(--neutral-bg);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  color: var(--text-dark);
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
+.tableRow {
+  cursor: default;
+  pointer-events: none;
+  position: relative;
+}
+
+.table tr:hover {
+  background-color: var(--neutral-bg);
+  transition: all 0.2s ease;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Badge Styles */
+.idBadge {
+  color: var(--text-dark);
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-block;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.thisIdBadge {
+  color: var(--text-dark);
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-block;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.sourceTableTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: #f1f5f9;
+  color: var(--text-dark);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.sourceTableTag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: var(--neutral-bg);
+}
+
+.iconTiny {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.staffCode {
+  color: var(--text-dark);
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-block;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.staffName {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 120px;
+}
+
+.firstName {
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 14px;
+}
+
+.lastName {
+  font-weight: 500;
+  color: var(--text-dark);
+  font-size: 13px;
+}
+
+.email {
+  color: var(--text-dark);
+  font-weight: 500;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  font-size: 13px;
+}
+
+.editTypeTag {
+  background: var(--neutral-bg);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-dark);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  border-left: 3px solid var(--primary-color);
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.editTypeTag:hover {
+  background: #e2e8f0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.editDetail {
+  color: var(--text-dark);
+  font-weight: 500;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.ipAddress {
+  font-family: system-ui, -apple-system, sans-serif;
+  color: var(--text-dark);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.dateTime {
+  font-size: 13px;
+  color: var(--text-dark);
+  font-weight: 500;
+  font-family: system-ui, -apple-system, sans-serif;
+  min-width: 140px;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  min-width: 50px;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 10;
+}
+
+.viewBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 15;
+}
+
+.viewBtn:hover:not(:disabled) {
+  background: #bae6fd;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(3, 105, 161, 0.3);
+}
+
+.viewBtn:active {
+  transform: scale(0.95);
+}
+
+.viewBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f1f5f9;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.noPermission {
+  color: #9ca3af;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.iconSmall {
+  width: 16px;
+  height: 16px;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-style: italic;
+  background: var(--neutral-bg);
+  font-size: 14px;
+}
+
+.errorMessage {
+  text-align: center;
+  padding: 40px 20px;
+  color: #ef4444;
+  font-weight: 500;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .table {
+    min-width: 1000px;
+  }
+  
+  .table th:nth-child(3),
+  .table td:nth-child(3) {
+    display: none;
+  }
+
+  .table th, .table td {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .editTypeTag, .editDetail {
+    max-width: 120px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 768px) {
+  .table {
+    min-width: 800px;
+  }
+
+  .table th:nth-child(2),
+  .table td:nth-child(2),
+  .table th:nth-child(3),
+  .table td:nth-child(3),
+  .table th:nth-child(6),
+  .table td:nth-child(6),
+  .table th:nth-child(9),
+  .table td:nth-child(9) {
+    display: none;
+  }
+
+  .table th, .table td {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .editTypeTag {
+    max-width: 100px;
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+
+  .idBadge, .staffCode, .thisIdBadge {
+    font-size: 13px;
+  }
+
+  .viewBtn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .iconSmall {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .table {
+    min-width: 600px;
+  }
+
+  .table th:nth-child(2),
+  .table td:nth-child(2),
+  .table th:nth-child(3),
+  .table td:nth-child(3),
+  .table th:nth-child(6),
+  .table td:nth-child(6),
+  .table th:nth-child(8),
+  .table td:nth-child(8),
+  .table th:nth-child(9),
+  .table td:nth-child(9) {
+    display: none;
+  }
+
+  .table th, .table td {
+    font-size: 11px;
+    padding: 6px 8px;
+  }
+
+  .editTypeTag {
+    max-width: 80px;
+    font-size: 9px;
+    padding: 2px 4px;
+  }
+
+  .viewBtn {
+    width: 24px;
+    height: 24px;
+  }
+
+  .iconSmall {
+    width: 12px;
+    height: 12px;
+  }
+
+  .emptyState, .errorMessage {
+    padding: 30px 15px;
+    font-size: 12px;
+  }
+}

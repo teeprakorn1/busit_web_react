@@ -22,6 +22,7 @@ import AdminUsersDetail from './components/NameRegisterAdmin/AdminUsersDetail/Ad
 
 import AddStaffAdmin from './components/StaffManagementAdmin/AddStaffAdmin/AddStaffAdmin';
 import AdminAllStaff from './components/StaffManagementAdmin/AdminAllStaff/AdminAllStaff';
+import GetDataEditUserAdmin from './components/StaffManagementAdmin/GetDataEditUserAdmin/GetDataEditUserAdmin';
 
 const ProtectedRoute = ({ children }) => {
   const isLoggedIn = sessionStorage.getItem("userSession");
@@ -61,6 +62,7 @@ function App() {
         <Route path='/staff-management/add-staff' element={<ProtectedRoute><AddStaffAdmin /></ProtectedRoute>} />
         <Route path='/staff-management/staff-name' element={<ProtectedRoute><AdminAllStaff /></ProtectedRoute>} />
         <Route path="/staff-management/staff-detail/:id" element={<AdminUsersDetail />} />
+        <Route path="/staff-management/get-dataedit-user" element={<GetDataEditUserAdmin />} />
 
         {/* 404 Page */}
         <Route path="*" element={<NotFoundPage />} />

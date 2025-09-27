@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import Navbar from '../../NavigationBar/NavigationBar';
 import styles from './AdminAllTeachers.module.css';
 import { AlertCircle, Loader, Calendar, GraduationCap, Shield, ArrowLeft } from 'lucide-react';
@@ -21,6 +21,7 @@ function AdminAllTeachers() {
   const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
 
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const {
     teachers,
@@ -90,7 +91,10 @@ function AdminAllTeachers() {
     handleToggleStatus,
     handleExportToExcel,
     handleAddTeacher,
-    handleGoBack
+    handleShowTeacherSummary,
+    handleRefreshTeachers,
+    handleSearch,
+    handleFilter
   } = useTeacherActions({
     validateId,
     sanitizeInput,
@@ -111,10 +115,25 @@ function AdminAllTeachers() {
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
   const currentRows = sortedTeachers.slice(indexOfFirstRow, indexOfLastRow);
 
-  const handleExport = () => {
+  const handleExport = useCallback(() => {
     const filterInfo = getFilterInfo();
     return handleExportToExcel(sortedTeachers, filterInfo);
-  };
+  }, [getFilterInfo, handleExportToExcel, sortedTeachers]);
+
+  // เพิ่มฟังก์ชันสำหรับ log search และ filter actions
+  const handleSearchWithLogging = useCallback(async (query) => {
+    setSearchQuery(query);
+    if (query && query.length > 0) {
+      await handleSearch({ searchQuery: query });
+    }
+  }, [setSearchQuery, handleSearch]);
+
+  const handleFilterWithLogging = useCallback(async (filterType, value) => {
+    if (value) {
+      const filterCriteria = { [filterType]: value };
+      await handleFilter(filterCriteria);
+    }
+  }, [handleFilter]);
 
   const departmentFromURL = useMemo(() => {
     const departmentIdParam = searchParams.get('departmentId');
@@ -134,6 +153,12 @@ function AdminAllTeachers() {
     }
     return null;
   }, [searchParams, departments, validateId]);
+
+  const handleGoBackFromURL = useCallback(() => {
+    if (departmentFromURL) {
+      navigate('/name-register/department-name');
+    }
+  }, [departmentFromURL, navigate]);
 
   const teacherStats = useMemo(() => {
     const filteredTeachers = getFilteredAndSortedTeachers(teachers);
@@ -170,6 +195,37 @@ function AdminAllTeachers() {
       }, 100);
     }
   }, [departmentFromURL, departments.length, setFacultyFilter, setDepartmentFilter]);
+
+  // เพิ่ม useEffect สำหรับ log filter actions
+  useEffect(() => {
+    if (facultyFilter) {
+      handleFilterWithLogging('faculty', facultyFilter);
+    }
+  }, [facultyFilter, handleFilterWithLogging]);
+
+  useEffect(() => {
+    if (departmentFilter) {
+      handleFilterWithLogging('department', departmentFilter);
+    }
+  }, [departmentFilter, handleFilterWithLogging]);
+
+  useEffect(() => {
+    if (statusFilter) {
+      handleFilterWithLogging('status', statusFilter);
+    }
+  }, [statusFilter, handleFilterWithLogging]);
+
+  useEffect(() => {
+    if (resignedFilter && resignedFilter !== 'all') {
+      handleFilterWithLogging('resigned', resignedFilter);
+    }
+  }, [resignedFilter, handleFilterWithLogging]);
+
+  useEffect(() => {
+    if (deanFilter) {
+      handleFilterWithLogging('dean', deanFilter);
+    }
+  }, [deanFilter, handleFilterWithLogging]);
 
   if (loading) {
     return (
@@ -210,7 +266,7 @@ function AdminAllTeachers() {
             )}
             <div className={styles.errorActions}>
               {departmentFromURL && (
-                <button className={styles.backButton} onClick={handleGoBack}>
+                <button className={styles.backButton} onClick={handleGoBackFromURL}>
                   <ArrowLeft size={16} /> กลับไปหน้าสาขา
                 </button>
               )}
@@ -251,10 +307,11 @@ function AdminAllTeachers() {
             <span>{securityAlert}</span>
           </div>
         )}
+        
         <div className={styles.headerBar}>
           <div className={styles.headerLeft}>
             {departmentFromURL && (
-              <button className={styles.backButton} onClick={handleGoBack}>
+              <button className={styles.backButton} onClick={handleGoBackFromURL}>
                 <ArrowLeft size={20} />
               </button>
             )}
@@ -326,7 +383,7 @@ function AdminAllTeachers() {
         <div className={styles.teachersSection}>
           <TeacherFiltersForm
             searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
+            setSearchQuery={handleSearchWithLogging}
             facultyFilter={facultyFilter}
             setFacultyFilter={setFacultyFilter}
             departmentFilter={departmentFilter}
@@ -348,6 +405,8 @@ function AdminAllTeachers() {
             resetFilters={resetFilters}
             setCurrentPage={setCurrentPage}
             onAddTeacher={handleAddTeacher}
+            onRefresh={handleRefreshTeachers}
+            onShowSummary={() => handleShowTeacherSummary(sortedTeachers, getFilterInfo())}
           />
 
           <div className={styles.resultsSummary}>

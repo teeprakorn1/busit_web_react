@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { 
+  logTeacherStatusChange, 
+  logSystemAction,
+  logBulkOperation 
+} from './../../../..//utils/systemLog';
 
 const sanitizeInput = (input) => {
   if (typeof input !== 'string') return input;
@@ -68,9 +73,33 @@ export const useTeachers = () => {
       setLoading(true);
       setError(null);
       setSecurityAlert(null);
+
       const teacherParams = {
         includeResigned: params.includeResigned !== undefined ? params.includeResigned : true
       };
+
+      if (params.facultyFilter && faculties.length > 0) {
+        const sanitizedFaculty = sanitizeInput(params.facultyFilter);
+        const selectedFaculty = faculties.find(f => f.Faculty_Name === sanitizedFaculty);
+        if (selectedFaculty) {
+          teacherParams.facultyId = selectedFaculty.Faculty_ID;
+        }
+      }
+
+      if (params.departmentFilter && departments.length > 0) {
+        const sanitizedDepartment = sanitizeInput(params.departmentFilter);
+        const selectedDepartment = departments.find(d => d.Department_Name === sanitizedDepartment);
+        if (selectedDepartment) {
+          teacherParams.departmentId = selectedDepartment.Department_ID;
+        }
+      }
+
+      if (params.searchQuery) {
+        const sanitizedQuery = sanitizeInput(params.searchQuery);
+        if (sanitizedQuery.length >= 2 && sanitizedQuery.length <= 100) {
+          teacherParams.search = sanitizedQuery;
+        }
+      }
 
       const teachersRes = await axios.get(getApiUrl(process.env.REACT_APP_API_ADMIN_TEACHERS_GET), {
         withCredentials: true,
@@ -108,7 +137,14 @@ export const useTeachers = () => {
           imageUrl: getProfileImageUrl(teacher.Users?.Users_ImageFile),
           isActive: Boolean(teacher.Users?.Users_IsActive)
         }));
+
         setTeachers(transformedTeachers);
+
+        // Log system action for data retrieval (only for filtered searches)
+        if (Object.keys(params).length > 1 || params.searchQuery) {
+          const searchDescription = `ค้นหาข้อมูลอาจารย์: ${JSON.stringify(params)}`;
+          await logSystemAction(0, searchDescription, 'Teacher');
+        }
       } else {
         setError('ไม่สามารถโหลดข้อมูลอาจารย์ได้: ' + (teachersRes.data?.message || 'Unknown error'));
         setTeachers([]);
@@ -151,7 +187,7 @@ export const useTeachers = () => {
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, [faculties, departments, navigate]);
 
   const loadFacultiesAndDepartments = useCallback(async () => {
     try {
@@ -210,19 +246,34 @@ export const useTeachers = () => {
       );
 
       if (response.data?.status) {
+        const newStatus = !teacher.isActive;
+        const teacherFullName = `${teacher.firstName} ${teacher.lastName}`;
+
+        // Update local state
         setTeachers(prevTeachers =>
           prevTeachers.map(t =>
             t.id === teacher.id
-              ? { ...t, isActive: !t.isActive }
+              ? { ...t, isActive: newStatus }
               : t
           )
         );
+
+        // Log the status change to data edit
+        const logResult = await logTeacherStatusChange(
+          teacher.id,
+          teacherFullName,
+          newStatus
+        );
+
+        if (!logResult.success) {
+          console.warn('Failed to log teacher status change:', logResult.error);
+        }
 
         const action = teacher.isActive ? 'ระงับ' : 'เปิด';
         return {
           success: true,
           message: `${action}การใช้งานเรียบร้อยแล้ว`,
-          updatedTeacher: { ...teacher, isActive: !teacher.isActive }
+          updatedTeacher: { ...teacher, isActive: newStatus }
         };
       } else {
         return {
@@ -287,9 +338,25 @@ export const useTeachers = () => {
               : t
           )
         );
+
+        // Log the refresh action
+        await logSystemAction(
+          teacherId,
+          `รีเฟรชข้อมูลอาจารย์ ID: ${teacherId}`,
+          'Teacher'
+        );
       }
     } catch (error) {
       console.warn('Failed to refresh teacher data:', error);
+    }
+  }, []);
+
+  // Function to log bulk operations
+  const handleLogBulkOperation = useCallback(async (operationType, affectedCount, details = '') => {
+    try {
+      await logBulkOperation(operationType, affectedCount, details, 'Teacher');
+    } catch (error) {
+      console.warn('Failed to log bulk operation:', error);
     }
   }, []);
 
@@ -321,6 +388,7 @@ export const useTeachers = () => {
     setError,
     setSecurityAlert,
     sanitizeInput,
-    validateId
+    validateId,
+    logBulkOperation: handleLogBulkOperation // Export the wrapped function
   };
 };

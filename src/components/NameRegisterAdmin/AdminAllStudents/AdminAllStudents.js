@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import Navbar from '../../NavigationBar/NavigationBar';
 import styles from './AdminAllStudents.module.css';
@@ -96,7 +96,11 @@ function AdminAllStudents() {
     handleEditStudent,
     handleToggleStatus,
     handleExportToExcel,
-    handleAddStudent
+    handleAddStudent,
+    handleShowStudentSummary,
+    handleRefreshStudents,
+    handleSearch,
+    handleFilter
   } = useStudentActions({
     validateId,
     sanitizeInput,
@@ -117,10 +121,25 @@ function AdminAllStudents() {
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
   const currentRows = sortedStudents.slice(indexOfFirstRow, indexOfLastRow);
 
-  const handleExport = () => {
+  const handleExport = useCallback(() => {
     const filterInfo = getFilterInfo();
     return handleExportToExcel(sortedStudents, filterInfo);
-  };
+  }, [getFilterInfo, handleExportToExcel, sortedStudents]);
+
+  // เพิ่มฟังก์ชันสำหรับ log search และ filter actions
+  const handleSearchWithLogging = useCallback(async (query) => {
+    setSearchQuery(query);
+    if (query && query.length > 0) {
+      await handleSearch({ searchQuery: query });
+    }
+  }, [setSearchQuery, handleSearch]);
+
+  const handleFilterWithLogging = useCallback(async (filterType, value) => {
+    if (value) {
+      const filterCriteria = { [filterType]: value };
+      await handleFilter(filterCriteria);
+    }
+  }, [handleFilter]);
 
   const departmentFromURL = useMemo(() => {
     const departmentIdParam = searchParams.get('departmentId');
@@ -141,11 +160,11 @@ function AdminAllStudents() {
     return null;
   }, [searchParams, departments, validateId]);
 
-  const handleGoBack = () => {
+  const handleGoBackFromURL = useCallback(() => {
     if (departmentFromURL) {
       navigate('/name-register/department-name');
     }
-  };
+  }, [departmentFromURL, navigate]);
 
   const studentStats = useMemo(() => {
     const filteredStudents = getFilteredAndSortedStudents(students);
@@ -180,6 +199,31 @@ function AdminAllStudents() {
       }, 100);
     }
   }, [departmentFromURL, departments.length, setFacultyFilter, setDepartmentFilter]);
+
+  // เพิ่ม useEffect สำหรับ log filter actions
+  useEffect(() => {
+    if (facultyFilter) {
+      handleFilterWithLogging('faculty', facultyFilter);
+    }
+  }, [facultyFilter, handleFilterWithLogging]);
+
+  useEffect(() => {
+    if (departmentFilter) {
+      handleFilterWithLogging('department', departmentFilter);
+    }
+  }, [departmentFilter, handleFilterWithLogging]);
+
+  useEffect(() => {
+    if (academicYearFilter) {
+      handleFilterWithLogging('academicYear', academicYearFilter);
+    }
+  }, [academicYearFilter, handleFilterWithLogging]);
+
+  useEffect(() => {
+    if (statusFilter) {
+      handleFilterWithLogging('status', statusFilter);
+    }
+  }, [statusFilter, handleFilterWithLogging]);
 
   if (loading) {
     return (
@@ -220,7 +264,7 @@ function AdminAllStudents() {
             )}
             <div className={styles.errorActions}>
               {departmentFromURL && (
-                <button className={styles.backButton} onClick={handleGoBack}>
+                <button className={styles.backButton} onClick={handleGoBackFromURL}>
                   <ArrowLeft size={16} /> กลับไปหน้าสาขา
                 </button>
               )}
@@ -265,7 +309,7 @@ function AdminAllStudents() {
         <div className={styles.headerBar}>
           <div className={styles.headerLeft}>
             {departmentFromURL && (
-              <button className={styles.backButton} onClick={handleGoBack}>
+              <button className={styles.backButton} onClick={handleGoBackFromURL}>
                 <ArrowLeft size={20} />
               </button>
             )}
@@ -350,7 +394,7 @@ function AdminAllStudents() {
         <div className={styles.studentsSection}>
           <StudentFiltersForm
             searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
+            setSearchQuery={handleSearchWithLogging}
             facultyFilter={facultyFilter}
             setFacultyFilter={setFacultyFilter}
             departmentFilter={departmentFilter}
@@ -377,6 +421,8 @@ function AdminAllStudents() {
             resetFilters={resetFilters}
             setCurrentPage={setCurrentPage}
             onAddStudent={handleAddStudent}
+            onRefresh={handleRefreshStudents}
+            onShowSummary={() => handleShowStudentSummary(sortedStudents, getFilterInfo())}
           />
           <div className={styles.resultsSummary}>
             <span>พบ {sortedStudents.length} รายการ</span>

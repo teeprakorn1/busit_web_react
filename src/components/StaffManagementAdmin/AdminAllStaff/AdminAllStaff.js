@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useCallback } from 'react';
 import Navbar from '../../NavigationBar/NavigationBar';
 import styles from './AdminAllStaff.module.css';
 import { AlertCircle, Loader, Calendar, Users, Shield } from 'lucide-react';
@@ -78,6 +78,10 @@ function AdminAllStaff() {
     handleToggleStatus,
     handleExportToExcel,
     handleAddStaff,
+    handleShowStaffSummary,
+    handleRefreshStaff,
+    handleSearch,
+    handleFilter
   } = useStaffActions({
     validateId,
     sanitizeInput,
@@ -98,10 +102,25 @@ function AdminAllStaff() {
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
   const currentRows = sortedStaff.slice(indexOfFirstRow, indexOfLastRow);
 
-  const handleExport = () => {
+  const handleExport = useCallback(() => {
     const filterInfo = getFilterInfo();
     return handleExportToExcel(sortedStaff, filterInfo);
-  };
+  }, [getFilterInfo, handleExportToExcel, sortedStaff]);
+
+  // เพิ่มฟังก์ชันสำหรับ log search และ filter actions
+  const handleSearchWithLogging = useCallback(async (query) => {
+    setSearchQuery(query);
+    if (query && query.length > 0) {
+      await handleSearch({ searchQuery: query });
+    }
+  }, [setSearchQuery, handleSearch]);
+
+  const handleFilterWithLogging = useCallback(async (filterType, value) => {
+    if (value) {
+      const filterCriteria = { [filterType]: value };
+      await handleFilter(filterCriteria);
+    }
+  }, [handleFilter]);
 
   const staffStats = useMemo(() => {
     const filteredStaff = getFilteredAndSortedStaff(staff);
@@ -119,6 +138,19 @@ function AdminAllStaff() {
   useEffect(() => {
     fetchStaff({ includeResigned: true });
   }, [fetchStaff]);
+
+  // เพิ่ม useEffect สำหรับ log filter actions
+  useEffect(() => {
+    if (statusFilter) {
+      handleFilterWithLogging('status', statusFilter);
+    }
+  }, [statusFilter, handleFilterWithLogging]);
+
+  useEffect(() => {
+    if (resignedFilter && resignedFilter !== 'all') {
+      handleFilterWithLogging('resigned', resignedFilter);
+    }
+  }, [resignedFilter, handleFilterWithLogging]);
 
   if (loading) {
     return (
@@ -195,6 +227,7 @@ function AdminAllStaff() {
             <span>{securityAlert}</span>
           </div>
         )}
+        
         <div className={styles.headerBar}>
           <div className={styles.headerLeft}>
             <div>
@@ -245,7 +278,7 @@ function AdminAllStaff() {
         <div className={styles.staffSection}>
           <StaffFiltersForm
             searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
+            setSearchQuery={handleSearchWithLogging}
             statusFilter={statusFilter}
             setStatusFilter={setStatusFilter}
             resignedFilter={resignedFilter}
@@ -259,6 +292,8 @@ function AdminAllStaff() {
             resetFilters={resetFilters}
             setCurrentPage={setCurrentPage}
             onAddStaff={handleAddStaff}
+            onRefresh={handleRefreshStaff}
+            onShowSummary={() => handleShowStaffSummary(sortedStaff, getFilterInfo())}
           />
 
           <div className={styles.resultsSummary}>

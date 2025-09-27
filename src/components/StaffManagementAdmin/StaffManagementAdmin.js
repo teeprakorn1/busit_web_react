@@ -94,7 +94,7 @@ function StaffManagementAdmin() {
             <FiEdit size={36} />
             <span>ประวัติแก้ไขกิจกรรม</span>
           </div>
-          <div className={`${styles.card} ${styles.card06}`} onClick={() => navigate("/all-activities")}>
+          <div className={`${styles.card} ${styles.card06}`} onClick={() => navigate("/staff-management/get-dataedit-user")}>
             <FiClipboard size={36} />
             <span>ประวัติแก้ไขบัญชี</span>
           </div>

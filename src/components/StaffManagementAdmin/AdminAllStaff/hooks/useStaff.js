@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { 
+  logStaffStatusChange, 
+  logSystemAction,
+  logBulkOperation 
+} from './../../../..//utils/systemLog';
 
 const sanitizeInput = (input) => {
   if (typeof input !== 'string') return input;
@@ -66,9 +71,17 @@ export const useStaff = () => {
       setLoading(true);
       setError(null);
       setSecurityAlert(null);
+
       const staffParams = {
         includeResigned: params.includeResigned !== undefined ? params.includeResigned : true
       };
+
+      if (params.searchQuery) {
+        const sanitizedQuery = sanitizeInput(params.searchQuery);
+        if (sanitizedQuery.length >= 2 && sanitizedQuery.length <= 100) {
+          staffParams.search = sanitizedQuery;
+        }
+      }
 
       const staffRes = await axios.get(getApiUrl('/api/admin/staff'), {
         withCredentials: true,
@@ -98,7 +111,14 @@ export const useStaff = () => {
           imageUrl: getProfileImageUrl(staff.Users?.Users_ImageFile),
           isActive: Boolean(staff.Users?.Users_IsActive)
         }));
+
         setStaff(transformedStaff);
+
+        // Log system action for data retrieval (only for filtered searches)
+        if (Object.keys(params).length > 1 || params.searchQuery) {
+          const searchDescription = `ค้นหาข้อมูลเจ้าหน้าที่: ${JSON.stringify(params)}`;
+          await logSystemAction(0, searchDescription, 'Staff');
+        }
       } else {
         setError('ไม่สามารถโหลดข้อมูลเจ้าหน้าที่ได้: ' + (staffRes.data?.message || 'Unknown error'));
         setStaff([]);
@@ -168,19 +188,34 @@ export const useStaff = () => {
       );
 
       if (response.data?.status) {
+        const newStatus = !staff.isActive;
+        const staffFullName = `${staff.firstName} ${staff.lastName}`;
+
+        // Update local state
         setStaff(prevStaff =>
           prevStaff.map(s =>
             s.id === staff.id
-              ? { ...s, isActive: !s.isActive }
+              ? { ...s, isActive: newStatus }
               : s
           )
         );
+
+        // Log the status change to data edit
+        const logResult = await logStaffStatusChange(
+          staff.id,
+          staffFullName,
+          newStatus
+        );
+
+        if (!logResult.success) {
+          console.warn('Failed to log staff status change:', logResult.error);
+        }
 
         const action = staff.isActive ? 'ระงับ' : 'เปิด';
         return {
           success: true,
           message: `${action}การใช้งานเรียบร้อยแล้ว`,
-          updatedStaff: { ...staff, isActive: !staff.isActive }
+          updatedStaff: { ...staff, isActive: newStatus }
         };
       } else {
         return {
@@ -245,9 +280,25 @@ export const useStaff = () => {
               : s
           )
         );
+
+        // Log the refresh action
+        await logSystemAction(
+          staffId,
+          `รีเฟรชข้อมูลเจ้าหน้าที่ ID: ${staffId}`,
+          'Staff'
+        );
       }
     } catch (error) {
       console.warn('Failed to refresh staff data:', error);
+    }
+  }, []);
+
+  // Function to log bulk operations
+  const handleLogBulkOperation = useCallback(async (operationType, affectedCount, details = '') => {
+    try {
+      await logBulkOperation(operationType, affectedCount, details, 'Staff');
+    } catch (error) {
+      console.warn('Failed to log bulk operation:', error);
     }
   }, []);
 
@@ -276,6 +327,7 @@ export const useStaff = () => {
     setError,
     setSecurityAlert,
     sanitizeInput,
-    validateId
+    validateId,
+    logBulkOperation: handleLogBulkOperation // Export the wrapped function
   };
 };

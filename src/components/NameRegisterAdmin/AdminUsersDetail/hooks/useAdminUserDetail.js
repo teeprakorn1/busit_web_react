@@ -8,6 +8,22 @@ import useDateFormatter from './useDateFormatter';
 import useApiClient from './useApiClient';
 import useSingleFetch from './useSingleFetch';
 
+import {
+  logStudentView,
+  logStudentDataUpdate,
+  logStudentViewTimestamp,
+  logStudentEditTimestamp,
+  logTeacherView,
+  logTeacherDataUpdate,
+  logTeacherViewTimestamp,
+  logTeacherEditTimestamp,
+  logStaffView,
+  logStaffDataUpdate,
+  logStaffViewTimestamp,
+  logStaffEditTimestamp,
+  logSystemAction
+} from './../../../../utils/systemLog';
+
 const detectUserTypeFromPath = (pathname) => {
   if (pathname.includes('/student-')) return 'student';
   if (pathname.includes('/teacher-')) return 'teacher';
@@ -72,6 +88,74 @@ const useAdminUserDetail = (id) => {
   } = useApiClient();
 
   const { singleFetch } = useSingleFetch();
+  const logViewAction = useCallback(async (userType, userId, userInfo) => {
+    try {
+      const firstName = userInfo.firstName || '';
+      const lastName = userInfo.lastName || '';
+      const userCode = userInfo.code || '';
+      const fullName = `${firstName} ${lastName}`;
+
+      switch (userType) {
+        case 'student':
+          await Promise.all([
+            logStudentView(userId, fullName, userCode),
+            logStudentViewTimestamp(fullName, userCode)
+          ]);
+          break;
+        case 'teacher':
+          await Promise.all([
+            logTeacherView(userId, fullName, userCode),
+            logTeacherViewTimestamp(fullName, userCode)
+          ]);
+          break;
+        case 'staff':
+          await Promise.all([
+            logStaffView(userId, fullName, userCode),
+            logStaffViewTimestamp(fullName, userCode)
+          ]);
+          break;
+        default:
+          await logSystemAction(userId, `ดูข้อมูลผู้ใช้: ${fullName} (${userCode})`);
+      }
+    } catch (error) {
+      console.warn('Failed to log view action:', error);
+    }
+  }, []);
+
+  const logEditAction = useCallback(async (userType, userId, userInfo, updateType = 'อัพเดทข้อมูล') => {
+    try {
+      const firstName = userInfo.firstName || '';
+      const lastName = userInfo.lastName || '';
+      const userCode = userInfo.code || '';
+      const fullName = `${firstName} ${lastName}`;
+
+      switch (userType) {
+        case 'student':
+          await Promise.all([
+            logStudentDataUpdate(userId, fullName, updateType),
+            logStudentEditTimestamp(fullName, userCode)
+          ]);
+          break;
+        case 'teacher':
+          await Promise.all([
+            logTeacherDataUpdate(userId, fullName, updateType),
+            logTeacherEditTimestamp(fullName, userCode)
+          ]);
+          break;
+        case 'staff':
+          await Promise.all([
+            logStaffDataUpdate(userId, fullName, updateType),
+            logStaffEditTimestamp(fullName, userCode)
+          ]);
+          break;
+        default:
+          await logSystemAction(userId, `แก้ไขข้อมูลผู้ใช้: ${fullName} - ${updateType}`);
+      }
+    } catch (error) {
+      console.warn('Failed to log edit action:', error);
+    }
+  }, []);
+
   const fetchUserData = useCallback(async () => {
     const fetchKey = `user-${id}`;
 
@@ -134,6 +218,11 @@ const useAdminUserDetail = (id) => {
           if (processedData.imageFile) {
             preloadImage(processedData.imageFile);
           }
+
+          const userTypeData = processedData[userType];
+          if (userTypeData) {
+            await logViewAction(userType, validatedId, userTypeData);
+          }
         } else {
           setError(response?.message || 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้');
         }
@@ -160,7 +249,8 @@ const useAdminUserDetail = (id) => {
     getProfileImageUrl,
     preloadImage,
     validateUserType,
-    sanitizeInput
+    sanitizeInput,
+    logViewAction
   ]);
 
   const handleUserDataUpdate = useCallback(async (updatedData) => {
@@ -178,9 +268,18 @@ const useAdminUserDetail = (id) => {
 
       const validatedId = validateAndSanitizeId(id);
       const sanitizedData = sanitizeUserData(updatedData, userType);
+      const userTypeData = userData[userType];
+      if (userTypeData) {
+        await logEditAction(userType, validatedId, userTypeData, 'เริ่มอัพเดทข้อมูล');
+      }
+
       const response = await apiUpdateUserData(validatedId, userType, sanitizedData);
 
       if (response && response.status) {
+        if (userTypeData) {
+          await logEditAction(userType, validatedId, userTypeData, 'อัพเดทข้อมูลสำเร็จ');
+        }
+
         await fetchUserData();
       } else {
         setError(response?.message || 'ไม่สามารถอัพเดทข้อมูลได้');
@@ -193,18 +292,29 @@ const useAdminUserDetail = (id) => {
       if (err.response?.status === 403) {
         setSecurityAlert('การแก้ไขถูกปฏิเสธ - ไม่มีสิทธิ์เพียงพอ');
       }
+
+      const userTypeData = userData?.[userData?.userType];
+      if (userTypeData && userData?.userType) {
+        await logEditAction(
+          userData.userType,
+          validateAndSanitizeId(id),
+          userTypeData,
+          `อัพเดทข้อมูลล้มเหลว: ${errorMessage}`
+        );
+      }
     } finally {
       setUpdateLoading(false);
     }
   }, [
-    userData?.userType,
+    userData,
     id,
     fetchUserData,
     validateAndSanitizeId,
     validateUserData,
     sanitizeUserData,
     apiUpdateUserData,
-    handleApiError
+    handleApiError,
+    logEditAction
   ]);
 
   const handlePasswordChange = useCallback(async (newPassword) => {
@@ -227,9 +337,33 @@ const useAdminUserDetail = (id) => {
       }
 
       const sanitizedPassword = sanitizeInput(newPassword);
+      const userType = userData?.userType;
+      const userTypeData = userData?.[userType];
+      if (userTypeData) {
+        const firstName = userTypeData.firstName || '';
+        const lastName = userTypeData.lastName || '';
+        const displayName = `${firstName} ${lastName}`;
+
+        await logSystemAction(
+          userData.Users_ID,
+          `เริ่มเปลี่ยนรหัสผ่าน: ${displayName} (${userType})`
+        );
+      }
+
       const response = await apiChangePassword(userData.Users_ID, sanitizedPassword);
 
       if (response && response.status) {
+        if (userTypeData) {
+          const firstName = userTypeData.firstName || '';
+          const lastName = userTypeData.lastName || '';
+          const displayName = `${firstName} ${lastName}`;
+
+          await logSystemAction(
+            userData.Users_ID,
+            `เปลี่ยนรหัสผ่านสำเร็จ: ${displayName} (${userType})`
+          );
+        }
+
         return { success: true, message: 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว' };
       } else {
         throw new Error(response?.message || 'ไม่สามารถเปลี่ยนรหัสผ่านได้');
@@ -242,12 +376,25 @@ const useAdminUserDetail = (id) => {
         setSecurityAlert('การเปลี่ยนรหัสผ่านถูกปฏิเสธ - ไม่มีสิทธิ์เพียงพอ');
       }
 
+      const userType = userData?.userType;
+      const userTypeData = userData?.[userType];
+      if (userTypeData) {
+        const firstName = userTypeData.firstName || '';
+        const lastName = userTypeData.lastName || '';
+        const displayName = `${firstName} ${lastName}`;
+
+        await logSystemAction(
+          userData.Users_ID,
+          `เปลี่ยนรหัสผ่านล้มเหลว: ${displayName} (${userType}) - ${errorMessage}`
+        );
+      }
+
       throw new Error(errorMessage);
     } finally {
       setPasswordChangeLoading(false);
     }
   }, [
-    userData?.Users_ID,
+    userData,
     validatePassword,
     sanitizeInput,
     apiChangePassword,
@@ -260,11 +407,58 @@ const useAdminUserDetail = (id) => {
     }
 
     const validatedId = validateAndSanitizeId(id);
+    const userType = userData?.userType;
+    if (userType === 'student' && userData?.student) {
+
+      await logEditAction(
+        'student',
+        validatedId,
+        userData.student,
+        `เปลี่ยนการมอบหมายภาควิชา/อาจารย์ที่ปรึกษา: ${departmentId}/${advisorId}`
+      );
+    }
     await updateStudentAssignment(validatedId, departmentId, advisorId);
-  }, [id, validateAndSanitizeId, updateStudentAssignment]);
+
+    if (userType === 'student' && userData?.student) {
+      await logEditAction(
+        'student',
+        validatedId,
+        userData.student,
+        `เปลี่ยนการมอบหมายสำเร็จ: ภาควิชา ${departmentId}, อาจารย์ ${advisorId}`
+      );
+    }
+  }, [id, userData, validateAndSanitizeId, updateStudentAssignment, logEditAction]);
 
   const handleGoBack = useCallback(() => {
-    const userType = userData?.userType;
+    const logNavigation = async () => {
+      try {
+        if (userData) {
+          const userType = userData.userType;
+          const userTypeData = userData[userType];
+          if (userTypeData) {
+            const firstName = userTypeData.firstName || '';
+            const lastName = userTypeData.lastName || '';
+            const displayName = `${firstName} ${lastName}`;
+
+            await logSystemAction(
+              userData.id || 0,
+              `กลับจากหน้ารายละเอียด: ${displayName} (${userType})`
+            );
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to log navigation:', error);
+      }
+    };
+
+    logNavigation();
+
+    if (!userData) {
+      navigate('/name-register');
+      return;
+    }
+
+    const userType = userData.userType;
 
     if (!validateUserType(userType)) {
       navigate('/name-register');
@@ -284,13 +478,22 @@ const useAdminUserDetail = (id) => {
       default:
         navigate('/name-register');
     }
-  }, [navigate, userData?.userType, validateUserType]);
+  }, [navigate, userData, validateUserType]);
 
   const retryFetch = useCallback(() => {
     setError(null);
     setSecurityAlert(null);
+    const logRetry = async () => {
+      try {
+        await logSystemAction(0, `ลองโหลดข้อมูลผู้ใช้ใหม่อีกครั้ง: ID ${id}`);
+      } catch (error) {
+        console.warn('Failed to log retry action:', error);
+      }
+    };
+
+    logRetry();
     fetchUserData();
-  }, [fetchUserData]);
+  }, [fetchUserData, id]);
 
   useEffect(() => {
     if (id) {

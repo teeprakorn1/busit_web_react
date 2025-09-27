@@ -2,6 +2,11 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { academicYearUtils } from '../utils/academicYearUtils';
+import { 
+  logStudentStatusChange, 
+  logSystemAction,
+  logBulkOperation 
+} from './../../../..//utils/systemLog';
 
 const sanitizeInput = (input) => {
   if (typeof input !== 'string') return input;
@@ -154,6 +159,12 @@ export const useStudents = () => {
         }));
 
         setStudents(transformedStudents);
+
+        // Log system action for data retrieval (only for filtered searches)
+        if (Object.keys(params).length > 1 || params.searchQuery) {
+          const searchDescription = `ค้นหาข้อมูลนักศึกษา: ${JSON.stringify(params)}`;
+          await logSystemAction(0, searchDescription);
+        }
       } else {
         setError('ไม่สามารถโหลดข้อมูลนักศึกษาได้: ' + (studentsRes.data?.message || 'Unknown error'));
         setStudents([]);
@@ -255,19 +266,34 @@ export const useStudents = () => {
       );
 
       if (response.data?.status) {
+        const newStatus = !student.isActive;
+        const studentFullName = `${student.firstName} ${student.lastName}`;
+
+        // Update local state
         setStudents(prevStudents =>
           prevStudents.map(s =>
             s.id === student.id
-              ? { ...s, isActive: !s.isActive }
+              ? { ...s, isActive: newStatus }
               : s
           )
         );
+
+        // Log the status change to data edit
+        const logResult = await logStudentStatusChange(
+          student.id,
+          studentFullName,
+          newStatus
+        );
+
+        if (!logResult.success) {
+          console.warn('Failed to log student status change:', logResult.error);
+        }
 
         const action = student.isActive ? 'ระงับ' : 'เปิด';
         return {
           success: true,
           message: `${action}การใช้งานเรียบร้อยแล้ว`,
-          updatedStudent: { ...student, isActive: !student.isActive }
+          updatedStudent: { ...student, isActive: newStatus }
         };
       } else {
         return {
@@ -332,9 +358,24 @@ export const useStudents = () => {
               : s
           )
         );
+
+        // Log the refresh action
+        await logSystemAction(
+          studentId,
+          `รีเฟรชข้อมูลนักศึกษา ID: ${studentId}`
+        );
       }
     } catch (error) {
       console.warn('Failed to refresh student data:', error);
+    }
+  }, []);
+
+  // Function to log bulk operations
+  const handleLogBulkOperation = useCallback(async (operationType, affectedCount, details = '') => {
+    try {
+      await logBulkOperation(operationType, affectedCount, details);
+    } catch (error) {
+      console.warn('Failed to log bulk operation:', error);
     }
   }, []);
 
@@ -368,6 +409,7 @@ export const useStudents = () => {
     setError,
     setSecurityAlert,
     sanitizeInput,
-    validateId
+    validateId,
+    logBulkOperation: handleLogBulkOperation // Export the wrapped function
   };
 };

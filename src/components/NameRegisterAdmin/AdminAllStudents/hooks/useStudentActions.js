@@ -2,6 +2,25 @@ import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { exportFilteredStudentsToExcel } from '../utils/excelExportUtils';
 import { useUserPermissions } from './useUserPermissions';
+import {
+  // Data Edit functions
+  logStudentView,
+  logStudentEdit,
+  logStudentStatusConfirm,
+  logStudentExport,
+  logStudentSearch,
+  logStudentFilter,
+  logBulkOperation,
+  logSystemAction,
+  
+  // Timestamp functions
+  logStudentViewTimestamp,
+  logStudentEditTimestamp,
+  logStudentStatusChangeTimestamp,
+  logStudentExportTimestamp,
+  logStudentSearchTimestamp,
+  logStudentFilterTimestamp
+} from './../../../..//utils/systemLog';
 
 export const useStudentActions = ({ 
   validateId, 
@@ -11,12 +30,13 @@ export const useStudentActions = ({
   closeModal, 
   openStudentModal,
   toggleStudentStatus,
-  fetchStudents 
+  fetchStudents
+  // ลบ logBulkOperation parameter เพราะตอนนี้ import จาก systemLog แล้ว
 }) => {
   const navigate = useNavigate();
   const permissions = useUserPermissions();
 
-  const handleViewStudent = useCallback((student) => {
+  const handleViewStudent = useCallback(async (student) => {
     if (!permissions.canViewStudentDetails) {
       setSecurityAlert('ไม่มีสิทธิ์ในการดูรายละเอียดนักศึกษา');
       return;
@@ -27,10 +47,23 @@ export const useStudentActions = ({
       setSecurityAlert('ตรวจพบการพยายามเข้าถึงข้อมูลไม่ถูกต้อง');
       return;
     }
+
+    const studentName = `${student.firstName} ${student.lastName}`;
+
+    // Log both data edit and timestamp
+    try {
+      await Promise.all([
+        logStudentView(student.id, studentName, student.code),
+        logStudentViewTimestamp(studentName, student.code)
+      ]);
+    } catch (error) {
+      console.warn('Failed to log view action:', error);
+    }
+
     openStudentModal(student.id);
   }, [permissions.canViewStudentDetails, validateId, setSecurityAlert, openStudentModal]);
 
-  const handleEditStudent = useCallback((student) => {
+  const handleEditStudent = useCallback(async (student) => {
     if (!permissions.canEditStudents) {
       setSecurityAlert('ไม่มีสิทธิ์ในการแก้ไขข้อมูลนักศึกษา');
       return;
@@ -41,10 +74,23 @@ export const useStudentActions = ({
       setSecurityAlert('ตรวจพบการพยายามเข้าถึงข้อมูลไม่ถูกต้อง');
       return;
     }
+
+    const studentName = `${student.firstName} ${student.lastName}`;
+
+    // Log both data edit and timestamp
+    try {
+      await Promise.all([
+        logStudentEdit(student.id, studentName, student.code),
+        logStudentEditTimestamp(studentName, student.code)
+      ]);
+    } catch (error) {
+      console.warn('Failed to log edit initiation:', error);
+    }
+
     navigate(`/name-register/student-detail/${student.id}?tab=profile&edit=true`);
   }, [navigate, permissions.canEditStudents, validateId, setSecurityAlert]);
 
-  const handleToggleStatus = useCallback((student) => {
+  const handleToggleStatus = useCallback(async (student) => {
     if (!permissions.canToggleStudentStatus) {
       setSecurityAlert('ไม่มีสิทธิ์ในการเปลี่ยนสถานะนักศึกษา - ต้องเป็น Staff เท่านั้น');
       return;
@@ -59,7 +105,8 @@ export const useStudentActions = ({
     const action = student.isActive ? 'ระงับ' : 'เปิด';
     const firstName = sanitizeInput(student.firstName || '');
     const lastName = sanitizeInput(student.lastName || '');
-    const confirmMessage = `คุณต้องการ${action}การใช้งานของ ${firstName} ${lastName} หรือไม่?`;
+    const studentName = `${firstName} ${lastName}`;
+    const confirmMessage = `คุณต้องการ${action}การใช้งานของ ${studentName} หรือไม่?`;
     
     showModal(confirmMessage, [
       {
@@ -70,30 +117,62 @@ export const useStudentActions = ({
         label: 'ยืนยัน',
         onClick: async () => {
           closeModal();
-          const result = await toggleStudentStatus(student);
-          if (result.success) {
-            await fetchStudents();
-            showModal(result.message);
-          } else {
-            showModal(result.error);
+          
+          try {
+            const result = await toggleStudentStatus(student);
+            
+            if (result.success) {
+              // Log both data edit and timestamp for status change confirmation
+              await Promise.all([
+                logStudentStatusConfirm(student.id, studentName, student.code, action),
+                logStudentStatusChangeTimestamp(studentName, student.code, action)
+              ]);
+
+              await fetchStudents();
+              showModal(result.message);
+            } else {
+              showModal(result.error);
+            }
+          } catch (error) {
+            console.error('Toggle status error:', error);
+            showModal('เกิดข้อผิดพลาดที่ไม่คาดคิด');
           }
         },
       }
     ]);
   }, [permissions.canToggleStudentStatus, validateId, sanitizeInput, setSecurityAlert, showModal, closeModal, toggleStudentStatus, fetchStudents]);
 
-  const handleExportToExcel = useCallback((students, filterInfo) => {
+  const handleExportToExcel = useCallback(async (students, filterInfo) => {
     if (!permissions.canExportData) {
       setSecurityAlert('ไม่มีสิทธิ์ในการส่งออกข้อมูล');
       return;
     }
-    return exportFilteredStudentsToExcel(students, filterInfo);
+
+    try {
+      // Log both data edit and timestamp
+      await Promise.all([
+        logStudentExport(students.length, filterInfo),
+        logStudentExportTimestamp(students.length, filterInfo)
+      ]);
+
+      return exportFilteredStudentsToExcel(students, filterInfo);
+    } catch (error) {
+      console.warn('Failed to log export action:', error);
+      return exportFilteredStudentsToExcel(students, filterInfo);
+    }
   }, [permissions.canExportData, setSecurityAlert]);
 
-  const handleAddStudent = useCallback(() => {
+  const handleAddStudent = useCallback(async () => {
     if (!permissions.canAddStudents) {
       setSecurityAlert('ไม่มีสิทธิ์ในการเพิ่มนักศึกษา - ต้องเป็น Staff เท่านั้น');
       return;
+    }
+    
+    // Log the add student action initiation
+    try {
+      await logSystemAction(0, 'เริ่มกระบวนการเพิ่มนักศึกษาใหม่');
+    } catch (error) {
+      console.warn('Failed to log add student initiation:', error);
     }
     
     navigate('/application/add-user', { 
@@ -127,7 +206,7 @@ export const useStudentActions = ({
     }
   }, [navigate]);
 
-  const handleShowStudentSummary = useCallback((students, filterInfo) => {
+  const handleShowStudentSummary = useCallback(async (students, filterInfo) => {
     if (!students || students.length === 0) {
       showModal('ไม่มีข้อมูลนักศึกษา', [
         {
@@ -136,6 +215,16 @@ export const useStudentActions = ({
         }
       ]);
       return;
+    }
+
+    // Log the summary view action
+    try {
+      await logSystemAction(
+        0,
+        `ดูสรุปข้อมูลนักศึกษา: ${students.length} คน ${filterInfo?.department ? `สาขา: ${filterInfo.department}` : ''}`
+      );
+    } catch (error) {
+      console.warn('Failed to log summary view:', error);
     }
 
     const totalStudents = students.length;
@@ -177,6 +266,9 @@ ${filterInfo?.academicYear ? `ปีการศึกษา: ${filterInfo.acade
 
   const handleRefreshStudents = useCallback(async () => {
     try {
+      // Log the refresh action
+      await logSystemAction(0, 'รีเฟรชข้อมูลนักศึกษาทั้งหมด');
+      
       await fetchStudents();
     } catch (error) {
       console.warn('Failed to refresh student data:', error);
@@ -184,7 +276,7 @@ ${filterInfo?.academicYear ? `ปีการศึกษา: ${filterInfo.acade
     }
   }, [fetchStudents, setSecurityAlert]);
 
-  const handleBulkExport = useCallback((students, filterInfo, options = {}) => {
+  const handleBulkExport = useCallback(async (students, filterInfo, options = {}) => {
     if (!permissions.canExportData) {
       setSecurityAlert('ไม่มีสิทธิ์ในการส่งออกข้อมูล');
       return;
@@ -220,21 +312,70 @@ ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
       },
       {
         label: 'ส่งออกข้อมูล',
-        onClick: () => {
+        onClick: async () => {
           closeModal();
-          const success = exportFilteredStudentsToExcel(students, filterInfo, options);
-          if (success) {
-            showModal('ส่งออกข้อมูลเรียบร้อยแล้ว', [
-              {
-                label: 'ตกลง',
-                onClick: closeModal,
-              }
+          
+          try {
+            // Log both data edit and timestamp
+            await Promise.all([
+              logBulkOperation(
+                'ส่งออกข้อมูลนักศึกษาแบบ Bulk',
+                students.length,
+                `ตัวกรอง: ${JSON.stringify(filterInfo || {})} | Options: ${JSON.stringify(options)}`
+              ),
+              logStudentExportTimestamp(students.length, filterInfo)
             ]);
+
+            const success = exportFilteredStudentsToExcel(students, filterInfo, options);
+            if (success) {
+              showModal('ส่งออกข้อมูลเรียบร้อยแล้ว', [
+                {
+                  label: 'ตกลง',
+                  onClick: closeModal,
+                }
+              ]);
+            }
+          } catch (error) {
+            console.warn('Failed to log bulk export:', error);
+            // Continue with export even if logging fails
+            const success = exportFilteredStudentsToExcel(students, filterInfo, options);
+            if (success) {
+              showModal('ส่งออกข้อมูลเรียบร้อยแล้ว', [
+                {
+                  label: 'ตกลง',
+                  onClick: closeModal,
+                }
+              ]);
+            }
           }
         },
       }
     ]);
   }, [permissions.canExportData, setSecurityAlert, showModal, closeModal]);
+
+  // New function to log search operations
+  const handleSearch = useCallback(async (searchCriteria) => {
+    try {
+      await Promise.all([
+        logStudentSearch(searchCriteria),
+        logStudentSearchTimestamp(searchCriteria)
+      ]);
+    } catch (error) {
+      console.warn('Failed to log search action:', error);
+    }
+  }, []);
+
+  // New function to log filter operations  
+  const handleFilter = useCallback(async (filterCriteria) => {
+    try {
+      await Promise.all([
+        logStudentFilter(filterCriteria),
+        logStudentFilterTimestamp(filterCriteria)
+      ]);
+    } catch (error) {
+      console.warn('Failed to log filter action:', error);
+    }
+  }, []);
 
   return {
     handleViewStudent,
@@ -247,6 +388,8 @@ ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
     handleShowStudentSummary,
     handleRefreshStudents,
     handleBulkExport,
+    handleSearch,
+    handleFilter,
     permissions
   };
 };
