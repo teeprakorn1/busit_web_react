@@ -3,7 +3,6 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import Navbar from '../../NavigationBar/NavigationBar';
 import styles from './AdminAllTeachers.module.css';
 import { AlertCircle, Loader, Calendar, GraduationCap, Shield, ArrowLeft } from 'lucide-react';
-import { FiBell } from 'react-icons/fi';
 
 import TeacherFiltersForm from './TeacherFiltersForm/TeacherFiltersForm';
 import TeacherTable from './TeacherTable/TeacherTable';
@@ -18,8 +17,6 @@ import { useTeacherActions } from './hooks/useTeacherActions';
 
 function AdminAllTeachers() {
   const rowsPerPage = 10;
-  const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
-
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -72,8 +69,6 @@ function AdminAllTeachers() {
     isMobile,
     sidebarOpen,
     setSidebarOpen,
-    notifyOpen,
-    setNotifyOpen,
     modalOpen,
     modalMessage,
     modalButtons,
@@ -351,31 +346,6 @@ function AdminAllTeachers() {
                   คณะ: {teacherStats.faculties} คณะ
                 </span>
               </div>
-            </div>
-          </div>
-          <div className={styles.headerRight}>
-            <div className={styles.notifyWrapper}>
-              <button
-                className={styles.notifyButton}
-                onClick={() => setNotifyOpen(!notifyOpen)}
-              >
-                <FiBell size={24} />
-                {notifications.length > 0 && (
-                  <span className={styles.badge}>
-                    {notifications.length}
-                  </span>
-                )}
-              </button>
-
-              {notifyOpen && (
-                <div className={styles.notifyDropdown}>
-                  {notifications.map((n, i) => (
-                    <div key={i} className={styles.notifyItem}>
-                      {sanitizeInput(n)}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         </div>

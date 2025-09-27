@@ -20,8 +20,11 @@ import AdminAllTeachers from './components/NameRegisterAdmin/AdminAllTeachers/Ad
 import AdminAllDepartments from './components/NameRegisterAdmin/AdminAllDepartments/AdminAllDepartments';
 import AdminUsersDetail from './components/NameRegisterAdmin/AdminUsersDetail/AdminUsersDetail';
 
+import CertificateEditAdmin from './components/StaffManagementAdmin/CertificateEditAdmin/CertificateEditAdmin';
 import AddStaffAdmin from './components/StaffManagementAdmin/AddStaffAdmin/AddStaffAdmin';
 import AdminAllStaff from './components/StaffManagementAdmin/AdminAllStaff/AdminAllStaff';
+import GetDataCreateActivityAdmin from './components/StaffManagementAdmin/GetDataCreateActivityAdmin/GetDataCreateActivityAdmin';
+import GetDataEditActivityAdmin from './components/StaffManagementAdmin/GetDataEditActivityAdmin/GetDataEditActivityAdmin';
 import GetDataEditUserAdmin from './components/StaffManagementAdmin/GetDataEditUserAdmin/GetDataEditUserAdmin';
 
 const ProtectedRoute = ({ children }) => {
@@ -59,9 +62,12 @@ function App() {
         <Route path='/name-register/teacher-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
 
         {/* Staff Management Redirects */}
+        <Route path='/staff-management/manage-certificate' element={<ProtectedRoute><CertificateEditAdmin /></ProtectedRoute>} />
         <Route path='/staff-management/add-staff' element={<ProtectedRoute><AddStaffAdmin /></ProtectedRoute>} />
         <Route path='/staff-management/staff-name' element={<ProtectedRoute><AdminAllStaff /></ProtectedRoute>} />
         <Route path="/staff-management/staff-detail/:id" element={<AdminUsersDetail />} />
+        <Route path="/staff-management/get-activity-create" element={<GetDataCreateActivityAdmin />} />
+        <Route path="/staff-management/get-activity-edit" element={<GetDataEditActivityAdmin />} />
         <Route path="/staff-management/get-dataedit-user" element={<GetDataEditUserAdmin />} />
 
         {/* 404 Page */}

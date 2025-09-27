@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../../NavigationBar/NavigationBar';
 import styles from './GetPersonTimestampAdmin.module.css';
-import { FiBell, FiSearch, FiInfo, FiClock, FiCheck, FiX, FiEye } from 'react-icons/fi';
+import { FiSearch, FiInfo, FiClock, FiCheck, FiX, FiEye } from 'react-icons/fi';
 import { ArrowLeft, Shield } from 'lucide-react';
 import CustomModal from '../../../services/CustomModal/CustomModal';
 import { encryptValue, decryptValue } from '../../../utils/crypto';
@@ -19,7 +19,6 @@ function GetPersonTimestamp() {
 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
-  const [notifyOpen, setNotifyOpen] = useState(false);
   const [searchEmail, setSearchEmail] = useState("");
   const [searchIpAddress, setSearchIpAddress] = useState("");
   const [recentSearches, setRecentSearches] = useState([]);
@@ -30,8 +29,6 @@ function GetPersonTimestamp() {
 
   const [previewData, setPreviewData] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
-
-  const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
 
   const MAX_RECENT_SEARCHES = 5;
   const RECENT_SEARCHES_KEY = 'timestamp_recent_searches';
@@ -401,16 +398,6 @@ function GetPersonTimestamp() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!e.target.closest(`.${styles.notifyWrapper}`)) {
-        setNotifyOpen(false);
-      }
-    };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
-
   const renderPermissionLoadingState = () => (
     <div className={styles.container}>
       <div className={styles.loadingWrapper}>
@@ -466,33 +453,6 @@ function GetPersonTimestamp() {
         {/* Header */}
         <div className={styles.headerBar}>
           <h1 className={styles.heading}>ประวัติการใช้งานรายบุคคล</h1>
-          <div className={styles.headerRight}>
-            <div className={styles.notifyWrapper}>
-              <button
-                className={styles.notifyButton}
-                onClick={() => setNotifyOpen(!notifyOpen)}
-                aria-label="แจ้งเตือน"
-                aria-expanded={notifyOpen}
-              >
-                <FiBell size={24} color="currentColor" />
-                {notifications.length > 0 && (
-                  <span className={styles.badge} aria-label={`${notifications.length} การแจ้งเตือน`}>
-                    {notifications.length}
-                  </span>
-                )}
-              </button>
-
-              {notifyOpen && (
-                <div className={styles.notifyDropdown} role="menu">
-                  {notifications.map((n, i) => (
-                    <div key={i} className={styles.notifyItem} role="menuitem">
-                      {n}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
         </div>
         <div className={styles.centerCard}>
           {permissions.canViewSearchHistory && recentSearches.length > 0 && (

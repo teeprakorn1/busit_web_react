@@ -2,15 +2,12 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../NavigationBar/NavigationBar';
 import styles from './ActivityAdmin.module.css';
 import { useNavigate } from "react-router-dom";
-import { FiBell, FiPlusCircle, FiUsers, FiEdit, FiList } from "react-icons/fi";
+import { FiPlusCircle, FiUsers, FiEdit, FiList } from "react-icons/fi";
 
 function ActivityAdmin() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
-  const [notifyOpen, setNotifyOpen] = useState(false);
   const navigate = useNavigate();
-
-  const notifications = ["มีผู้ใช้งานเข้ารวมกิจกรรม"];
 
   useEffect(() => {
     const handleResize = () => {
@@ -20,16 +17,6 @@ function ActivityAdmin() {
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!e.target.closest(`.${styles.notifyWrapper}`)) {
-        setNotifyOpen(false);
-      }
-    };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
   return (
@@ -47,29 +34,6 @@ function ActivityAdmin() {
         {/* Header */}
         <div className={styles.headerBar}>
           <h1 className={styles.heading}>จัดการกิจกรรม</h1>
-          <div className={styles.headerRight}>
-            <div className={styles.notifyWrapper}>
-              <button
-                className={styles.notifyButton}
-                onClick={() => setNotifyOpen(!notifyOpen)}
-              >
-                <FiBell size={24} color="currentColor" />
-                {notifications.length > 0 && (
-                  <span className={styles.badge}>{notifications.length}</span>
-                )}
-              </button>
-
-              {notifyOpen && (
-                <div className={styles.notifyDropdown}>
-                  {notifications.map((n, i) => (
-                    <div key={i} className={styles.notifyItem}>
-                      {n}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
         {/* Menu Section */}

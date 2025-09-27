@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, AlertCircle, Shield, Lock, CheckCircle } from 'lucide-react';
-import { FiBell } from 'react-icons/fi';
 
 import Navbar from '../../NavigationBar/NavigationBar';
 import StudentProfileForm from './forms/StudentProfileForm';
@@ -19,11 +18,6 @@ import { useUserPermissions } from './hooks/useUserPermissions';
 
 import styles from './AdminUsersDetail.module.css';
 
-const sanitizeInput = (input) => {
-  if (typeof input !== 'string') return input;
-  return input.replace(/[<>"'&]/g, '').trim();
-};
-
 function AdminStaffDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -39,7 +33,6 @@ function AdminStaffDetail() {
     passwordChangeLoading,
     securityAlert,
     imageUrls,
-    // เพิ่ม dropdown states และฟังก์ชันใหม่
     faculties,
     departments,
     teachers,
@@ -64,16 +57,11 @@ function AdminStaffDetail() {
     isMobile,
     sidebarOpen,
     setSidebarOpen,
-    notifyOpen,
-    setNotifyOpen,
     activeTab,
     handleTabChange,
-    notifications
   } = useUIState();
 
   const { userInfo, formatRegisterDate } = useUserUtils(userData);
-
-  // Dynamic handleGoBack based on userType
   const handleGoBack = () => {
     if (userData?.userType === 'student') {
       navigate('/name-register/student-name');
@@ -143,17 +131,16 @@ function AdminStaffDetail() {
       handleImageError,
       shouldLoadImage,
       loadImageWithCredentials,
-      canEdit: userData.userType === 'staff' ? permissions.canEditStaff : 
-               userData.userType === 'teacher' ? permissions.canEditTeachers :
-               userData.userType === 'student' ? permissions.canEditStudents : false
+      canEdit: userData.userType === 'staff' ? permissions.canEditStaff :
+        userData.userType === 'teacher' ? permissions.canEditTeachers :
+          userData.userType === 'student' ? permissions.canEditStudents : false
     };
 
     switch (userData.userType) {
       case 'student':
         return (
-          <StudentProfileForm 
+          <StudentProfileForm
             {...commonProps}
-            // เพิ่ม props ใหม่สำหรับ dropdown และการจัดการข้อมูล
             faculties={faculties}
             departments={departments}
             teachers={teachers}
@@ -198,41 +185,6 @@ function AdminStaffDetail() {
         return renderProfileForm();
     }
   };
-
-  const renderNotificationDropdown = () => (
-    <div className={styles.notifyWrapper}>
-      <button
-        className={styles.notifyButton}
-        onClick={() => setNotifyOpen(!notifyOpen)}
-        aria-label="การแจ้งเตือน"
-      >
-        <FiBell size={24} />
-        {notifications.length > 0 && (
-          <span className={styles.badge}>{notifications.length}</span>
-        )}
-      </button>
-
-      {notifyOpen && (
-        <div className={styles.notifyDropdown}>
-          <div className={styles.notifyHeader}>
-            <h4>การแจ้งเตือน</h4>
-          </div>
-          {notifications.length > 0 ? (
-            notifications.map((notification, index) => (
-              <div key={index} className={styles.notifyItem}>
-                <span className={styles.notifyDot}></span>
-                {sanitizeInput(notification)}
-              </div>
-            ))
-          ) : (
-            <div className={styles.noNotifications}>
-              ไม่มีการแจ้งเตือน
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
 
   const renderUserProfileCard = () => {
     if (!userInfo) return null;
@@ -522,8 +474,8 @@ function AdminStaffDetail() {
               </h1>
               <div className={styles.breadcrumb}>
                 <span>
-                  {userData.userType === 'staff' 
-                    ? 'รายชื่อเจ้าหน้าที่' 
+                  {userData.userType === 'staff'
+                    ? 'รายชื่อเจ้าหน้าที่'
                     : `รายชื่อ${userInfo?.userTypeDisplay}`
                   }
                 </span>
@@ -531,9 +483,6 @@ function AdminStaffDetail() {
                 <span className={styles.breadcrumbCurrent}>ข้อมูลรายบุคคล</span>
               </div>
             </div>
-          </div>
-          <div className={styles.headerRight}>
-            {renderNotificationDropdown()}
           </div>
         </div>
 

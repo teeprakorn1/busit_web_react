@@ -2,7 +2,6 @@ import React, { useEffect, useMemo } from 'react';
 import Navbar from '../../NavigationBar/NavigationBar';
 import styles from './AdminAllDepartments.module.css';
 import { AlertCircle, Loader, Building, GraduationCap, Shield, BookOpen } from 'lucide-react';
-import { FiBell } from 'react-icons/fi';
 
 import DepartmentFiltersForm from './DepartmentFiltersForm/DepartmentFiltersForm';
 import DepartmentTable from './DepartmentTable/DepartmentTable';
@@ -17,7 +16,6 @@ import { useDepartmentActions } from './hooks/useDepartmentActions';
 
 function AdminAllDepartments() {
   const rowsPerPage = 10;
-  const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
 
   const {
     departments,
@@ -60,8 +58,6 @@ function AdminAllDepartments() {
     isMobile,
     sidebarOpen,
     setSidebarOpen,
-    notifyOpen,
-    setNotifyOpen,
     modalOpen,
     modalMessage,
     modalButtons,
@@ -221,31 +217,6 @@ function AdminAllDepartments() {
                   อาจารย์: {departmentStats.teachers} คน
                 </span>
               </div>
-            </div>
-          </div>
-          <div className={styles.headerRight}>
-            <div className={styles.notifyWrapper}>
-              <button
-                className={styles.notifyButton}
-                onClick={() => setNotifyOpen(!notifyOpen)}
-              >
-                <FiBell size={24} />
-                {notifications.length > 0 && (
-                  <span className={styles.badge}>
-                    {notifications.length}
-                  </span>
-                )}
-              </button>
-
-              {notifyOpen && (
-                <div className={styles.notifyDropdown}>
-                  {notifications.map((n, i) => (
-                    <div key={i} className={styles.notifyItem}>
-                      {sanitizeInput(n)}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         </div>

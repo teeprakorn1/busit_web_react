@@ -9,7 +9,7 @@ import CustomModal from '../../../services/CustomModal/CustomModal';
 import { validateStaffForm } from './../../../utils/formValidator';
 import { useUserPermissions } from './hooks/useUserPermissions';
 import styles from './AddStaffAdmin.module.css';
-import { FiBell, FiArrowLeft } from 'react-icons/fi';
+import { FiArrowLeft } from 'react-icons/fi';
 
 const getApiUrl = (endpoint) => {
   return `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}${endpoint}`;
@@ -56,7 +56,6 @@ function AddStaffAdmin() {
   const [importedData, setImportedData] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
-  const [notifyOpen, setNotifyOpen] = useState(false);
   const [errors, setErrors] = useState({});
 
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
@@ -65,8 +64,6 @@ function AddStaffAdmin() {
 
   const [isImportLoading, setIsImportLoading] = useState(false);
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
-
-  const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
 
   useEffect(() => {
     if (permissions.userType !== null) {
@@ -114,16 +111,6 @@ function AddStaffAdmin() {
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!e.target.closest(`.${styles.notifyWrapper}`)) {
-        setNotifyOpen(false);
-      }
-    };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
   const handleDataImport = (file) => {
@@ -364,29 +351,6 @@ function AddStaffAdmin() {
               </div>
             )}
             <h1 className={styles.heading}>เพิ่มบัญชีเจ้าหน้าที่</h1>
-            <div className={styles.headerRight}>
-              <div className={styles.notifyWrapper}>
-                <button
-                  className={styles.notifyButton}
-                  onClick={() => setNotifyOpen(!notifyOpen)}
-                >
-                  <FiBell size={24} color="currentColor" />
-                  {notifications.length > 0 && (
-                    <span className={styles.badge}>{notifications.length}</span>
-                  )}
-                </button>
-
-                {notifyOpen && (
-                  <div className={styles.notifyDropdown}>
-                    {notifications.map((n, i) => (
-                      <div key={i} className={styles.notifyItem}>
-                        {n}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
 
           <StaffImportExport

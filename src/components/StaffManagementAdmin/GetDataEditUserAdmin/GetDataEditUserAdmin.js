@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../../NavigationBar/NavigationBar';
 import styles from './GetDataEditUserAdmin.module.css';
 import { AlertCircle, Loader, ArrowLeft, Activity, Users, Shield, Edit, Database } from 'lucide-react';
-import { FiBell } from 'react-icons/fi';
 
 import DataEditFiltersForm from './DataEditFiltersForm/DataEditFiltersForm';
 import DataEditTable from './DataEditTable/DataEditTable';
@@ -20,7 +19,6 @@ function GetDataEditUserAdmin() {
   const navigate = useNavigate();
   const permissions = useUserPermissions();
   const rowsPerPage = 10;
-  const notifications = ["มีการแก้ไขข้อมูลผู้ใช้ใหม่"];
 
   const {
     dataEdits,
@@ -55,19 +53,12 @@ function GetDataEditUserAdmin() {
 
   const { exportToExcel } = useDataEditActions();
 
-  const {
-    isMobile,
-    sidebarOpen,
-    setSidebarOpen,
-    notifyOpen,
-    setNotifyOpen
-  } = useUIState();
+  const { isMobile, sidebarOpen, setSidebarOpen } = useUIState();
 
   const [selectedDataEdit, setSelectedDataEdit] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
 
-  // Permission check
   useEffect(() => {
     if (permissions.userType !== null) {
       if (!permissions.isStaff || !permissions.canAccessAdminFeatures) {
@@ -77,19 +68,16 @@ function GetDataEditUserAdmin() {
     }
   }, [permissions, navigate]);
 
-  // Apply search criteria from navigation
   useEffect(() => {
     if (searchCriteria) {
       setSearchFromCriteria(searchCriteria);
     }
   }, [searchCriteria, setSearchFromCriteria]);
 
-  // Memoized filtered data
   const filteredDataEdits = useMemo(() => {
     return getFilteredDataEdits(dataEdits);
   }, [getFilteredDataEdits, dataEdits]);
 
-  // Memoized unique values for filters
   const uniqueEditTypes = useMemo(() => {
     return getUniqueEditTypes(dataEdits);
   }, [getUniqueEditTypes, dataEdits]);
@@ -98,13 +86,11 @@ function GetDataEditUserAdmin() {
     return getUniqueSourceTables(dataEdits);
   }, [getUniqueSourceTables, dataEdits]);
 
-  // Pagination calculations
   const totalPages = Math.ceil(filteredDataEdits.length / rowsPerPage);
   const indexOfLastRow = currentPage * rowsPerPage;
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
   const currentRows = filteredDataEdits.slice(indexOfFirstRow, indexOfLastRow);
 
-  // Event handlers
   const handleViewDataEdit = (dataEdit) => {
     if (!permissions.canViewDataEditDetails) {
       return;
@@ -126,13 +112,11 @@ function GetDataEditUserAdmin() {
     try {
       setExportLoading(true);
       const result = exportToExcel(filteredDataEdits, searchCriteria);
-      
+
       if (result.success) {
-        // Optional: Show success notification
         console.log(`Exported ${result.recordCount} records to ${result.filename}`);
       } else {
         console.error('Export failed:', result.error);
-        // Optional: Show error notification
       }
     } catch (error) {
       console.error('Export error:', error);
@@ -147,7 +131,7 @@ function GetDataEditUserAdmin() {
     setSourceTableFilter('');
     setDateFilter(null);
     setCurrentPage(1);
-    
+
     if (typeof resetFilters === 'function') {
       resetFilters();
     }
@@ -157,7 +141,6 @@ function GetDataEditUserAdmin() {
     fetchDataEdits();
   };
 
-  // Render states
   const renderPermissionLoadingState = () => (
     <div className={styles.container}>
       <div className={styles.loadingWrapper}>
@@ -232,17 +215,14 @@ function GetDataEditUserAdmin() {
     </div>
   );
 
-  // Permission loading state
   if (permissions.userType === null) {
     return renderPermissionLoadingState();
   }
 
-  // Unauthorized access
   if (!permissions.isStaff || !permissions.canAccessAdminFeatures) {
     return renderUnauthorizedState();
   }
 
-  // Loading and error states
   if (loading) return renderLoadingState();
   if (error) return renderErrorState();
 
@@ -275,7 +255,7 @@ function GetDataEditUserAdmin() {
               <h1 className={styles.heading}>
                 {isPersonSearch ? 'ผลการค้นหาประวัติการแก้ไขบัญชี' : 'ประวัติการแก้ไขบัญชี'}
               </h1>
-              
+
               {/* Summary Statistics */}
               <div className={styles.summaryStats}>
                 <span className={styles.statItem}>
@@ -302,8 +282,8 @@ function GetDataEditUserAdmin() {
               {searchCriteria && (
                 <p className={styles.searchInfo}>
                   ค้นหาด้วย {
-                    searchCriteria.type === 'email' ? 'อีเมล' : 
-                    searchCriteria.type === 'staff_code' ? 'รหัสเจ้าหน้าที่' : 'IP Address'
+                    searchCriteria.type === 'email' ? 'อีเมล' :
+                      searchCriteria.type === 'staff_code' ? 'รหัสเจ้าหน้าที่' : 'IP Address'
                   }:
                   <span className={styles.searchValue}>{searchCriteria.value}</span>
                 </p>
@@ -314,34 +294,6 @@ function GetDataEditUserAdmin() {
                 <p className={styles.filterInfo}>
                   ฟิลเตอร์ที่ใช้: {getFilterSummary}
                 </p>
-              )}
-            </div>
-          </div>
-
-          {/* Header Right - Notifications */}
-          <div className={styles.headerRight}>
-            <div className={styles.notifyWrapper}>
-              <button
-                className={styles.notifyButton}
-                onClick={() => setNotifyOpen(!notifyOpen)}
-                aria-label="การแจ้งเตือน"
-              >
-                <FiBell size={24} />
-                {notifications.length > 0 && (
-                  <span className={styles.badge}>
-                    {notifications.length}
-                  </span>
-                )}
-              </button>
-
-              {notifyOpen && (
-                <div className={styles.notifyDropdown}>
-                  {notifications.map((notification, index) => (
-                    <div key={index} className={styles.notifyItem}>
-                      {notification}
-                    </div>
-                  ))}
-                </div>
               )}
             </div>
           </div>
@@ -375,8 +327,8 @@ function GetDataEditUserAdmin() {
             {searchCriteria && (
               <span className={styles.searchSummary}>
                 จากการค้นหา {
-                  searchCriteria.type === 'email' ? 'อีเมล' : 
-                  searchCriteria.type === 'staff_code' ? 'รหัสเจ้าหน้าที่' : 'IP'
+                  searchCriteria.type === 'email' ? 'อีเมล' :
+                    searchCriteria.type === 'staff_code' ? 'รหัสเจ้าหน้าที่' : 'IP'
                 }: {searchCriteria.value}
               </span>
             )}

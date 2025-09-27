@@ -6,12 +6,6 @@ import { FiBell, FiUsers, FiCalendar, FiBarChart2 } from 'react-icons/fi';
 function MainAdmin() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
-  const [notifyOpen, setNotifyOpen] = useState(false);
-
-  const notifications = [
-    "มีผู้ใช้งานเข้ารวมกิจกรรมใหม่",
-    "กิจกรรมจะเริ่มขึ้นใน 3 วัน",
-  ];
 
   const systemStats = [
     {
@@ -73,16 +67,6 @@ function MainAdmin() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!e.target.closest(`.${styles.notifyWrapper}`)) {
-        setNotifyOpen(false);
-      }
-    };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
-
   return (
     <div className={styles.container}>
       <Navbar
@@ -98,32 +82,6 @@ function MainAdmin() {
         {/* Header Bar */}
         <div className={styles.headerBar}>
           <h1 className={styles.heading}>หน้าหลัก (ตัวอย่าง)</h1>
-          <div className={styles.headerRight}>
-            <div className={styles.notifyWrapper}>
-              <button
-                className={styles.notifyButton}
-                onClick={() => setNotifyOpen(!notifyOpen)}
-              >
-                <FiBell size={24} color="currentColor" />
-                {notifications.length > 0 && (
-                  <span className={styles.badge}>{notifications.length}</span>
-                )}
-              </button>
-
-              {notifyOpen && (
-                <div className={styles.notifyDropdown}>
-                  <div className={styles.notifyHeader}>
-                    <h4>การแจ้งเตือน</h4>
-                  </div>
-                  {notifications.map((n, i) => (
-                    <div key={i} className={styles.notifyItem}>
-                      {n}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
         {/* Welcome Section */}
@@ -131,7 +89,7 @@ function MainAdmin() {
           <div className={styles.welcomeContent}>
             <h2>ยินดีต้อนรับสู่ระบบจัดการกิจกรรมนักศึกษา BUSIT PLUS</h2>
             <p>
-              ระบบจัดการกิจกรรมนักศึกษาออนไลน์ที่ครบครันสำหรับสถาบันการศึกษา (มหาวิทยาลัยเทคโนโลยีราชมงคลตะวันออก เขตพื้นที่จักรพงษภูวนารถ) 
+              ระบบจัดการกิจกรรมนักศึกษาออนไลน์ที่ครบครันสำหรับสถาบันการศึกษา (มหาวิทยาลัยเทคโนโลยีราชมงคลตะวันออก เขตพื้นที่จักรพงษภูวนารถ)
               ช่วยให้การบริหารจัดการกิจกรรมต่างๆ เป็นไปอย่างมีประสิทธิภาพและสะดวกสบาย
             </p>
           </div>
@@ -143,7 +101,7 @@ function MainAdmin() {
           <div className={styles.statsGrid}>
             {systemStats.map((stat, index) => (
               <div key={index} className={styles.statCard}>
-                <div 
+                <div
                   className={styles.statIcon}
                   style={{ color: stat.color }}
                 >

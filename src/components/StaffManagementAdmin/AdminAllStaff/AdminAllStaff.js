@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useCallback } from 'react';
 import Navbar from '../../NavigationBar/NavigationBar';
 import styles from './AdminAllStaff.module.css';
 import { AlertCircle, Loader, Calendar, Users, Shield } from 'lucide-react';
-import { FiBell } from 'react-icons/fi';
 
 import StaffFiltersForm from './StaffFiltersForm/StaffFiltersForm';
 import StaffTable from './StaffTable/StaffTable';
@@ -17,7 +16,6 @@ import { useStaffActions } from './hooks/useStaffActions';
 
 function AdminAllStaff() {
   const rowsPerPage = 10;
-  const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
 
   const {
     staff,
@@ -59,8 +57,6 @@ function AdminAllStaff() {
     isMobile,
     sidebarOpen,
     setSidebarOpen,
-    notifyOpen,
-    setNotifyOpen,
     modalOpen,
     modalMessage,
     modalButtons,
@@ -246,31 +242,6 @@ function AdminAllStaff() {
                   ลาออกแล้ว: {staffStats.resigned} คน
                 </span>
               </div>
-            </div>
-          </div>
-          <div className={styles.headerRight}>
-            <div className={styles.notifyWrapper}>
-              <button
-                className={styles.notifyButton}
-                onClick={() => setNotifyOpen(!notifyOpen)}
-              >
-                <FiBell size={24} />
-                {notifications.length > 0 && (
-                  <span className={styles.badge}>
-                    {notifications.length}
-                  </span>
-                )}
-              </button>
-
-              {notifyOpen && (
-                <div className={styles.notifyDropdown}>
-                  {notifications.map((n, i) => (
-                    <div key={i} className={styles.notifyItem}>
-                      {sanitizeInput(n)}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         </div>

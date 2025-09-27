@@ -16,7 +16,6 @@
   --card-gradient6: linear-gradient(135deg, #f5f5f5, #fff);
 }
 
-/* ==================== Container ==================== */
 .container {
   height: 100vh;
   display: flex;
@@ -39,7 +38,6 @@
   margin-left: 0;
 }
 
-/* ==================== Header ==================== */
 .headerBar {
   display: flex;
   align-items: center;
@@ -64,58 +62,6 @@
   gap: 15px;
 }
 
-/* ==================== Notify ==================== */
-.notifyWrapper {
-  position: relative;
-}
-
-.notifyButton {
-  background: none;
-  border: none;
-  cursor: pointer;
-  position: relative;
-  display: flex;
-  align-items: center;
-  padding: 0;
-}
-
-.badge {
-  position: absolute;
-  top: -5px;
-  right: -8px;
-  background: red;
-  color: white;
-  font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 50%;
-}
-
-.notifyDropdown {
-  position: absolute;
-  right: 0;
-  top: 36px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: var(--shadow);
-  width: 240px;
-  z-index: 1000;
-  padding: 5px 0;
-}
-
-.notifyItem {
-  padding: 12px 16px;
-  font-size: 14px;
-  color: var(--text-dark);
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.notifyItem:hover {
-  background: #f1f5f9;
-  border-radius: 6px;
-}
-
-/* ==================== Dashboard Cards ==================== */
 .dashboardSection {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -179,7 +125,6 @@
   color: #1e4580;
 }
 
-/* ==================== Latest Activities Table ==================== */
 .tableSection {
   margin-bottom: 40px;
   padding: 10px 0 0 0;
@@ -238,7 +183,6 @@
   background: #f1f5f9;
 }
 
-/* ==================== Chart Section ==================== */
 .chartSection {
   margin-bottom: 40px;
   background: #fff;
@@ -254,7 +198,6 @@
   font-weight: 600;
 }
 
-/* ==================== Responsive ==================== */
 @media (max-width: 1024px) {
   .table {
     min-width: 500px;

@@ -3,16 +3,13 @@ import Navbar from '../NavigationBar/NavigationBar';
 import styles from './DashboardAdmin.module.css';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { FiBell, FiActivity, FiUsers, FiClipboard, FiBarChart2, FiClock, FiEdit } from 'react-icons/fi';
+import { FiActivity, FiUsers, FiClipboard, FiBarChart2, FiClock, FiEdit } from 'react-icons/fi';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function DashboardAdmin() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
-  const [notifyOpen, setNotifyOpen] = useState(false);
-
-  const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
 
   const summaryCards = [
     { title: "กิจกรรมทั้งหมด", value: 120, icon: <FiActivity size={36} /> },
@@ -52,16 +49,6 @@ function DashboardAdmin() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!e.target.closest(`.${styles.notifyWrapper}`)) {
-        setNotifyOpen(false);
-      }
-    };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
-
   return (
     <div className={styles.container}>
       <Navbar
@@ -72,29 +59,6 @@ function DashboardAdmin() {
       <main className={`${styles.mainContent} ${isMobile ? styles.mobileContent : ""} ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}>
         <div className={styles.headerBar}>
           <h1 className={styles.heading}>แดชบอร์ด (ตัวอย่าง)</h1>
-          <div className={styles.headerRight}>
-            <div className={styles.notifyWrapper}>
-              <button
-                className={styles.notifyButton}
-                onClick={() => setNotifyOpen(!notifyOpen)}
-              >
-                <FiBell size={24} color="currentColor" />
-                {notifications.length > 0 && (
-                  <span className={styles.badge}>{notifications.length}</span>
-                )}
-              </button>
-
-              {notifyOpen && (
-                <div className={styles.notifyDropdown}>
-                  {notifications.map((n, i) => (
-                    <div key={i} className={styles.notifyItem}>
-                      {n}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
         {/* Summary Cards */}

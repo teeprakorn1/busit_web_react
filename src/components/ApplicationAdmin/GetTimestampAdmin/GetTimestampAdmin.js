@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../../NavigationBar/NavigationBar';
 import styles from './GetTimestampAdmin.module.css';
 import { AlertCircle, Loader, Calendar, ArrowLeft, Activity, Users, Shield } from 'lucide-react';
-import { FiBell } from 'react-icons/fi';
 
 import TimestampFiltersForm from './TimestampFiltersForm/TimestampFiltersForm';
 import TimestampTable from './TimestampTable/TimestampTable';
@@ -20,7 +19,6 @@ function GetTimestamp() {
   const navigate = useNavigate();
   const permissions = useUserPermissions();
   const rowsPerPage = 10;
-  const notifications = ["มีผู้ใช้งานเข้าร่วมกิจกรรม"];
 
   const {
     timestamps,
@@ -57,8 +55,6 @@ function GetTimestamp() {
     isMobile,
     sidebarOpen,
     setSidebarOpen,
-    notifyOpen,
-    setNotifyOpen
   } = useUIState();
 
   const [selectedTimestamp, setSelectedTimestamp] = useState(null);
@@ -248,31 +244,6 @@ function GetTimestamp() {
                   ค้นหาด้วย {searchCriteria.type === 'email' ? 'อีเมล' : 'IP Address'}:
                   <span className={styles.searchValue}>{searchCriteria.value}</span>
                 </p>
-              )}
-            </div>
-          </div>
-          <div className={styles.headerRight}>
-            <div className={styles.notifyWrapper}>
-              <button
-                className={styles.notifyButton}
-                onClick={() => setNotifyOpen(!notifyOpen)}
-              >
-                <FiBell size={24} />
-                {notifications.length > 0 && (
-                  <span className={styles.badge}>
-                    {notifications.length}
-                  </span>
-                )}
-              </button>
-
-              {notifyOpen && (
-                <div className={styles.notifyDropdown}>
-                  {notifications.map((n, i) => (
-                    <div key={i} className={styles.notifyItem}>
-                      {n}
-                    </div>
-                  ))}
-                </div>
               )}
             </div>
           </div>
