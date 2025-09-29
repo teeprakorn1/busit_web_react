@@ -50,7 +50,18 @@ export const TIMESTAMP_TYPES = {
   STAFF_EDIT: 34,
   STAFF_EXPORT: 35,
   STAFF_SEARCH: 36,
-  STAFF_FILTER: 37
+  STAFF_FILTER: 37,
+  CERTIFICATE_TEMPLATE_ADD: 38,
+  CERTIFICATE_TEMPLATE_EDIT: 39,
+  CERTIFICATE_TEMPLATE_DELETE: 40,
+  CERTIFICATE_TEMPLATE_VIEW: 41,
+  CERTIFICATE_TEMPLATE_SEARCH: 42,
+  CERTIFICATE_SIGNATURE_ADD: 43,
+  CERTIFICATE_SIGNATURE_EDIT: 44,
+  CERTIFICATE_SIGNATURE_DELETE: 45,
+  CERTIFICATE_SIGNATURE_VIEW: 46,
+  CERTIFICATE_SIGNATURE_SEARCH: 47,
+  CERTIFICATE_GENERATE: 48
 };
 
 export const logTimestamp = async ({
@@ -385,6 +396,105 @@ export const logAddUserTimestamp = async (userType, userName, userCode) => {
   return await logTimestamp({
     timestampName,
     timestampTypeId: typeId
+  });
+};
+
+export const logCertificateTemplateAddTimestamp = async (templateName, templateId) => {
+  const timestampName = `เพิ่มแม่แบบเกียรติบัตร: ${templateName} (ID: ${templateId})`;
+
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.CERTIFICATE_TEMPLATE_ADD
+  });
+};
+
+export const logCertificateTemplateEditTimestamp = async (templateName, templateId) => {
+  const timestampName = `แก้ไขแม่แบบเกียรติบัตร: ${templateName} (ID: ${templateId})`;
+
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.CERTIFICATE_TEMPLATE_EDIT
+  });
+};
+
+export const logCertificateTemplateDeleteTimestamp = async (templateName, templateId) => {
+  const timestampName = `ลบแม่แบบเกียรติบัตร: ${templateName} (ID: ${templateId})`;
+
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.CERTIFICATE_TEMPLATE_DELETE
+  });
+};
+
+export const logCertificateTemplateViewTimestamp = async (templateName, templateId) => {
+  const timestampName = `ดูตัวอย่างแม่แบบเกียรติบัตร: ${templateName} (ID: ${templateId})`;
+
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.CERTIFICATE_TEMPLATE_VIEW
+  });
+};
+
+export const logCertificateTemplateSearchTimestamp = async (searchCriteria) => {
+  const timestampName = `ค้นหาแม่แบบเกียรติบัตร: ${JSON.stringify(searchCriteria)}`;
+
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.CERTIFICATE_TEMPLATE_SEARCH
+  });
+};
+
+export const logCertificateSignatureAddTimestamp = async (signatureName, signatureId) => {
+  const timestampName = `เพิ่มลายเซ็นเกียรติบัตร: ${signatureName} (ID: ${signatureId})`;
+
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.CERTIFICATE_SIGNATURE_ADD
+  });
+};
+
+export const logCertificateSignatureEditTimestamp = async (signatureName, signatureId) => {
+  const timestampName = `แก้ไขลายเซ็นเกียรติบัตร: ${signatureName} (ID: ${signatureId})`;
+
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.CERTIFICATE_SIGNATURE_EDIT
+  });
+};
+
+export const logCertificateSignatureDeleteTimestamp = async (signatureName, signatureId) => {
+  const timestampName = `ลบลายเซ็นเกียรติบัตร: ${signatureName} (ID: ${signatureId})`;
+
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.CERTIFICATE_SIGNATURE_DELETE
+  });
+};
+
+export const logCertificateSignatureViewTimestamp = async (signatureName, signatureId) => {
+  const timestampName = `ดูตัวอย่างลายเซ็นเกียรติบัตร: ${signatureName} (ID: ${signatureId})`;
+
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.CERTIFICATE_SIGNATURE_VIEW
+  });
+};
+
+export const logCertificateSignatureSearchTimestamp = async (searchCriteria) => {
+  const timestampName = `ค้นหาลายเซ็นเกียรติบัตร: ${JSON.stringify(searchCriteria)}`;
+
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.CERTIFICATE_SIGNATURE_SEARCH
+  });
+};
+
+export const logCertificateGenerateTimestamp = async (activityId, userId, templateId) => {
+  const timestampName = `สร้างเกียรติบัตร: กิจกรรม ID ${activityId}, ผู้ใช้ ID ${userId}, แม่แบบ ID ${templateId}`;
+
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.CERTIFICATE_GENERATE
   });
 };
 

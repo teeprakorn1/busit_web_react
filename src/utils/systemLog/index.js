@@ -63,5 +63,16 @@ export {
   logOtherPhoneUpdateTimestamp,
   logOtherPhoneDeleteTimestamp,
   logAddUserTimestamp,
-  logCSVImportTimestamp
+  logCSVImportTimestamp,
+  logCertificateTemplateAddTimestamp,
+  logCertificateTemplateEditTimestamp,
+  logCertificateTemplateDeleteTimestamp,
+  logCertificateTemplateViewTimestamp,
+  logCertificateTemplateSearchTimestamp,
+  logCertificateSignatureAddTimestamp,
+  logCertificateSignatureEditTimestamp,
+  logCertificateSignatureDeleteTimestamp,
+  logCertificateSignatureViewTimestamp,
+  logCertificateSignatureSearchTimestamp,
+  logCertificateGenerateTimestamp
 } from './timestampLogger';

@@ -3,6 +3,10 @@ import Navbar from '../../NavigationBar/NavigationBar';
 import { FiEye, FiEdit2, FiTrash2, FiPlus, FiX, FiRefreshCw, FiAlertTriangle } from 'react-icons/fi';
 import { useCertificateData } from './hooks/useCertificateData';
 import { useModal } from './hooks/useModal';
+import {
+  logCertificateTemplateViewTimestamp,
+  logCertificateSignatureViewTimestamp
+} from './../../../utils/systemLog';
 import CertificateForm from './CertificateForm/CertificateForm';
 import CertificatePreview from './CertificatePreview/CertificatePreview';
 import styles from './CertificateEditAdmin.module.css';
@@ -84,6 +88,27 @@ function CertificateEditAdmin() {
     }
   };
 
+  const handlePreview = async (item, tab) => {
+    openModal('preview', item, tab);
+
+    // Log timestamp สำหรับการ preview
+    try {
+      if (tab === 'templates') {
+        await logCertificateTemplateViewTimestamp(
+          item.Template_Name,
+          item.Template_ID
+        );
+      } else {
+        await logCertificateSignatureViewTimestamp(
+          item.Signature_Name,
+          item.Signature_ID
+        );
+      }
+    } catch (error) {
+      console.warn('Failed to log preview timestamp:', error);
+    }
+  };
+
   const handleFormFileChange = (file) => {
     handleFileChange(file);
   };
@@ -158,6 +183,7 @@ function CertificateEditAdmin() {
             </button>
           </div>
         </div>
+
         {error && (
           <div className={styles.errorBanner}>
             <div className={styles.errorContent}>
@@ -173,6 +199,7 @@ function CertificateEditAdmin() {
             </div>
           </div>
         )}
+
         <div className={styles.tabNav}>
           <button
             className={`${styles.tabButton} ${activeTab === 'templates' ? styles.active : ''}`}
@@ -195,6 +222,7 @@ function CertificateEditAdmin() {
             )}
           </button>
         </div>
+
         <div className={styles.contentArea}>
           {loading && getCurrentData().length === 0 ? (
             <div className={styles.loadingContainer}>
@@ -224,7 +252,7 @@ function CertificateEditAdmin() {
                       <div className={styles.cardActions}>
                         <button
                           className={styles.actionButton}
-                          onClick={() => openModal('preview', template, activeTab)}
+                          onClick={() => handlePreview(template, activeTab)}
                           title="ดูตัวอย่าง"
                           disabled={loading}
                         >
@@ -268,7 +296,7 @@ function CertificateEditAdmin() {
                       <div className={styles.cardActions}>
                         <button
                           className={styles.actionButton}
-                          onClick={() => openModal('preview', sig, activeTab)}
+                          onClick={() => handlePreview(sig, activeTab)}
                           title="ดูตัวอย่าง"
                           disabled={loading}
                         >
@@ -302,6 +330,7 @@ function CertificateEditAdmin() {
             </div>
           )}
         </div>
+
         {showModal && (
           <div className={styles.modalOverlay} onClick={handleModalClose}>
             <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -346,6 +375,7 @@ function CertificateEditAdmin() {
             </div>
           </div>
         )}
+
         {loading && getCurrentData().length > 0 && (
           <div className={styles.loadingOverlay}>
             <div className={styles.loadingContent}>

@@ -3,7 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
   logSystemAction,
-  logBulkOperation
+  logBulkOperation,
+  logCertificateTemplateAddTimestamp,
+  logCertificateTemplateEditTimestamp,
+  logCertificateTemplateDeleteTimestamp,
+  logCertificateTemplateSearchTimestamp,
+  logCertificateSignatureAddTimestamp,
+  logCertificateSignatureEditTimestamp,
+  logCertificateSignatureDeleteTimestamp,
+  logCertificateSignatureSearchTimestamp,
+  logCertificateGenerateTimestamp
 } from './../../../../utils/systemLog';
 
 const sanitizeInput = (input) => {
@@ -78,6 +87,7 @@ export const useCertificateData = () => {
   const [imageLoadErrors, setImageLoadErrors] = useState(new Set());
 
   const navigate = useNavigate();
+
   const handleImageError = useCallback((filename) => {
     setImageLoadErrors(prev => new Set([...prev, filename]));
   }, []);
@@ -177,6 +187,7 @@ export const useCertificateData = () => {
 
         if (Object.keys(params).length > 0 && params.searchQuery) {
           await logSystemAction(0, `ค้นหาแม่แบบเกียรติบัตร: ${JSON.stringify(params)}`, 'Template');
+          await logCertificateTemplateSearchTimestamp(params);
         }
       } else {
         throw new Error(result.message || 'Failed to load templates');
@@ -221,6 +232,7 @@ export const useCertificateData = () => {
 
         if (Object.keys(params).length > 0 && params.searchQuery) {
           await logSystemAction(0, `ค้นหาลายเซ็น: ${JSON.stringify(params)}`, 'Signature');
+          await logCertificateSignatureSearchTimestamp(params);
         }
       } else {
         throw new Error(result.message || 'Failed to load signatures');
@@ -310,6 +322,8 @@ export const useCertificateData = () => {
           'Template'
         );
 
+        await logCertificateTemplateAddTimestamp(sanitizedName, result.data?.Template_ID || 0);
+
         return {
           success: true,
           message: 'เพิ่มแม่แบบเรียบร้อยแล้ว',
@@ -392,6 +406,8 @@ export const useCertificateData = () => {
           'Template'
         );
 
+        await logCertificateTemplateEditTimestamp(sanitizedName, templateId);
+
         return {
           success: true,
           message: 'แก้ไขแม่แบบเรียบร้อยแล้ว',
@@ -438,6 +454,8 @@ export const useCertificateData = () => {
           `ลบแม่แบบ: ${templateName}`,
           'Template'
         );
+
+        await logCertificateTemplateDeleteTimestamp(templateName, templateId);
 
         return {
           success: true,
@@ -499,6 +517,8 @@ export const useCertificateData = () => {
           `เพิ่มลายเซ็นใหม่: ${sanitizedName}`,
           'Signature'
         );
+
+        await logCertificateSignatureAddTimestamp(sanitizedName, result.data?.Signature_ID || 0);
 
         return {
           success: true,
@@ -567,6 +587,8 @@ export const useCertificateData = () => {
           'Signature'
         );
 
+        await logCertificateSignatureEditTimestamp(sanitizedName, signatureId);
+
         return {
           success: true,
           message: 'แก้ไขลายเซ็นเรียบร้อยแล้ว',
@@ -614,6 +636,8 @@ export const useCertificateData = () => {
           'Signature'
         );
 
+        await logCertificateSignatureDeleteTimestamp(signatureName, signatureId);
+
         return {
           success: true,
           message: 'ลบลายเซ็นเรียบร้อยแล้ว'
@@ -655,6 +679,8 @@ export const useCertificateData = () => {
           `สร้างเกียรติบัตร: กิจกรรม ${activityId}, ผู้ใช้ ${userId}`,
           'Certificate'
         );
+
+        await logCertificateGenerateTimestamp(activityId, userId, templateId);
 
         return {
           success: true,
@@ -806,7 +832,6 @@ export const useCertificateData = () => {
       setLoading(false);
     }
   }, [loadAllData]);
-
 
   return {
     templates,
