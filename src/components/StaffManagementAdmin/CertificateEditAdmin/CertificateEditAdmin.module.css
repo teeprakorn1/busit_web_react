@@ -1,14 +1,17 @@
-/* CertificateEditAdmin.module.css */
+/* CertificateEditAdmin.module.css - Cleaned Version */
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap");
 
 :root {
   --primary-color: #2563eb;
   --primary-hover: #1e4fd6;
+  --danger-color: #ef4444;
   --bg-light: #f9fafb;
   --text-dark: #374151;
   --text-muted: #6b7280;
   --card-bg: #ffffff;
   --shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  --shadow-hover: 0 8px 16px rgba(0, 0, 0, 0.1);
+  --border-color: #e5e7eb;
 }
 
 /* Main Container */
@@ -43,7 +46,7 @@
   margin-bottom: 20px;
   flex-wrap: wrap;
   gap: 15px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-color);
   padding-bottom: 15px;
 }
 
@@ -56,7 +59,6 @@
   transition: padding-left 0.3s ease;
 }
 
-/* Header Right */
 .headerRight {
   display: flex;
   align-items: center;
@@ -65,30 +67,446 @@
   justify-content: flex-end;
 }
 
-/* Dashboard Section */
-.dashboardSection {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
+.addButton {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.card {
-  background: var(--card-bg);
-  padding: 24px;
-  border-radius: 14px;
+.buttonIcon {
+  font-size: 16px;
+}
+
+.addButton:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* Tab Navigation */
+.tabNav {
+  display: flex;
+  gap: 0;
+  margin-bottom: 30px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tabButton {
+  background: none;
+  border: none;
+  padding: 16px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 3px solid transparent;
+  position: relative;
+}
+
+.tabButton:hover {
+  color: var(--primary-color);
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.tabButton.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+  background: rgba(37, 99, 235, 0.1);
+}
+
+/* Content Area */
+.contentArea {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
   box-shadow: var(--shadow);
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.itemCard {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow);
+}
+
+.itemCard:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--primary-color);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.cardTitle {
+  margin: 0;
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-dark);
+  flex: 1;
+  margin-right: 12px;
+}
+
+.cardActions {
+  display: flex;
+  gap: 8px;
+}
+
+.actionButton {
+  background: var(--bg-light);
+  border: 1px solid var(--border-color);
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  min-width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+.actionButton:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  transform: scale(1.1);
+}
+
+.deleteButton:hover {
+  background: var(--danger-color);
+  border-color: var(--danger-color);
+}
+
+.cardBody > * + * {
+  margin-top: 8px;
+}
+
+.cardInfo {
+  margin: 8px 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.cardDate {
+  margin: 8px 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 30px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+  background: var(--bg-light);
+  color: var(--text-dark);
+}
+
+.modalBody {
+  padding: 30px;
+}
+
+/* Empty States */
+.emptyState {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+.emptyState h3 {
+  font-size: 20px;
+  margin-bottom: 12px;
+  color: var(--text-dark);
+}
+
+.emptyState p {
+  font-size: 16px;
+  margin-bottom: 24px;
+}
+
+.emptyStateButton {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.emptyStateButton:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+}
+
+/* Loading States */
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error Banner */
+.errorBanner {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.errorContent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.errorIcon {
+  color: #ef4444;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.errorMessage {
+  flex: 1;
+  color: #991b1b;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.errorCloseButton {
+  background: none;
+  border: none;
+  color: #991b1b;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  font-size: 18px;
+}
+
+.errorCloseButton:hover {
+  background: #fee2e2;
+}
+
+/* Refresh Button */
+.refreshButton {
+  background: var(--bg-light);
+  border: 1px solid var(--border-color);
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 44px;
+}
+
+.refreshButton:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  transform: rotate(90deg);
+}
+
+.refreshButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.refreshButton:disabled:hover {
+  transform: none;
+  background: var(--bg-light);
+  color: inherit;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+/* Tab Badge */
+.tabBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-color);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+  min-width: 24px;
+}
+
+.tabButton.active .tabBadge {
+  background: white;
+  color: var(--primary-color);
+}
+
+/* Loading Container */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: var(--text-muted);
+}
+
+.loadingContainer p {
+  margin-top: 16px;
+  font-size: 16px;
+}
+
+/* Loading Overlay */
+.loadingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(2px);
+}
+
+.loadingContent {
+  background: white;
+  padding: 40px 60px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.loadingContent p {
+  margin: 0;
+  color: var(--text-dark);
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Disabled States */
+.addButton:disabled,
+.tabButton:disabled,
+.actionButton:disabled,
+.emptyStateButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* Responsive */
@@ -98,23 +516,131 @@
     padding: 15px 20px;
   }
 
-  .dashboardSection {
+  .contentArea {
+    padding: 20px;
+  }
+
+  .cardGrid {
     grid-template-columns: 1fr;
   }
 
   .headerBar {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .headerRight {
-    width: auto;
-    justify-content: flex-end;
+    width: 100%;
+    justify-content: center;
   }
 
   .heading {
     padding-left: 50px;
     font-size: 22px;
+    text-align: center;
+  }
+
+  .tabNav {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .tabButton {
+    padding: 12px 24px;
+    font-size: 14px;
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .modal {
+    width: 95%;
+    margin: 20px;
+    max-height: 85vh;
+  }
+
+  .modalHeader {
+    padding: 20px;
+  }
+
+  .modalBody {
+    padding: 20px;
+  }
+
+  .cardActions {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .actionButton {
+    width: 100%;
+    padding: 10px;
+    min-width: auto;
+    height: auto;
+  }
+
+  .errorBanner {
+    padding: 12px 16px;
+  }
+
+  .errorMessage {
+    font-size: 13px;
+  }
+
+  .refreshButton {
+    min-width: 40px;
+    height: 40px;
+    padding: 10px;
+  }
+
+  .tabBadge {
+    font-size: 11px;
+    padding: 2px 6px;
+    min-width: 20px;
+  }
+
+  .loadingContent {
+    padding: 30px 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .heading {
+    font-size: 20px;
+    padding-left: 0;
+  }
+
+  .addButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .tabButton {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .itemCard {
+    padding: 16px;
+  }
+
+  .cardTitle {
+    font-size: 16px;
+  }
+
+  .errorBanner {
+    padding: 10px 12px;
+  }
+
+  .errorIcon {
+    font-size: 18px;
+  }
+
+  .errorMessage {
+    font-size: 12px;
+  }
+
+  .loadingContent {
+    padding: 24px 32px;
+    width: 90%;
   }
 }
