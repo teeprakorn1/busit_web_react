@@ -1,0 +1,494 @@
+/* ActivityForms.module.css */
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap");
+
+.formContainer {
+  background: white;
+  padding: 28px;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.formContainer:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.formTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.titleIcon {
+  color: #3b82f6;
+  font-size: 22px;
+}
+
+.fieldGroup {
+  margin-bottom: 24px;
+}
+
+.fieldGroup:last-child {
+  margin-bottom: 0;
+}
+
+.label {
+  display: block;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+
+.required {
+  color: #ef4444;
+  margin-left: 4px;
+}
+
+.inputField,
+.textareaField,
+.selectField {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: 'Noto Sans', sans-serif;
+  transition: all 0.3s ease;
+  background: #f8fafc;
+}
+
+.inputField:focus,
+.textareaField:focus,
+.selectField:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.inputField.error,
+.textareaField.error {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.textareaField {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.selectField {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23334155' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 40px;
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 14px;
+  color: #64748b;
+  font-size: 18px;
+  pointer-events: none;
+}
+
+.inputWrapper .inputField {
+  padding-left: 44px;
+}
+
+.errorText {
+  display: block;
+  color: #ef4444;
+  font-size: 13px;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.helpText {
+  display: block;
+  color: #64748b;
+  font-size: 13px;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.dateDisplay {
+  display: block;
+  margin-top: 8px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  color: #1e40af;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #334155;
+  font-size: 15px;
+}
+
+.checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
+
+/* Status Display */
+.statusDisplay {
+  padding: 16px;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 1px solid #86efac;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.statusDisplay::before {
+  content: '●';
+  color: #16a34a;
+  font-size: 20px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 0;
+  background: none;
+  color: #166534;
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Location Picker Styles */
+.locationPickerWrapper {
+  margin-top: 8px;
+}
+
+.selectLocationBtn {
+  width: 100%;
+  padding: 16px 20px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.selectLocationBtn:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.btnIcon {
+  font-size: 20px;
+}
+
+.selectedLocation {
+  background: #f0fdf4;
+  border: 2px solid #86efac;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.locationInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.locationIcon {
+  color: #16a34a;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.locationCoords {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.locationCoords span {
+  color: #166534;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.locationActions {
+  display: flex;
+  gap: 8px;
+}
+
+.changeLocationBtn,
+.removeLocationBtn {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.changeLocationBtn {
+  background: #3b82f6;
+  color: white;
+}
+
+.changeLocationBtn:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+}
+
+.removeLocationBtn {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 8px;
+}
+
+.removeLocationBtn:hover {
+  background: #fecaca;
+  transform: scale(1.1);
+}
+
+/* Image Upload Styles */
+.uploadArea {
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  background: #f8fafc;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.uploadArea:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.fileInput {
+  display: none;
+}
+
+.uploadLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  color: #475569;
+}
+
+.uploadIcon {
+  font-size: 48px;
+  color: #3b82f6;
+  transition: transform 0.3s ease;
+}
+
+.uploadArea:hover .uploadIcon {
+  transform: translateY(-4px);
+}
+
+.uploadLabel span {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.uploadLabel small {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.imagePreviewContainer {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.imagePreview {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  display: block;
+  border-radius: 12px;
+}
+
+.removeImageBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(239, 68, 68, 0.95);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(4px);
+}
+
+.removeImageBtn:hover {
+  background: rgba(220, 38, 38, 0.95);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .formContainer {
+    padding: 20px;
+  }
+  
+  .formTitle {
+    font-size: 18px;
+  }
+  
+  .inputField,
+  .textareaField,
+  .selectField {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+  
+  .uploadArea {
+    padding: 30px 16px;
+  }
+  
+  .uploadIcon {
+    font-size: 40px;
+  }
+  
+  .uploadLabel span {
+    font-size: 15px;
+  }
+
+  .selectedLocation {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .locationActions {
+    width: 100%;
+  }
+
+  .changeLocationBtn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .formContainer {
+    padding: 16px;
+  }
+  
+  .formTitle {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .fieldGroup {
+    margin-bottom: 20px;
+  }
+  
+  .inputField,
+  .textareaField,
+  .selectField {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  
+  .uploadArea {
+    padding: 24px 12px;
+  }
+  
+  .uploadIcon {
+    font-size: 36px;
+  }
+  
+  .uploadLabel span {
+    font-size: 14px;
+  }
+  
+  .removeImageBtn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .locationCoords span {
+    font-size: 12px;
+  }
+
+  .changeLocationBtn,
+  .removeLocationBtn {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .statusBadge {
+    font-size: 13px;
+    padding: 5px 14px;
+  }
+}

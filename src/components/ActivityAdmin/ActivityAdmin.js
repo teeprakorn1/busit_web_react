@@ -38,7 +38,7 @@ function ActivityAdmin() {
 
         {/* Menu Section */}
         <div className={styles.dashboardSection}>
-          <div className={`${styles.card} ${styles.card01}`} onClick={() => navigate("/create-activity")}>
+          <div className={`${styles.card} ${styles.card01}`} onClick={() => navigate("/activity/activity-create")}>
             <FiPlusCircle size={36} />
             <span>สร้างกิจกรรม</span>
           </div>

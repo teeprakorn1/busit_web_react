@@ -11,6 +11,8 @@ import ApplicationAdmin from './components/ApplicationAdmin/ApplicationAdmin';
 import NameRegisterAdmin from './components/NameRegisterAdmin/NameRegisterAdmin';
 import StaffManagementAdmin from './components/StaffManagementAdmin/StaffManagementAdmin';
 
+import CreateActivity from './components/ActivityAdmin/CreateActivity/CreateActivity';
+
 import GetPersonTimestampAdmin from './components/ApplicationAdmin/GetPersonTimestampAdmin/GetPersonTimestampAdmin';
 import GetTimestampAdmin from './components/ApplicationAdmin/GetTimestampAdmin/GetTimestampAdmin';
 import AddUsersAdmin from './components/ApplicationAdmin/AddUsersAdmin/AddUsersAdmin';
@@ -47,6 +49,9 @@ function App() {
         <Route path='/application' element={<ProtectedRoute><ApplicationAdmin /></ProtectedRoute>} />
         <Route path='/name-register' element={<ProtectedRoute><NameRegisterAdmin /></ProtectedRoute>} />
         <Route path='/staff-management' element={<ProtectedRoute><StaffManagementAdmin /></ProtectedRoute>} />
+
+        {/* Activity Redirects */}
+        <Route path='/activity/activity-create' element={<ProtectedRoute><CreateActivity /></ProtectedRoute>} />
 
         {/* Application Redirects */}
         <Route path='/application/get-person-timestamp' element={<ProtectedRoute><GetPersonTimestampAdmin /></ProtectedRoute>} />
