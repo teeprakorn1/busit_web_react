@@ -38,21 +38,21 @@ function ActivityAdmin() {
 
         {/* Menu Section */}
         <div className={styles.dashboardSection}>
-          <div className={`${styles.card} ${styles.card01}`} onClick={() => navigate("/activity/activity-create")}>
+          <div className={`${styles.card} ${styles.card01}`} onClick={() => navigate("/activity-management/activity-create")}>
             <FiPlusCircle size={36} />
             <span>สร้างกิจกรรม</span>
           </div>
-          <div className={`${styles.card} ${styles.card02}`} onClick={() => navigate("/join-activity")}>
+          <div className={`${styles.card} ${styles.card02}`} onClick={() => navigate("/activity-management/activity-join")}>
             <FiUsers size={36} />
-            <span>การเข้าร่วมกิจกรรม</span>
+            <span>จัดการผู้เข้าร่วมกิจกรรม</span>
           </div>
-          <div className={`${styles.card} ${styles.card03}`} onClick={() => navigate("/edit-activity")}>
+          <div className={`${styles.card} ${styles.card03}`} onClick={() => navigate("/activity-management/activity-edit")}>
             <FiEdit size={36} />
             <span>แก้ไขข้อมูลกิจกรรม</span>
           </div>
-          <div className={`${styles.card} ${styles.card04}`} onClick={() => navigate("/all-activities")}>
+          <div className={`${styles.card} ${styles.card04}`} onClick={() => navigate("/activity-management/activity-name")}>
             <FiList size={36} />
-            <span>กิจกรรมทั้งหมด</span>
+            <span>จัดการกิจกรรม</span>
           </div>
         </div>
       </main>

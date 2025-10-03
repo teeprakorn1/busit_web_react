@@ -351,6 +351,7 @@ function AddStaffAdmin() {
               </div>
             )}
             <h1 className={styles.heading}>เพิ่มบัญชีเจ้าหน้าที่</h1>
+            <div className={styles.headerRight}/>
           </div>
 
           <StaffImportExport

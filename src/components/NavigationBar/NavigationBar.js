@@ -217,7 +217,7 @@ const NavigationBar = () => {
   }, [location.pathname]);
 
   const checkPermission = (path, userType) => {
-    const allowedPaths = ["/main", "/dashboard", "/activity", "/application", "/name-register", "/staff-management"];
+    const allowedPaths = ["/main", "/dashboard", "/activity-management", "/application", "/name-register", "/staff-management"];
 
     if (!allowedPaths.includes(path)) {
       return { allowed: false, message: "หน้าที่คุณเข้าถึงไม่ถูกต้อง." };
@@ -229,7 +229,7 @@ const NavigationBar = () => {
     }
 
     if (normalizedUserType === "teacher") {
-      const restrictedForTeacher = ["/activity", "/staff-management", "/application"];
+      const restrictedForTeacher = ["/activity-management", "/staff-management", "/application"];
       if (restrictedForTeacher.includes(path)) {
         return { allowed: false, message: "คุณไม่มีสิทธิ์เข้าถึงหน้านี้." };
       }
@@ -336,7 +336,7 @@ const NavigationBar = () => {
           <li className={`${styles.navbarItem} ${activePath === "/dashboard" ? styles.active : ""}`} onClick={() => handleNavigation("/dashboard")}>
             <span className={styles.navbarLink}><DashboardIcon width="20" height="20" /> แดชบอร์ด</span>
           </li>
-          <li className={`${styles.navbarItem} ${activePath === "/activity" ? styles.active : ""}`} onClick={() => handleNavigation("/activity")}>
+          <li className={`${styles.navbarItem} ${activePath === "/activity-management" ? styles.active : ""}`} onClick={() => handleNavigation("/activity-management")}>
             <span className={styles.navbarLink}><ActivityIcon width="20" height="20" /> จัดการกิจกรรม</span>
           </li>
           <li className={`${styles.navbarItem} ${activePath === "/application" ? styles.active : ""}`} onClick={() => handleNavigation("/application")}>

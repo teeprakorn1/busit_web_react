@@ -1,0 +1,225 @@
+/* ActivityTable.module.css */
+:root {
+  --primary-color: #2563eb;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+  --text-dark: #374151;
+  --text-muted: #6b7280;
+  --card-bg: #ffffff;
+  --bg-light: #f9fafb;
+  --border-color: #e5e7eb;
+  --shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-bg);
+}
+
+.table th,
+.table td {
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table th {
+  background: var(--bg-light);
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+
+.table th.sortable:hover {
+  background: #e5e7eb;
+}
+
+.table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.table tbody tr:hover {
+  background: var(--bg-light);
+}
+
+.activityTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.titleText {
+  font-weight: 600;
+  color: var(--text-dark);
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.typeTag {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #e0e7ff;
+  color: #3730a3;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.statusOpen {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.statusOngoing {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.statusCompleted {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.statusCancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.dateCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-dark);
+  font-size: 13px;
+}
+
+.locationCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.requireBadge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.required {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.optional {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.viewBtn,
+.editBtn,
+.deleteBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.viewBtn {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.viewBtn:hover:not(:disabled) {
+  background: #bfdbfe;
+  transform: scale(1.1);
+}
+
+.editBtn {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.editBtn:hover:not(:disabled) {
+  background: #fde68a;
+  transform: scale(1.1);
+}
+
+.deleteBtn {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.deleteBtn:hover:not(:disabled) {
+  background: #fecaca;
+  transform: scale(1.1);
+}
+
+.viewBtn:disabled,
+.editBtn:disabled,
+.deleteBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.iconSmall {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 768px) {
+  .table {
+    min-width: 800px;
+  }
+
+  .table th,
+  .table td {
+    padding: 12px 8px;
+    font-size: 13px;
+  }
+
+  .titleText {
+    max-width: 150px;
+  }
+}

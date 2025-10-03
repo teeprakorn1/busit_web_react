@@ -12,6 +12,7 @@ import NameRegisterAdmin from './components/NameRegisterAdmin/NameRegisterAdmin'
 import StaffManagementAdmin from './components/StaffManagementAdmin/StaffManagementAdmin';
 
 import CreateActivity from './components/ActivityAdmin/CreateActivity/CreateActivity';
+import AdminAllActivity from './components/ActivityAdmin/AdminAllActivity/AdminAllActivity';
 
 import GetPersonTimestampAdmin from './components/ApplicationAdmin/GetPersonTimestampAdmin/GetPersonTimestampAdmin';
 import GetTimestampAdmin from './components/ApplicationAdmin/GetTimestampAdmin/GetTimestampAdmin';
@@ -45,13 +46,14 @@ function App() {
         <Route path='/' element={<ProtectedRoute><MainAdmin /></ProtectedRoute>} />
         <Route path='/main' element={<ProtectedRoute><MainAdmin /></ProtectedRoute>} />
         <Route path='/dashboard' element={<ProtectedRoute><DashboardAdmin /></ProtectedRoute>} />
-        <Route path='/activity' element={<ProtectedRoute><ActivityAdmin /></ProtectedRoute>} />
+        <Route path='/activity-management' element={<ProtectedRoute><ActivityAdmin /></ProtectedRoute>} />
         <Route path='/application' element={<ProtectedRoute><ApplicationAdmin /></ProtectedRoute>} />
         <Route path='/name-register' element={<ProtectedRoute><NameRegisterAdmin /></ProtectedRoute>} />
         <Route path='/staff-management' element={<ProtectedRoute><StaffManagementAdmin /></ProtectedRoute>} />
 
         {/* Activity Redirects */}
-        <Route path='/activity/activity-create' element={<ProtectedRoute><CreateActivity /></ProtectedRoute>} />
+        <Route path='/activity-management/activity-create' element={<ProtectedRoute><CreateActivity /></ProtectedRoute>} />
+        <Route path="/activity-management/activity-name" element={<ProtectedRoute><AdminAllActivity /></ProtectedRoute>} />
 
         {/* Application Redirects */}
         <Route path='/application/get-person-timestamp' element={<ProtectedRoute><GetPersonTimestampAdmin /></ProtectedRoute>} />

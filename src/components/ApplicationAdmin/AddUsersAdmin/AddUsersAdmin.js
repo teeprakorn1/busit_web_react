@@ -467,6 +467,7 @@ function AddUsersAdmin() {
               </div>
             )}
             <h1 className={styles.heading}>เพิ่มบัญชีนักศึกษา/อาจารย์</h1>
+            <div className={styles.headerRight}/>
           </div>
 
           <UserTypeSelector
