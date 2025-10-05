@@ -17,7 +17,7 @@ export const useFilters = (fetchActivities, rowsPerPage = 10) => {
   const isDateInRange = useCallback((activityDate, range) => {
     const now = new Date();
     const startDate = new Date(activityDate);
-    
+
     switch (range) {
       case 'upcoming':
         return startDate > now;
@@ -31,16 +31,16 @@ export const useFilters = (fetchActivities, rowsPerPage = 10) => {
         const weekStart = new Date(now);
         weekStart.setDate(now.getDate() - now.getDay());
         weekStart.setHours(0, 0, 0, 0);
-        
+
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekStart.getDate() + 6);
         weekEnd.setHours(23, 59, 59, 999);
-        
+
         return startDate >= weekStart && startDate <= weekEnd;
       }
       case 'this_month': {
-        return startDate.getMonth() === now.getMonth() && 
-               startDate.getFullYear() === now.getFullYear();
+        return startDate.getMonth() === now.getMonth() &&
+          startDate.getFullYear() === now.getFullYear();
       }
       default:
         return true;
@@ -50,52 +50,28 @@ export const useFilters = (fetchActivities, rowsPerPage = 10) => {
   const getFilteredAndSortedActivities = useCallback((activities) => {
     if (!Array.isArray(activities)) return [];
 
-    console.log('Filtering activities:', {
-      total: activities.length,
-      typeFilter,
-      statusFilter,
-      dateRangeFilter,
-      searchQuery
-    });
-
     const filtered = activities.filter(activity => {
       if (!activity) return false;
 
-      // Search filter
       const query = searchQuery.toLowerCase().trim();
-      const matchesSearch = !query || 
+      const matchesSearch = !query ||
         activity.title?.toLowerCase().includes(query) ||
         activity.description?.toLowerCase().includes(query) ||
         activity.locationDetail?.toLowerCase().includes(query);
 
-      // Type filter - ใช้ชื่อประเภทแทน ID
-      const matchesType = !typeFilter || 
+      const matchesType = !typeFilter ||
         activity.typeName === typeFilter;
 
-      // Status filter - ใช้ชื่อสถานะแทน ID
-      const matchesStatus = !statusFilter || 
+      const matchesStatus = !statusFilter ||
         activity.statusName === statusFilter;
 
-      // Date range filter
-      const matchesDateRange = !dateRangeFilter || 
+      const matchesDateRange = !dateRangeFilter ||
         isDateInRange(activity.startTime, dateRangeFilter);
 
       const result = matchesSearch && matchesType && matchesStatus && matchesDateRange;
-      
-      if (!result) {
-        console.log('Activity filtered out:', {
-          title: activity.title,
-          matchesSearch,
-          matchesType,
-          matchesStatus,
-          matchesDateRange
-        });
-      }
 
       return result;
     });
-
-    console.log('Filtered activities:', filtered.length);
 
     if (!sortBy) return filtered;
 

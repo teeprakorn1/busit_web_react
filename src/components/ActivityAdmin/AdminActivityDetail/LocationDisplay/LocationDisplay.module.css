@@ -1,0 +1,236 @@
+/* LocationDisplay.module.css */
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap");
+
+.container {
+  width: 100%;
+  position: relative;
+  font-family: 'Noto Sans', sans-serif;
+}
+
+.map {
+  width: 100%;
+  height: 400px;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.coordinates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1px solid #86efac;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.coordItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.coordLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: #059669;
+  white-space: nowrap;
+}
+
+.coordValue {
+  font-size: 14px;
+  font-weight: 700;
+  color: #166534;
+  font-family: 'Courier New', monospace;
+}
+
+.mapsLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.mapsLink:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
+.mapsLink:active {
+  transform: translateY(0);
+}
+
+.noLocation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: #f9fafb;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  color: #9ca3af;
+  text-align: center;
+  gap: 12px;
+}
+
+.noLocation svg {
+  opacity: 0.4;
+}
+
+.noLocation p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Custom Leaflet Popup Styles */
+:global(.custom-popup) {
+  font-family: 'Noto Sans', sans-serif;
+}
+
+:global(.custom-popup .leaflet-popup-content-wrapper) {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+:global(.custom-popup .leaflet-popup-tip) {
+  background: white;
+}
+
+/* Custom Marker Animation */
+:global(.custom-marker) {
+  animation: markerBounce 1s ease-in-out;
+}
+
+@keyframes markerBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Leaflet Control Styles */
+:global(.leaflet-control-zoom) {
+  border: none !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+
+:global(.leaflet-control-zoom a) {
+  color: #374151 !important;
+  font-weight: 600 !important;
+  border: none !important;
+}
+
+:global(.leaflet-control-zoom a:hover) {
+  background: #f3f4f6 !important;
+  color: #1f2937 !important;
+}
+
+:global(.leaflet-bar) {
+  border: none !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .map {
+    height: 320px;
+    border-radius: 10px;
+  }
+
+  .coordinates {
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .coordItem {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .mapsLink {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 16px;
+  }
+
+  .noLocation {
+    padding: 40px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .map {
+    height: 280px;
+    border-radius: 8px;
+  }
+
+  .coordinates {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .coordItem {
+    padding: 6px 10px;
+  }
+
+  .coordLabel {
+    font-size: 12px;
+  }
+
+  .coordValue {
+    font-size: 13px;
+  }
+
+  .mapsLink {
+    font-size: 12px;
+    padding: 8px 14px;
+  }
+
+  .noLocation svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .noLocation p {
+    font-size: 13px;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .map {
+    height: 300px;
+    page-break-inside: avoid;
+  }
+
+  .mapsLink {
+    display: none;
+  }
+}

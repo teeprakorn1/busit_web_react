@@ -13,6 +13,7 @@ import StaffManagementAdmin from './components/StaffManagementAdmin/StaffManagem
 
 import CreateActivity from './components/ActivityAdmin/CreateActivity/CreateActivity';
 import AdminAllActivity from './components/ActivityAdmin/AdminAllActivity/AdminAllActivity';
+import AdminActivityDetail from './components/ActivityAdmin/AdminActivityDetail/AdminActivityDetail';
 
 import GetPersonTimestampAdmin from './components/ApplicationAdmin/GetPersonTimestampAdmin/GetPersonTimestampAdmin';
 import GetTimestampAdmin from './components/ApplicationAdmin/GetTimestampAdmin/GetTimestampAdmin';
@@ -54,6 +55,7 @@ function App() {
         {/* Activity Redirects */}
         <Route path='/activity-management/activity-create' element={<ProtectedRoute><CreateActivity /></ProtectedRoute>} />
         <Route path="/activity-management/activity-name" element={<ProtectedRoute><AdminAllActivity /></ProtectedRoute>} />
+        <Route path='/activity-management/activity-detail/:id' element={<ProtectedRoute><AdminActivityDetail /></ProtectedRoute>} />
 
         {/* Application Redirects */}
         <Route path='/application/get-person-timestamp' element={<ProtectedRoute><GetPersonTimestampAdmin /></ProtectedRoute>} />

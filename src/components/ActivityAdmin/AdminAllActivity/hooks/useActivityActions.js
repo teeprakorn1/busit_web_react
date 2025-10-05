@@ -32,7 +32,7 @@ export const useActivityActions = ({
       return;
     }
 
-    navigate(`/activity-management/activity-edit/${activity.id}`, {
+    navigate(`/activity-management/activity-detail/${activity.id}`, {
       state: { from: '/activity-management/activity-name' }
     });
   }, [navigate, permissions.canManageActivities, showModal]);
