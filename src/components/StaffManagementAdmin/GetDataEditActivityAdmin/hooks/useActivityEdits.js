@@ -1,4 +1,4 @@
-// hooks/useDataEdits.js
+// hooks/useActivityEdits.js
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -8,12 +8,12 @@ const getApiUrl = (endpoint) => {
   return `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}${endpoint}`;
 };
 
-export const useDataEdits = () => {
-  const [dataEdits, setDataEdits] = useState([]);
+export const useActivityEdits = () => {
+  const [activityEdits, setActivityEdits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchCriteria, setSearchCriteria] = useState(null);
-  const [isPersonSearch, setIsPersonSearch] = useState(false);
+  const [isActivitySearch, setIsActivitySearch] = useState(false);
 
   const initialLoadDone = useRef(false);
   const lastFetchParams = useRef(null);
@@ -22,60 +22,56 @@ export const useDataEdits = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const ALLOWED_SOURCE_TABLES = useMemo(() => ['Student', 'Teacher', 'Staff', 'Users'], []);
-
-  const dataEditStats = useMemo(() => {
-    if (!Array.isArray(dataEdits)) {
+  const activityEditStats = useMemo(() => {
+    if (!Array.isArray(activityEdits)) {
       return {
         total: 0,
         uniqueStaff: 0,
         uniqueIPs: 0,
         editTypes: 0,
-        sourceTableStats: {},
+        uniqueActivities: 0,
         editTypeStats: {}
       };
     }
 
     const stats = {
-      total: dataEdits.length,
-      uniqueStaff: new Set(dataEdits.map(d => d.Users_Email).filter(Boolean)).size,
-      uniqueIPs: new Set(dataEdits.map(d => d.DataEdit_IP_Address).filter(Boolean)).size,
-      editTypes: new Set(dataEdits.map(d => d.DataEditType_Name).filter(Boolean)).size,
-      sourceTableStats: {},
+      total: activityEdits.length,
+      uniqueStaff: new Set(activityEdits.map(d => d.Users_Email).filter(Boolean)).size,
+      uniqueIPs: new Set(activityEdits.map(d => d.DataEdit_IP_Address).filter(Boolean)).size,
+      editTypes: new Set(activityEdits.map(d => d.DataEditType_Name).filter(Boolean)).size,
+      uniqueActivities: new Set(activityEdits.map(d => d.DataEdit_ThisId).filter(Boolean)).size,
       editTypeStats: {}
     };
 
-    dataEdits.forEach(d => {
+    activityEdits.forEach(d => {
       if (d.DataEditType_Name) {
         stats.editTypeStats[d.DataEditType_Name] = (stats.editTypeStats[d.DataEditType_Name] || 0) + 1;
-      }
-      if (d.DataEdit_SourceTable) {
-        stats.sourceTableStats[d.DataEdit_SourceTable] = (stats.sourceTableStats[d.DataEdit_SourceTable] || 0) + 1;
       }
     });
 
     return stats;
-  }, [dataEdits]);
+  }, [activityEdits]);
 
   const parseSearchCriteria = useCallback(() => {
     try {
-      const encryptedCriteria = sessionStorage.getItem('current_search_criteria');
+      const encryptedCriteria = sessionStorage.getItem('current_activity_search_criteria');
       if (encryptedCriteria) {
         const decrypted = decryptValue(encryptedCriteria);
         const criteria = JSON.parse(decrypted);
-        sessionStorage.removeItem('current_search_criteria');
+        sessionStorage.removeItem('current_activity_search_criteria');
         return criteria;
       }
 
       const params = new URLSearchParams(location.search);
-      const email = params.get("email");
+      const activityId = params.get("activity_id");
+      const activityTitle = params.get("activity_title");
       const staffCode = params.get("staff_code");
-      const ip = params.get("ip");
+      const email = params.get("email");
 
-      if (email || staffCode || ip) {
+      if (activityId || activityTitle || staffCode || email) {
         return {
-          type: email ? 'email' : staffCode ? 'staff_code' : 'ip',
-          value: email || staffCode || ip,
+          type: activityId ? 'activity_id' : activityTitle ? 'activity_title' : staffCode ? 'staff_code' : 'email',
+          value: activityId || activityTitle || staffCode || email,
           timestamp: Date.now()
         };
       }
@@ -87,7 +83,7 @@ export const useDataEdits = () => {
     }
   }, [location.search]);
 
-  const fetchDataEdits = useCallback(async (criteria = null) => {
+  const fetchActivityEdits = useCallback(async (criteria = null) => {
     if (!mounted.current) return;
 
     try {
@@ -103,16 +99,18 @@ export const useDataEdits = () => {
       let apiUrl;
       if (criteria) {
         const params = new URLSearchParams();
-        if (criteria.type === 'email') {
-          params.append('email', criteria.value);
+        if (criteria.type === 'activity_id') {
+          params.append('activity_id', criteria.value);
+        } else if (criteria.type === 'activity_title') {
+          params.append('activity_title', criteria.value);
         } else if (criteria.type === 'staff_code') {
           params.append('staff_code', criteria.value);
-        } else if (criteria.type === 'ip') {
-          params.append('ip', criteria.value);
+        } else if (criteria.type === 'email') {
+          params.append('email', criteria.value);
         }
-        apiUrl = getApiUrl(`${process.env.REACT_APP_API_DATAEDIT_SEARCH}?${params.toString()}`);
+        apiUrl = getApiUrl(`/api/dataedit/search?source_table=Activity&${params.toString()}`);
       } else {
-        apiUrl = getApiUrl(process.env.REACT_APP_API_DATAEDIT_GET);
+        apiUrl = getApiUrl('/api/dataedit/get/source/Activity');
       }
 
       const response = await axios.get(apiUrl, {
@@ -127,24 +125,19 @@ export const useDataEdits = () => {
       if (!mounted.current) return;
 
       if (response.data.status) {
-        let data = Array.isArray(response.data.data) ? response.data.data : [];
-
-        data = data.filter(item =>
-          item && ALLOWED_SOURCE_TABLES.includes(item.DataEdit_SourceTable)
-        );
-
-        setDataEdits(data);
+        const data = Array.isArray(response.data.data) ? response.data.data : [];
+        setActivityEdits(data);
       } else {
         const errorMsg = 'ไม่สามารถโหลดข้อมูลได้: ' + (response.data.message || 'Unknown error');
         setError(errorMsg);
-        setDataEdits([]);
+        setActivityEdits([]);
       }
 
       initialLoadDone.current = true;
     } catch (err) {
       if (!mounted.current) return;
 
-      console.error('Fetch dataedits error:', err);
+      console.error('Fetch activity edits error:', err);
 
       let errorMessage = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
 
@@ -155,15 +148,15 @@ export const useDataEdits = () => {
       } else if (err.response?.status === 403) {
         errorMessage = 'ไม่มีสิทธิ์เข้าถึงข้อมูลนี้';
       } else if (err.response?.status === 404) {
-        errorMessage = 'ไม่พบข้อมูลการแก้ไข';
-        setDataEdits([]);
+        errorMessage = 'ไม่พบข้อมูลการแก้ไขกิจกรรม';
+        setActivityEdits([]);
       } else if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
       }
 
       setError(errorMessage);
       if (err.response?.status !== 404) {
-        setDataEdits([]);
+        setActivityEdits([]);
       }
 
       initialLoadDone.current = true;
@@ -172,15 +165,15 @@ export const useDataEdits = () => {
         setLoading(false);
       }
     }
-  }, [ALLOWED_SOURCE_TABLES]);
+  }, []);
 
-  const goBackToPersonSearch = useCallback(() => {
-    navigate('/staff-management/search-staff');
+  const goBackToActivitySearch = useCallback(() => {
+    navigate('/activity-management/search-activity');
   }, [navigate]);
 
   const resetSearchCriteria = useCallback(() => {
     setSearchCriteria(null);
-    setIsPersonSearch(false);
+    setIsActivitySearch(false);
     initialLoadDone.current = false;
     lastFetchParams.current = null;
     navigate({
@@ -189,13 +182,13 @@ export const useDataEdits = () => {
     });
   }, [navigate, location.pathname]);
 
-  const refreshDataEdits = useCallback(() => {
+  const refreshActivityEdits = useCallback(() => {
     if (!mounted.current) return;
 
     initialLoadDone.current = false;
     lastFetchParams.current = null;
-    fetchDataEdits(searchCriteria);
-  }, [fetchDataEdits, searchCriteria]);
+    fetchActivityEdits(searchCriteria);
+  }, [fetchActivityEdits, searchCriteria]);
 
   useEffect(() => {
     if (!mounted.current) return;
@@ -204,16 +197,16 @@ export const useDataEdits = () => {
 
     if (criteria) {
       setSearchCriteria(criteria);
-      setIsPersonSearch(true);
+      setIsActivitySearch(true);
     } else {
       setSearchCriteria(null);
-      setIsPersonSearch(false);
+      setIsActivitySearch(false);
     }
 
     if (!initialLoadDone.current) {
-      fetchDataEdits(criteria);
+      fetchActivityEdits(criteria);
     }
-  }, [parseSearchCriteria, fetchDataEdits]);
+  }, [parseSearchCriteria, fetchActivityEdits]);
 
   useEffect(() => {
     mounted.current = true;
@@ -224,14 +217,14 @@ export const useDataEdits = () => {
   }, []);
 
   return {
-    dataEdits,
-    dataEditStats,
+    activityEdits,
+    activityEditStats,
     searchCriteria,
-    isPersonSearch,
+    isActivitySearch,
     loading,
     error,
-    fetchDataEdits: refreshDataEdits,
-    goBackToPersonSearch,
+    fetchActivityEdits: refreshActivityEdits,
+    goBackToActivitySearch,
     resetSearchCriteria,
     setError
   };

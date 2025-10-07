@@ -64,6 +64,19 @@ export const TIMESTAMP_TYPES = {
   CERTIFICATE_GENERATE: 48,
   ACTIVITY_CREATE_SUCCESS: 49,
   ACTIVITY_CREATE_FAIL: 50,
+  ACTIVITY_VIEW: 51,
+  ACTIVITY_EDIT_START: 52,
+  ACTIVITY_EDIT_SAVE: 53,
+  ACTIVITY_EDIT_CANCEL: 54,
+  ACTIVITY_DELETE_CONFIRM: 55,
+  ACTIVITY_EXPORT: 56,
+  ACTIVITY_PARTICIPANTS_VIEW: 57,
+  ACTIVITY_PARTICIPANTS_CHECKIN: 58,
+  ACTIVITY_PARTICIPANTS_CHECKOUT: 59,
+  ACTIVITY_DEPARTMENTS_VIEW: 60,
+  ACTIVITY_STATS_VIEW: 61,
+  ACTIVITY_TEMPLATE_CHANGE: 62,
+  ACTIVITY_IMAGE_UPLOAD: 63
 };
 
 export const logTimestamp = async ({
@@ -525,5 +538,113 @@ export const logCSVImportTimestamp = async (userType, importCount) => {
   return await logTimestamp({
     timestampName,
     timestampTypeId: typeId
+  });
+};
+
+export const logActivityView = async (activityId, activityTitle) => {
+  const timestampName = `ดูรายละเอียดกิจกรรม: ${activityTitle} (ID: ${activityId})`;
+  
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.ACTIVITY_VIEW
+  });
+};
+
+export const logActivityEditStart = async (activityId, activityTitle) => {
+  const timestampName = `เริ่มแก้ไขกิจกรรม: ${activityTitle} (ID: ${activityId})`;
+  
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.ACTIVITY_EDIT_START
+  });
+};
+
+export const logActivityEditCancel = async (activityId, activityTitle) => {
+  const timestampName = `ยกเลิกการแก้ไขกิจกรรม: ${activityTitle} (ID: ${activityId})`;
+  
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.ACTIVITY_EDIT_CANCEL
+  });
+};
+
+export const logActivityImageUpload = async (activityId, activityTitle) => {
+  const timestampName = `อัปโหลดรูปภาพกิจกรรม: ${activityTitle} (ID: ${activityId})`;
+  
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.ACTIVITY_IMAGE_UPLOAD
+  });
+};
+
+export const logActivityExport = async (activityId, activityTitle) => {
+  const timestampName = `ส่งออกข้อมูลกิจกรรม: ${activityTitle} (ID: ${activityId})`;
+  
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.ACTIVITY_EXPORT
+  });
+};
+
+export const logActivityParticipantsView = async (activityId, activityTitle) => {
+  const timestampName = `ดูรายชื่อผู้เข้าร่วมกิจกรรม: ${activityTitle} (ID: ${activityId})`;
+  
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.ACTIVITY_PARTICIPANTS_VIEW
+  });
+};
+
+export const logActivityParticipantCheckIn = async (activityId, activityTitle, participantName) => {
+  const timestampName = `เช็คอินผู้เข้าร่วม: ${participantName} ในกิจกรรม "${activityTitle}"`;
+  
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.ACTIVITY_PARTICIPANTS_CHECKIN
+  });
+};
+
+export const logActivityParticipantCheckOut = async (activityId, activityTitle, participantName) => {
+  const timestampName = `เช็คเอาท์ผู้เข้าร่วม: ${participantName} ในกิจกรรม "${activityTitle}"`;
+  
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.ACTIVITY_PARTICIPANTS_CHECKOUT
+  });
+};
+
+export const logActivityDepartmentsView = async (activityId, activityTitle) => {
+  const timestampName = `ดูข้อมูลสาขาที่เข้าร่วมกิจกรรม: ${activityTitle} (ID: ${activityId})`;
+  
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.ACTIVITY_DEPARTMENTS_VIEW
+  });
+};
+
+export const logActivityStatsView = async (activityId, activityTitle) => {
+  const timestampName = `ดูสถิติกิจกรรม: ${activityTitle} (ID: ${activityId})`;
+  
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.ACTIVITY_STATS_VIEW
+  });
+};
+
+export const logActivityCreateSuccess = async (activityTitle) => {
+  const timestampName = `สร้างกิจกรรมสำเร็จ: ${activityTitle}`;
+  
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.ACTIVITY_CREATE_SUCCESS
+  });
+};
+
+export const logActivityCreateFail = async (activityTitle, reason) => {
+  const timestampName = `สร้างกิจกรรมไม่สำเร็จ: ${activityTitle} - เหตุผล: ${reason}`;
+  
+  return await logTimestamp({
+    timestampName,
+    timestampTypeId: TIMESTAMP_TYPES.ACTIVITY_CREATE_FAIL
   });
 };

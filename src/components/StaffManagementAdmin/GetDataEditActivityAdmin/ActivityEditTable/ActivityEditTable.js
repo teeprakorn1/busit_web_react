@@ -1,7 +1,7 @@
-// DataEditTable/DataEditTable.js
+// ActivityEditTable/ActivityEditTable.js
 import React, { useCallback } from 'react';
-import { Eye, Database } from 'lucide-react';
-import styles from './DataEditTable.module.css';
+import { Eye, Calendar } from 'lucide-react';
+import styles from './ActivityEditTable.module.css';
 
 const formatDate = (date) => {
   if (!date) return 'N/A';
@@ -27,26 +27,6 @@ const formatEditType = (editType) => {
     .replace(/\b\w/g, l => l.toUpperCase());
 };
 
-const formatSourceTable = (sourceTable) => {
-  const tableMap = {
-    'Student': 'นักเรียน',
-    'Teacher': 'อาจารย์',
-    'Staff': 'เจ้าหน้าที่',
-    'Users': 'ผู้ใช้'
-  };
-  return tableMap[sourceTable] || sourceTable || 'N/A';
-};
-
-const getSourceTableColor = (sourceTable) => {
-  const colorMap = {
-    'Student': '#3b82f6',
-    'Teacher': '#10b981',
-    'Staff': '#8b5cf6',
-    'Users': '#f59e0b'
-  };
-  return colorMap[sourceTable] || '#6b7280';
-};
-
 const sanitizeIP = (ip) => {
   if (!ip) return 'N/A';
   const parts = ip.split('.');
@@ -62,26 +42,26 @@ const truncateText = (text, maxLength = 30) => {
   return text.substring(0, maxLength) + '...';
 };
 
-function DataEditTable({
-  dataEdits = [],
-  onViewDataEdit,
+function ActivityEditTable({
+  activityEdits = [],
+  onViewActivityEdit,
   searchCriteria,
   canViewDetails = true
 }) {
-  const handleViewClick = useCallback((e, dataEdit) => {
+  const handleViewClick = useCallback((e, activityEdit) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (onViewDataEdit && typeof onViewDataEdit === 'function') {
-      onViewDataEdit(dataEdit);
+    if (onViewActivityEdit && typeof onViewActivityEdit === 'function') {
+      onViewActivityEdit(activityEdit);
     }
-  }, [onViewDataEdit]);
+  }, [onViewActivityEdit]);
 
   const handleRowClick = useCallback((e) => {
     e.stopPropagation();
   }, []);
 
-  if (!Array.isArray(dataEdits)) {
+  if (!Array.isArray(activityEdits)) {
     return (
       <div className={styles.tableWrapper}>
         <div className={styles.errorMessage}>
@@ -97,8 +77,9 @@ function DataEditTable({
         <thead>
           <tr>
             <th>รหัส</th>
-            <th>รหัสข้อมูล</th>
-            <th>ตารางที่มา</th>
+            <th>รหัสกิจกรรม</th>
+            <th>ชื่อกิจกรรม</th>
+            <th>สถานะกิจกรรม</th>
             <th>รหัสเจ้าหน้าที่</th>
             <th>ชื่อ-นามสกุล</th>
             <th>อีเมล</th>
@@ -110,70 +91,75 @@ function DataEditTable({
           </tr>
         </thead>
         <tbody>
-          {dataEdits.map(de => (
+          {activityEdits.map(ae => (
             <tr
-              key={de.DataEdit_ID || Math.random()}
+              key={ae.DataEdit_ID || Math.random()}
               onClick={handleRowClick}
               className={styles.tableRow}
             >
               <td onClick={handleRowClick}>
                 <span className={styles.idBadge}>
-                  {de.DataEdit_ID || 'N/A'}
+                  {ae.DataEdit_ID || 'N/A'}
                 </span>
               </td>
               <td onClick={handleRowClick}>
-                <span className={styles.thisIdBadge}>
-                  {de.DataEdit_ThisId || 'N/A'}
+                <span className={styles.activityIdBadge}>
+                  <Calendar className={styles.iconTiny} />
+                  {ae.DataEdit_ThisId || 'N/A'}
+                </span>
+              </td>
+              <td onClick={handleRowClick} title={ae.Activity_Title}>
+                <span className={styles.activityTitle}>
+                  {truncateText(ae.Activity_Title, 35)}
                 </span>
               </td>
               <td onClick={handleRowClick}>
-                <span
-                  className={styles.sourceTableTag}
-                  style={{
-                    backgroundColor: `${getSourceTableColor(de.DataEdit_SourceTable)}15`,
-                    borderColor: getSourceTableColor(de.DataEdit_SourceTable),
-                    color: getSourceTableColor(de.DataEdit_SourceTable)
-                  }}
-                  title={`ข้อมูลจากตาราง: ${de.DataEdit_SourceTable || 'N/A'}`}
-                >
-                  <Database className={styles.iconTiny} />
-                  {formatSourceTable(de.DataEdit_SourceTable)}
-                </span>
+                {ae.ActivityStatus_Name ? (
+                  <span className={`${styles.statusBadge} ${ae.ActivityStatus_Name === 'เปิดรับสมัคร' ? styles.statusOpen :
+                      ae.ActivityStatus_Name === 'กำลังดำเนินการ' ? styles.statusOngoing :
+                        ae.ActivityStatus_Name === 'เสร็จสิ้น' ? styles.statusCompleted :
+                          styles.statusCancelled
+                    }`}>
+                    {ae.ActivityStatus_Name}
+                  </span>
+                ) : (
+                  <span className={styles.noData}>N/A</span>
+                )}
               </td>
               <td onClick={handleRowClick}>
                 <span className={styles.staffCode}>
-                  {de.Staff_Code || 'N/A'}
+                  {ae.Staff_Code || 'N/A'}
                 </span>
               </td>
               <td onClick={handleRowClick}>
                 <div className={styles.staffName}>
-                  <span className={styles.firstName}>{de.Staff_FirstName || 'N/A'}</span>
-                  <span className={styles.lastName}>{de.Staff_LastName || ''}</span>
+                  <span className={styles.firstName}>{ae.Staff_FirstName || 'N/A'}</span>
+                  <span className={styles.lastName}>{ae.Staff_LastName || ''}</span>
                 </div>
               </td>
-              <td onClick={handleRowClick} title={de.Users_Email}>
+              <td onClick={handleRowClick} title={ae.Users_Email}>
                 <span className={styles.email}>
-                  {de.Users_Email || 'N/A'}
+                  {ae.Users_Email || 'N/A'}
                 </span>
               </td>
               <td onClick={handleRowClick}>
-                <span className={styles.editTypeTag} title={de.DataEditType_Name}>
-                  {formatEditType(de.DataEditType_Name)}
+                <span className={styles.editTypeTag} title={ae.DataEditType_Name}>
+                  {formatEditType(ae.DataEditType_Name)}
                 </span>
               </td>
-              <td onClick={handleRowClick} title={de.DataEdit_Name}>
+              <td onClick={handleRowClick} title={ae.DataEdit_Name}>
                 <span className={styles.editDetail}>
-                  {truncateText(de.DataEdit_Name)}
+                  {truncateText(ae.DataEdit_Name)}
                 </span>
               </td>
-              <td onClick={handleRowClick} title={de.DataEdit_IP_Address}>
+              <td onClick={handleRowClick} title={ae.DataEdit_IP_Address}>
                 <span className={styles.ipAddress}>
-                  {sanitizeIP(de.DataEdit_IP_Address)}
+                  {sanitizeIP(ae.DataEdit_IP_Address)}
                 </span>
               </td>
               <td onClick={handleRowClick}>
                 <span className={styles.dateTime}>
-                  {formatDate(de.DataEdit_RegisTime)}
+                  {formatDate(ae.DataEdit_RegisTime)}
                 </span>
               </td>
               <td onClick={handleRowClick}>
@@ -181,10 +167,10 @@ function DataEditTable({
                   {canViewDetails ? (
                     <button
                       className={styles.viewBtn}
-                      onClick={(e) => handleViewClick(e, de)}
+                      onClick={(e) => handleViewClick(e, ae)}
                       onMouseDown={(e) => e.stopPropagation()}
                       onMouseUp={(e) => e.stopPropagation()}
-                      aria-label={`ดูรายละเอียดการแก้ไข ${de.DataEdit_ID}`}
+                      aria-label={`ดูรายละเอียดการแก้ไข ${ae.DataEdit_ID}`}
                       type="button"
                     >
                       <Eye className={styles.iconSmall} />
@@ -196,14 +182,15 @@ function DataEditTable({
               </td>
             </tr>
           ))}
-          {dataEdits.length === 0 && (
+          {activityEdits.length === 0 && (
             <tr>
-              <td colSpan="11" className={styles.emptyState}>
+              <td colSpan="12" className={styles.emptyState}>
                 {searchCriteria
-                  ? `ไม่พบประวัติการแก้ไขบัญชีสำหรับ ${searchCriteria.type === 'email' ? 'อีเมล' :
-                    searchCriteria.type === 'staff_code' ? 'รหัสเจ้าหน้าที่' : 'IP'
+                  ? `ไม่พบประวัติการแก้ไขกิจกรรมสำหรับ ${searchCriteria.type === 'activity_id' ? 'รหัสกิจกรรม' :
+                    searchCriteria.type === 'activity_title' ? 'ชื่อกิจกรรม' :
+                      searchCriteria.type === 'staff_code' ? 'รหัสเจ้าหน้าที่' : 'อีเมล'
                   }: ${searchCriteria.value}`
-                  : "ไม่มีข้อมูลประวัติการแก้ไขบัญชี"}
+                  : "ไม่มีข้อมูลประวัติการแก้ไขกิจกรรม"}
               </td>
             </tr>
           )}
@@ -213,4 +200,4 @@ function DataEditTable({
   );
 }
 
-export default DataEditTable;
+export default ActivityEditTable;

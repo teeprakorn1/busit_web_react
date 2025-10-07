@@ -4,6 +4,7 @@ import CertificatePreview from '../CertificatePreview/CertificatePreview';
 import LocationDisplay from '../LocationDisplay/LocationDisplay';
 import axios from 'axios';
 import styles from './ActivityForms.module.css';
+import { logActivityEditStart, logActivityEditCancel } from '../../../../utils/systemLog';
 
 const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -236,6 +237,18 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
     }
   };
 
+  const handleEditStart = async () => {
+    setIsEditing(true);
+    
+    // Log edit start
+    if (activityData?.Activity_ID && activityData?.Activity_Title) {
+      await logActivityEditStart(
+        activityData.Activity_ID,
+        activityData.Activity_Title
+      );
+    }
+  };
+
   const handleSave = async () => {
     if (!onUpdate || loading) return;
 
@@ -298,7 +311,15 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
     }
   };
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
+    // Log cancel action
+    if (activityData?.Activity_ID && activityData?.Activity_Title) {
+      await logActivityEditCancel(
+        activityData.Activity_ID,
+        activityData.Activity_Title
+      );
+    }
+
     if (activityData) {
       const formatDateTimeLocal = (dateString) => {
         if (!dateString) return '';
@@ -390,7 +411,7 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
             ) : (
               <button
                 className={styles.editButton}
-                onClick={() => setIsEditing(true)}
+                onClick={handleEditStart}
                 disabled={loading}
               >
                 <Edit size={16} /> แก้ไข
@@ -400,6 +421,7 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
         )}
       </div>
 
+      {/* Rest of the component remains the same as the original */}
       <div className={styles.infoGrid}>
         <div className={styles.infoSection}>
           <h4>ข้อมูลหลัก</h4>
@@ -616,7 +638,7 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
         </div>
       </div>
 
-      {/* ส่วนแสดง/แก้ไข GPS */}
+      {/* GPS Section */}
       <div className={styles.infoSection} style={{ marginTop: '24px' }}>
         <h4>
           <MapPin size={18} style={{ display: 'inline', marginRight: '8px' }} />
@@ -678,7 +700,7 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
         </div>
       </div>
 
-      {/* ส่วนเลือก/แสดงตัวอย่างเกียรติบัตร */}
+      {/* Certificate Template Section */}
       <div className={styles.infoSection} style={{ marginTop: '24px' }}>
         <h4>
           <Award size={18} style={{ display: 'inline', marginRight: '8px' }} />
@@ -724,7 +746,6 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
               </div>
             )}
 
-            {/* Certificate Preview with Signature */}
             {(templatePreview || activityData.Template_ImageFile) && (
               <CertificatePreview
                 templateImageFile={isEditing ? templatePreview?.filename : activityData.Template_ImageFile}

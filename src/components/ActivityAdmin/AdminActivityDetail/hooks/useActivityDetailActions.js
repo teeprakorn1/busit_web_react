@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserPermissions } from './useUserPermissions';
 import axios from 'axios';
+import { logActivityDelete } from '../../../../utils/systemLog';
 
 export const useActivityDetailActions = (activityData) => {
   const navigate = useNavigate();
@@ -43,6 +44,9 @@ export const useActivityDetailActions = (activityData) => {
     const confirmMessage = `คุณต้องการลบกิจกรรม "${activityTitle}" หรือไม่?\n\nการดำเนินการนี้ไม่สามารถย้อนกลับได้`;
 
     if (window.confirm(confirmMessage)) {
+      // Log delete action BEFORE actual deletion
+      await logActivityDelete(activityData.Activity_ID, activityTitle);
+
       const result = await deleteActivityFromAPI(activityData.Activity_ID);
 
       if (result.success) {

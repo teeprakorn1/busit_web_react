@@ -37,8 +37,7 @@ const formatSourceTable = (sourceTable) => {
     'Student': 'นักเรียน',
     'Teacher': 'อาจารย์',
     'Staff': 'เจ้าหน้าที่',
-    'Users': 'ผู้ใช้',
-    'Activity': 'กิจกรรม'
+    'Users': 'ผู้ใช้'
   };
   return tableMap[sourceTable] || sourceTable || 'N/A';
 };
@@ -58,7 +57,6 @@ function DataEditModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch source table data
   const fetchSourceData = async (sourceTable, thisId) => {
     if (!sourceTable || !thisId) return;
 
@@ -67,7 +65,7 @@ function DataEditModal({
 
     try {
       let endpoint = '';
-      
+
       switch (sourceTable) {
         case 'Student':
           endpoint = `/api/admin/students/${thisId}`;
@@ -82,7 +80,6 @@ function DataEditModal({
           endpoint = `/api/admin/users/${thisId}`;
           break;
         case 'Activity':
-          // Activity ยังไม่มี API endpoint ให้ข้าม
           setError('ไม่สามารถดึงข้อมูล Activity ได้ในขณะนี้');
           return;
         default:
@@ -124,13 +121,12 @@ function DataEditModal({
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
-      
-      // Fetch source data when modal opens
+
       if (dataEdit?.DataEdit_SourceTable && dataEdit?.DataEdit_ThisId) {
         fetchSourceData(dataEdit.DataEdit_SourceTable, dataEdit.DataEdit_ThisId);
       }
     }
-    
+
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'unset';
@@ -139,7 +135,6 @@ function DataEditModal({
     };
   }, [isOpen, dataEdit?.DataEdit_SourceTable, dataEdit?.DataEdit_ThisId, onClose]);
 
-  // Early return after hooks
   if (!isOpen || !dataEdit) return null;
 
   const handleBackdropClick = (e) => {
@@ -219,7 +214,6 @@ function DataEditModal({
     }
   };
 
-  // เพิ่มฟังก์ชันสำหรับแสดงข้อมูล Users
   const renderUsersData = () => (
     <>
       <div className={styles.modalRow}>
@@ -237,10 +231,10 @@ function DataEditModal({
       <div className={styles.modalRow}>
         <div className={styles.modalLabel}>ประเภทผู้ใช้:</div>
         <div className={styles.modalValue}>
-          {sourceData.userType === 'student' ? 'นักเรียน' : 
-           sourceData.userType === 'teacher' ? 'อาจารย์' : 
-           sourceData.userType === 'staff' ? 'เจ้าหน้าที่' : 
-           sourceData.userType || 'N/A'}
+          {sourceData.userType === 'student' ? 'นักเรียน' :
+            sourceData.userType === 'teacher' ? 'อาจารย์' :
+              sourceData.userType === 'staff' ? 'เจ้าหน้าที่' :
+                sourceData.userType || 'N/A'}
         </div>
       </div>
       <div className={styles.modalRow}>
@@ -273,7 +267,7 @@ function DataEditModal({
       <div className={styles.modalRow}>
         <div className={styles.modalLabel}>ชื่อ-นามสกุล:</div>
         <div className={styles.modalValue}>
-          {sourceData.student?.firstName && sourceData.student?.lastName 
+          {sourceData.student?.firstName && sourceData.student?.lastName
             ? `${sourceData.student.firstName} ${sourceData.student.lastName}`
             : 'N/A'}
         </div>
@@ -299,8 +293,8 @@ function DataEditModal({
       <div className={styles.modalRow}>
         <div className={styles.modalLabel}>คณะ/สาขา:</div>
         <div className={styles.modalValue}>
-          {sourceData.department?.faculty?.name ? 
-            `${sourceData.department.faculty.name} / ${sourceData.department?.name || 'N/A'}` 
+          {sourceData.department?.faculty?.name ?
+            `${sourceData.department.faculty.name} / ${sourceData.department?.name || 'N/A'}`
             : 'N/A'}
         </div>
       </div>
@@ -330,7 +324,7 @@ function DataEditModal({
       <div className={styles.modalRow}>
         <div className={styles.modalLabel}>ชื่อ-นามสกุล:</div>
         <div className={styles.modalValue}>
-          {sourceData.teacher?.firstName && sourceData.teacher?.lastName 
+          {sourceData.teacher?.firstName && sourceData.teacher?.lastName
             ? `${sourceData.teacher.firstName} ${sourceData.teacher.lastName}`
             : 'N/A'}
         </div>
@@ -352,8 +346,8 @@ function DataEditModal({
       <div className={styles.modalRow}>
         <div className={styles.modalLabel}>คณะ/สาขา:</div>
         <div className={styles.modalValue}>
-          {sourceData.department?.faculty?.name ? 
-            `${sourceData.department.faculty.name} / ${sourceData.department?.name || 'N/A'}` 
+          {sourceData.department?.faculty?.name ?
+            `${sourceData.department.faculty.name} / ${sourceData.department?.name || 'N/A'}`
             : 'N/A'}
         </div>
       </div>
@@ -385,7 +379,7 @@ function DataEditModal({
       <div className={styles.modalRow}>
         <div className={styles.modalLabel}>ชื่อ-นามสกุล:</div>
         <div className={styles.modalValue}>
-          {sourceData.staff?.firstName && sourceData.staff?.lastName 
+          {sourceData.staff?.firstName && sourceData.staff?.lastName
             ? `${sourceData.staff.firstName} ${sourceData.staff.lastName}`
             : 'N/A'}
         </div>
@@ -452,7 +446,7 @@ function DataEditModal({
               <Database size={16} />
               ข้อมูลการแก้ไข
             </h3>
-            
+
             <div className={styles.modalRow}>
               <div className={styles.modalLabel}>รหัสการแก้ไข:</div>
               <div className={styles.modalValue}>{dataEdit.DataEdit_ID || 'N/A'}</div>
@@ -467,12 +461,12 @@ function DataEditModal({
               <div className={styles.modalLabel}>ตารางที่มา:</div>
               <div className={styles.modalValue}>{formatSourceTable(dataEdit.DataEdit_SourceTable)}</div>
             </div>
-            
+
             <div className={styles.modalRow}>
               <div className={styles.modalLabel}>ประเภทการแก้ไข:</div>
               <div className={styles.modalValue}>{formatEditType(dataEdit.DataEditType_Name)}</div>
             </div>
-            
+
             <div className={styles.modalRow}>
               <div className={styles.modalLabel}>รายละเอียดการแก้ไข:</div>
               <div className={styles.modalValue}>
@@ -492,16 +486,16 @@ function DataEditModal({
               <div className={styles.modalLabel}>รหัสเจ้าหน้าที่:</div>
               <div className={styles.modalValue}>{dataEdit.Staff_Code || 'N/A'}</div>
             </div>
-            
+
             <div className={styles.modalRow}>
               <div className={styles.modalLabel}>ชื่อ-นามสกุลเจ้าหน้าที่:</div>
               <div className={styles.modalValue}>
-                {dataEdit.Staff_FirstName && dataEdit.Staff_LastName 
+                {dataEdit.Staff_FirstName && dataEdit.Staff_LastName
                   ? `${dataEdit.Staff_FirstName} ${dataEdit.Staff_LastName}`
                   : 'N/A'}
               </div>
             </div>
-            
+
             <div className={styles.modalRow}>
               <div className={styles.modalLabel}>อีเมล:</div>
               <div className={styles.modalValue}>{dataEdit.Users_Email || 'N/A'}</div>
@@ -526,19 +520,19 @@ function DataEditModal({
               <Monitor size={16} />
               ข้อมูลเทคนิค
             </h3>
-            
+
             <div className={styles.modalRow}>
               <div className={styles.modalLabel}>IP Address:</div>
               <div className={styles.modalValue}>{dataEdit.DataEdit_IP_Address || 'N/A'}</div>
             </div>
-            
+
             <div className={styles.modalRow}>
               <div className={styles.modalLabel}>User Agent:</div>
               <div className={styles.modalValue} title={dataEdit.DataEdit_UserAgent}>
                 {truncateUserAgent(dataEdit.DataEdit_UserAgent)}
               </div>
             </div>
-            
+
             <div className={styles.modalRow}>
               <div className={styles.modalLabel}>วันที่ / เวลา:</div>
               <div className={styles.modalValue}>
@@ -555,14 +549,14 @@ function DataEditModal({
                 <Info size={16} />
                 ข้อมูลเพิ่มเติม
               </h3>
-              
+
               {dataEdit.DataEditType_ID && (
                 <div className={styles.modalRow}>
                   <div className={styles.modalLabel}>ID ประเภทการแก้ไข:</div>
                   <div className={styles.modalValue}>{dataEdit.DataEditType_ID}</div>
                 </div>
               )}
-              
+
               {dataEdit.Staff_ID && (
                 <div className={styles.modalRow}>
                   <div className={styles.modalLabel}>ID เจ้าหน้าที่:</div>

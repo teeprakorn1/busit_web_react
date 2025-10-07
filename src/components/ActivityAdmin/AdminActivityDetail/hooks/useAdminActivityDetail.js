@@ -1,5 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
+import {
+  logActivityView, logActivityEditSave,
+  logActivityImageUpload, logActivityStatusChange, logActivityTemplateChange
+} from '../../../../utils/systemLog';
 
 const useAdminActivityDetail = (id) => {
   const [loading, setLoading] = useState(true);
@@ -31,6 +35,14 @@ const useAdminActivityDetail = (id) => {
 
       if (response.data?.status) {
         setActivityData(response.data.data);
+
+        // Log activity view
+        if (response.data.data) {
+          await logActivityView(
+            response.data.data.Activity_ID,
+            response.data.data.Activity_Title
+          );
+        }
       } else {
         setError('ไม่สามารถโหลดข้อมูลกิจกรรมได้');
       }
@@ -66,15 +78,41 @@ const useAdminActivityDetail = (id) => {
       if (updatedData.activityStatusId) {
         formData.append('activityStatusId', updatedData.activityStatusId);
       }
-      if (activityData?.Template_ID) {
-        formData.append('templateId', activityData.Template_ID);
+      if (updatedData.templateId) {
+        formData.append('templateId', updatedData.templateId);
       }
       if (updatedData.activityLocationGPS) {
         formData.append('activityLocationGPS', updatedData.activityLocationGPS);
       }
 
+      // Track changes for logging
+      const changes = [];
+      let hasImageUpload = false;
+      let hasStatusChange = false;
+      let hasTemplateChange = false;
+      let oldStatus = activityData?.ActivityStatus_Name;
+      let newStatus = oldStatus;
+      let oldTemplate = activityData?.Template_Name;
+      let newTemplate = oldTemplate;
+
       if (updatedData.activityImage) {
         formData.append('activityImage', updatedData.activityImage);
+        changes.push('อัปโหลดรูปภาพใหม่');
+        hasImageUpload = true;
+      }
+
+      if (updatedData.activityTitle !== activityData?.Activity_Title) {
+        changes.push(`เปลี่ยนชื่อเป็น "${updatedData.activityTitle}"`);
+      }
+
+      if (updatedData.activityStatusId && updatedData.activityStatusId !== activityData?.ActivityStatus_ID) {
+        hasStatusChange = true;
+        changes.push('เปลี่ยนสถานะ');
+      }
+
+      if (updatedData.templateId !== activityData?.Template_ID) {
+        hasTemplateChange = true;
+        changes.push('เปลี่ยนแม่แบบเกียรติบัตร');
       }
 
       const response = await axios.put(
@@ -91,6 +129,41 @@ const useAdminActivityDetail = (id) => {
       if (response.data?.status) {
         await new Promise(resolve => setTimeout(resolve, 500));
         await fetchActivityData();
+
+        // Log the update
+        const changesText = changes.length > 0 ? changes.join(', ') : 'แก้ไขข้อมูล';
+        await logActivityEditSave(
+          parseInt(id),
+          updatedData.activityTitle,
+          changesText
+        );
+
+        // Log specific changes
+        if (hasImageUpload) {
+          await logActivityImageUpload(
+            parseInt(id),
+            updatedData.activityTitle
+          );
+        }
+
+        if (hasStatusChange) {
+          await logActivityStatusChange(
+            parseInt(id),
+            updatedData.activityTitle,
+            oldStatus,
+            newStatus
+          );
+        }
+
+        if (hasTemplateChange) {
+          await logActivityTemplateChange(
+            parseInt(id),
+            updatedData.activityTitle,
+            oldTemplate,
+            newTemplate
+          );
+        }
+
         return { success: true, message: response.data.message };
       } else {
         throw new Error(response.data?.message || 'อัพเดทไม่สำเร็จ');

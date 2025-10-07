@@ -19,7 +19,14 @@ export const DATA_EDIT_TYPES = {
   TEACHER_DATA_UPDATE: 3,
   STAFF_DATA_UPDATE: 4,
   PROFILE_UPDATE: 5,
-  SYSTEM_ACTION: 6
+  SYSTEM_ACTION: 6,
+  ACTIVITY_CREATE: 7,
+  ACTIVITY_UPDATE: 8,
+  ACTIVITY_DELETE: 9,
+  ACTIVITY_STATUS_CHANGE: 10,
+  ACTIVITY_DEPARTMENT_ADD: 11,
+  ACTIVITY_DEPARTMENT_REMOVE: 12,
+  ACTIVITY_TEMPLATE_CHANGE: 13
 };
 
 export const SOURCE_TABLES = {
@@ -95,6 +102,8 @@ export const logDataEdit = async ({
   }
 };
 
+// ==================== Student Loggers ====================
+
 export const logStudentStatusChange = async (studentId, studentName, newStatus) => {
   return await logDataEdit({
     dataEditThisId: studentId,
@@ -139,6 +148,8 @@ export const logStudentStatusConfirm = async (studentId, studentName, studentCod
     dataEditTypeId: DATA_EDIT_TYPES.USERS_STATUS_CHANGE
   });
 };
+
+// ==================== Teacher Loggers ====================
 
 export const logTeacherStatusChange = async (teacherId, teacherName, newStatus) => {
   return await logDataEdit({
@@ -185,6 +196,8 @@ export const logTeacherStatusConfirm = async (teacherId, teacherName, teacherCod
   });
 };
 
+// ==================== Staff Loggers ====================
+
 export const logStaffStatusChange = async (staffId, staffName, newStatus) => {
   return await logDataEdit({
     dataEditThisId: staffId,
@@ -229,6 +242,8 @@ export const logStaffStatusConfirm = async (staffId, staffName, staffCode, actio
     dataEditTypeId: DATA_EDIT_TYPES.USERS_STATUS_CHANGE
   });
 };
+
+// ==================== System Action Loggers ====================
 
 export const logSystemAction = async (targetId, actionName, sourceTable = SOURCE_TABLES.STUDENT) => {
   return await logDataEdit({
@@ -321,4 +336,67 @@ export const logStaffFilter = async (filterCriteria) => {
     `กรองข้อมูลเจ้าหน้าที่: ${JSON.stringify(filterCriteria)}`,
     SOURCE_TABLES.STAFF
   );
+};
+
+// ==================== Activity Data Edit Loggers ====================
+
+export const logActivityDataEdit = async ({
+  activityId,
+  editName,
+  editTypeId
+}) => {
+  return await logDataEdit({
+    dataEditThisId: activityId,
+    dataEditName: editName,
+    sourceTable: SOURCE_TABLES.ACTIVITY,
+    dataEditTypeId: editTypeId
+  });
+};
+
+export const logActivityEditSave = async (activityId, activityTitle, changes) => {
+  return await logActivityDataEdit({
+    activityId,
+    editName: `แก้ไขกิจกรรม: ${activityTitle} - ${changes}`,
+    editTypeId: DATA_EDIT_TYPES.ACTIVITY_UPDATE
+  });
+};
+
+export const logActivityDelete = async (activityId, activityTitle) => {
+  return await logActivityDataEdit({
+    activityId,
+    editName: `ลบกิจกรรม: ${activityTitle}`,
+    editTypeId: DATA_EDIT_TYPES.ACTIVITY_DELETE
+  });
+};
+
+export const logActivityStatusChange = async (activityId, activityTitle, oldStatus, newStatus) => {
+  return await logActivityDataEdit({
+    activityId,
+    editName: `เปลี่ยนสถานะกิจกรรม: ${activityTitle} จาก "${oldStatus}" เป็น "${newStatus}"`,
+    editTypeId: DATA_EDIT_TYPES.ACTIVITY_STATUS_CHANGE
+  });
+};
+
+export const logActivityTemplateChange = async (activityId, activityTitle, oldTemplate, newTemplate) => {
+  return await logActivityDataEdit({
+    activityId,
+    editName: `เปลี่ยนแม่แบบเกียรติบัตร: ${activityTitle} จาก "${oldTemplate || 'ไม่มี'}" เป็น "${newTemplate || 'ไม่มี'}"`,
+    editTypeId: DATA_EDIT_TYPES.ACTIVITY_TEMPLATE_CHANGE
+  });
+};
+
+export const logActivityDepartmentAdd = async (activityId, activityTitle, departmentName) => {
+  return await logActivityDataEdit({
+    activityId,
+    editName: `เพิ่มสาขา "${departmentName}" เข้าสู่กิจกรรม: ${activityTitle}`,
+    editTypeId: DATA_EDIT_TYPES.ACTIVITY_DEPARTMENT_ADD
+  });
+};
+
+export const logActivityDepartmentRemove = async (activityId, activityTitle, departmentName) => {
+  return await logActivityDataEdit({
+    activityId,
+    editName: `ลบสาขา "${departmentName}" ออกจากกิจกรรม: ${activityTitle}`,
+    editTypeId: DATA_EDIT_TYPES.ACTIVITY_DEPARTMENT_REMOVE
+  });
 };

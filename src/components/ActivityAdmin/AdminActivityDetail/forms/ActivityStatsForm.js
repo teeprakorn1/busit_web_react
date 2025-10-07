@@ -1,7 +1,10 @@
+
+// ActivityStatsForm.js - Updated with Logging
 import React, { useState, useEffect, useCallback } from 'react';
 import { BarChart3, Users, CheckCircle, Clock, TrendingUp } from 'lucide-react';
 import axios from 'axios';
 import styles from './ActivityForms.module.css';
+import { logActivityStatsView } from '../../../../utils/systemLog';
 
 const ActivityStatsForm = ({ activityData }) => {
   const [stats, setStats] = useState(null);
@@ -19,13 +22,19 @@ const ActivityStatsForm = ({ activityData }) => {
 
       if (response.data?.status) {
         setStats(response.data.data);
+        
+        // Log stats view
+        await logActivityStatsView(
+          activityData.Activity_ID,
+          activityData.Activity_Title
+        );
       }
     } catch (err) {
       console.error('Fetch stats error:', err);
     } finally {
       setLoading(false);
     }
-  }, [activityData?.Activity_ID]);
+  }, [activityData?.Activity_ID, activityData?.Activity_Title]);
 
   useEffect(() => {
     fetchStats();
@@ -172,4 +181,4 @@ const ActivityStatsForm = ({ activityData }) => {
   );
 };
 
-export default ActivityStatsForm;
+export default  ActivityStatsForm;

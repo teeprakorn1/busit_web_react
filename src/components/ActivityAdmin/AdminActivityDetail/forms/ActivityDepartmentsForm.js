@@ -1,7 +1,9 @@
+// ActivityDepartmentsForm.js - Updated with Logging
 import React, { useState, useEffect, useCallback } from 'react';
 import { Building2, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import styles from './ActivityForms.module.css';
+import { logActivityDepartmentsView } from '../../../../utils/systemLog';
 
 const ActivityDepartmentsForm = ({ activityData }) => {
   const [departments, setDepartments] = useState([]);
@@ -19,13 +21,19 @@ const ActivityDepartmentsForm = ({ activityData }) => {
 
       if (response.data?.status) {
         setDepartments(response.data.data);
+        
+        // Log departments view
+        await logActivityDepartmentsView(
+          activityData.Activity_ID,
+          activityData.Activity_Title
+        );
       }
     } catch (err) {
       console.error('Fetch departments error:', err);
     } finally {
       setLoading(false);
     }
-  }, [activityData?.Activity_ID]);
+  }, [activityData?.Activity_ID, activityData?.Activity_Title]);
 
   useEffect(() => {
     fetchDepartments();

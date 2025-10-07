@@ -33,8 +33,7 @@ export const useDataEditActions = () => {
       'Student': 'นักเรียน',
       'Teacher': 'อาจารย์',
       'Staff': 'เจ้าหน้าที่',
-      'Users': 'ผู้ใช้',
-      'Activity': 'กิจกรรม'
+      'Users': 'ผู้ใช้'
     };
     return tableMap[sourceTable] || sourceTable || 'N/A';
   };
@@ -70,7 +69,7 @@ export const useDataEditActions = () => {
   const searchStaff = useCallback(async (searchParams) => {
     try {
       const params = new URLSearchParams();
-      
+
       if (searchParams.email) params.append('email', searchParams.email);
       if (searchParams.staff_code) params.append('staff_code', searchParams.staff_code);
       if (searchParams.ip) params.append('ip', searchParams.ip);
@@ -107,7 +106,6 @@ export const useDataEditActions = () => {
         throw new Error('ไม่มีข้อมูลสำหรับการส่งออก');
       }
 
-      // Prepare data for export
       const exportData = dataEdits.map((de, index) => ({
         'ลำดับ': index + 1,
         'รหัสการแก้ไข': de.DataEdit_ID || 'N/A',
@@ -124,29 +122,24 @@ export const useDataEditActions = () => {
         'User Agent': de.DataEdit_UserAgent || 'N/A'
       }));
 
-      // Create workbook
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(exportData);
-
-      // Auto-size columns
       const colWidths = [
-        { wch: 8 },   // ลำดับ
-        { wch: 15 },  // รหัสการแก้ไข
-        { wch: 18 },  // รหัสข้อมูลที่แก้ไข
-        { wch: 15 },  // ตารางที่มา
-        { wch: 18 },  // รหัสเจ้าหน้าที่
-        { wch: 20 },  // ชื่อ
-        { wch: 20 },  // นามสกุล
-        { wch: 30 },  // อีเมล
-        { wch: 25 },  // ประเภทการแก้ไข
-        { wch: 35 },  // รายละเอียด
-        { wch: 18 },  // IP Address
-        { wch: 22 },  // วันที่/เวลา
-        { wch: 50 }   // User Agent
+        { wch: 8 },
+        { wch: 15 },
+        { wch: 18 },
+        { wch: 15 },
+        { wch: 18 },
+        { wch: 20 },
+        { wch: 20 },
+        { wch: 30 },
+        { wch: 25 },
+        { wch: 35 },
+        { wch: 18 },
+        { wch: 22 },
+        { wch: 50 }
       ];
       ws['!cols'] = colWidths;
-
-      // Add header styling
       const headerRange = XLSX.utils.decode_range(ws['!ref']);
       for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
         const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
@@ -158,26 +151,21 @@ export const useDataEditActions = () => {
         };
       }
 
-      // Add worksheet to workbook
       XLSX.utils.book_append_sheet(wb, ws, 'ประวัติการแก้ไขบัญชี');
-
-      // Generate filename
       const now = new Date();
       const dateStr = now.toLocaleDateString('th-TH').replace(/\//g, '-');
       const timeStr = now.toLocaleTimeString('th-TH', { hour12: false }).replace(/:/g, '-');
-      
+
       let filename = `ประวัติการแก้ไขบัญชี_${dateStr}_${timeStr}`;
-      
+
       if (searchCriteria) {
-        const searchType = searchCriteria.type === 'email' ? 'อีเมล' : 
-                          searchCriteria.type === 'staff_code' ? 'รหัสเจ้าหน้าที่' : 'IP';
+        const searchType = searchCriteria.type === 'email' ? 'อีเมล' :
+          searchCriteria.type === 'staff_code' ? 'รหัสเจ้าหน้าที่' : 'IP';
         const cleanValue = searchCriteria.value.replace(/[<>:"/\\|?*]/g, '_');
         filename += `_${searchType}_${cleanValue}`;
       }
-      
-      filename += '.xlsx';
 
-      // Save file
+      filename += '.xlsx';
       XLSX.writeFile(wb, filename);
 
       return {

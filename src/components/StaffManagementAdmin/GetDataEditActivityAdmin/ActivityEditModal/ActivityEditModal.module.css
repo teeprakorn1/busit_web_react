@@ -1,0 +1,386 @@
+/* ActivityEditModal.module.css */
+:root {
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
+  --text-dark: #1f2937;
+  --text-muted: #6b7280;
+  --background: #ffffff;
+  --border: #e5e7eb;
+  --neutral-bg: #f8fafc;
+  --shadow: rgba(0, 0, 0, 0.1);
+  --danger-color: #dc2626;
+  --danger-hover: #b91c1c;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.15s ease-out;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.modalContent {
+  background: var(--background);
+  padding: 28px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px var(--shadow), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  position: relative;
+  font-family: system-ui, -apple-system, sans-serif;
+  animation: slideIn 0.2s ease-out;
+  border: 1px solid var(--border);
+  margin: 0 auto;
+}
+
+.modalHeading {
+  margin: 0 0 24px 0;
+  font-size: 1.5rem;
+  color: var(--text-dark);
+  text-align: center;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 16px;
+  font-weight: 700;
+}
+
+.modalClose {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--danger-color);
+  color: white;
+  border: none;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.modalClose:hover {
+  background: var(--danger-hover);
+  transform: scale(1.05);
+}
+
+.modalClose:focus-visible {
+  outline: 2px solid var(--danger-color);
+  outline-offset: 2px;
+}
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.modalSection {
+  margin-bottom: 20px;
+  padding: 24px;
+  background: var(--neutral-bg);
+  border-radius: 8px;
+  border-left: 3px solid var(--primary-color);
+  border: 1px solid var(--border);
+}
+
+.activityDataSection {
+  margin-bottom: 20px;
+  padding: 24px;
+  background: #fef3c7;
+  border-radius: 8px;
+  border-left: 3px solid #f59e0b;
+  border: 1px solid #fcd34d;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 20px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modalRow {
+  position: relative;
+  background: var(--background);
+  padding: 16px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  transition: border-color 0.15s ease;
+}
+
+.modalRow:hover {
+  border-color: var(--primary-color);
+}
+
+.modalLabel {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.modalValue {
+  font-size: 14px;
+  color: var(--text-dark);
+  word-break: break-word;
+  line-height: 1.5;
+  font-weight: 500;
+  min-height: 20px;
+}
+
+.modalValue[title] {
+  cursor: help;
+  border-bottom: 1px dotted var(--text-muted);
+}
+
+.modalFooter {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: center;
+}
+
+.closeButton {
+  background: var(--text-muted);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  font-size: 14px;
+}
+
+.closeButton:hover {
+  background: var(--text-dark);
+  transform: translateY(-1px);
+}
+
+.closeButton:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 12px;
+}
+
+.loadingSpinner {
+  width: 32px;
+  height: 32px;
+  animation: spin 1s linear infinite;
+  color: var(--primary-color);
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.errorContainer {
+  padding: 20px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.errorText {
+  color: #dc2626;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .modalOverlay {
+    padding: 16px;
+  }
+
+  .modalContent {
+    padding: 20px;
+    max-height: 90vh;
+    border-radius: 8px;
+  }
+
+  .modalHeading {
+    font-size: 1.25rem;
+    margin-bottom: 20px;
+  }
+
+  .modalSection,
+  .activityDataSection {
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .modalRow {
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+
+  .modalLabel {
+    font-size: 0.7rem;
+    margin-bottom: 4px;
+  }
+
+  .modalValue {
+    font-size: 13px;
+  }
+
+  .modalClose {
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modalOverlay {
+    padding: 12px;
+  }
+
+  .modalContent {
+    padding: 16px;
+    max-height: 92vh;
+  }
+
+  .modalHeading {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+  }
+
+  .modalSection,
+  .activityDataSection {
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  .modalRow {
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+
+  .closeButton {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+}
+
+.modalContent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modalContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modalContent::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.modalContent::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.modalOverlay {
+  -webkit-overflow-scrolling: touch;
+}
+
+.modalContent:focus {
+  outline: none;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+.staffDataSection {
+  margin-bottom: 20px;
+  padding: 24px;
+  background: #e0f2fe;
+  border-radius: 8px;
+  border-left: 3px solid #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.staffDataSection .sectionTitle {
+  color: #0c4a6e;
+}
+
+.modalRow.highlight {
+  background: #fef3c7;
+  border-color: #f59e0b;
+}
+
+.modalRow.highlight .modalLabel {
+  color: #92400e;
+}
+
+.modalRow.highlight .modalValue {
+  color: #78350f;
+  font-weight: 600;
+}

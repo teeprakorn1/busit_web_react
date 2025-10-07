@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Users, Search, Check, X, Clock, Building2 } from 'lucide-react';
 import axios from 'axios';
 import styles from './ActivityForms.module.css';
+import { logActivityParticipantsView, logActivityParticipantCheckIn, logActivityParticipantCheckOut } from '../../../../utils/systemLog';
 
 const ActivityParticipantsForm = ({ activityData }) => {
   const [participants, setParticipants] = useState([]);
@@ -22,13 +23,19 @@ const ActivityParticipantsForm = ({ activityData }) => {
 
       if (response.data?.status) {
         setParticipants(response.data.data);
+        
+        // Log participants view
+        await logActivityParticipantsView(
+          activityData.Activity_ID,
+          activityData.Activity_Title
+        );
       }
     } catch (err) {
       console.error('Fetch participants error:', err);
     } finally {
       setLoading(false);
     }
-  }, [activityData?.Activity_ID]);
+  }, [activityData?.Activity_ID, activityData?.Activity_Title]);
 
   useEffect(() => {
     fetchParticipants();
@@ -70,8 +77,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
       .sort((a, b) => b.total - a.total);
   }, [participants]);
 
-
-  const handleCheckIn = async (userId) => {
+  const handleCheckIn = async (userId, participantName) => {
     try {
       const response = await axios.patch(
         `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/admin/activities/${activityData.Activity_ID}/participants/${userId}/checkin`,
@@ -81,13 +87,20 @@ const ActivityParticipantsForm = ({ activityData }) => {
 
       if (response.data?.status) {
         fetchParticipants();
+        
+        // Log check-in
+        await logActivityParticipantCheckIn(
+          activityData.Activity_ID,
+          activityData.Activity_Title,
+          participantName
+        );
       }
     } catch (err) {
       console.error('Check-in error:', err);
     }
   };
 
-  const handleCheckOut = async (userId) => {
+  const handleCheckOut = async (userId, participantName) => {
     try {
       const response = await axios.patch(
         `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/admin/activities/${activityData.Activity_ID}/participants/${userId}/checkout`,
@@ -97,6 +110,13 @@ const ActivityParticipantsForm = ({ activityData }) => {
 
       if (response.data?.status) {
         fetchParticipants();
+        
+        // Log check-out
+        await logActivityParticipantCheckOut(
+          activityData.Activity_ID,
+          activityData.Activity_Title,
+          participantName
+        );
       }
     } catch (err) {
       console.error('Check-out error:', err);
@@ -264,58 +284,62 @@ const ActivityParticipantsForm = ({ activityData }) => {
             <div className={styles.participantsCount}>
               แสดง {filteredParticipants.length} จาก {participants.length} คน
             </div>
-            {filteredParticipants.map((participant, index) => (
-              <div key={participant.Users_ID} className={styles.participantCard}>
-                <div className={styles.participantInfo}>
-                  <div className={styles.participantNumber}>#{index + 1}</div>
-                  <div className={styles.participantDetails}>
-                    <h4>{participant.Student_FirstName} {participant.Student_LastName}</h4>
-                    <p className={styles.participantCode}>{participant.Student_Code}</p>
-                    <p className={styles.participantDept}>
-                      <Building2 size={14} style={{ display: 'inline', marginRight: '4px' }} />
-                      {participant.Department_Name} - {participant.Faculty_Name}
-                    </p>
+            {filteredParticipants.map((participant, index) => {
+              const fullName = `${participant.Student_FirstName} ${participant.Student_LastName}`;
+              
+              return (
+                <div key={participant.Users_ID} className={styles.participantCard}>
+                  <div className={styles.participantInfo}>
+                    <div className={styles.participantNumber}>#{index + 1}</div>
+                    <div className={styles.participantDetails}>
+                      <h4>{fullName}</h4>
+                      <p className={styles.participantCode}>{participant.Student_Code}</p>
+                      <p className={styles.participantDept}>
+                        <Building2 size={14} style={{ display: 'inline', marginRight: '4px' }} />
+                        {participant.Department_Name} - {participant.Faculty_Name}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className={styles.participantStatus}>
+                    {participant.Registration_CheckInTime && (
+                      <div className={styles.statusItem}>
+                        <Clock size={14} />
+                        <span>เช็คอิน: {new Date(participant.Registration_CheckInTime).toLocaleTimeString('th-TH')}</span>
+                      </div>
+                    )}
+                    {participant.Registration_CheckOutTime && (
+                      <div className={styles.statusItem}>
+                        <Clock size={14} />
+                        <span>เช็คเอาท์: {new Date(participant.Registration_CheckOutTime).toLocaleTimeString('th-TH')}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={styles.participantActions}>
+                    {!participant.Registration_CheckInTime ? (
+                      <button
+                        className={`${styles.actionButton} ${styles.checkInButton}`}
+                        onClick={() => handleCheckIn(participant.Users_ID, fullName)}
+                      >
+                        <Check size={16} /> เช็คอิน
+                      </button>
+                    ) : !participant.Registration_CheckOutTime ? (
+                      <button
+                        className={`${styles.actionButton} ${styles.checkOutButton}`}
+                        onClick={() => handleCheckOut(participant.Users_ID, fullName)}
+                      >
+                        <X size={16} /> เช็คเอาท์
+                      </button>
+                    ) : (
+                      <span className={styles.completedBadge}>
+                        <Check size={16} /> เสร็จสิ้น
+                      </span>
+                    )}
                   </div>
                 </div>
-
-                <div className={styles.participantStatus}>
-                  {participant.Registration_CheckInTime && (
-                    <div className={styles.statusItem}>
-                      <Clock size={14} />
-                      <span>เช็คอิน: {new Date(participant.Registration_CheckInTime).toLocaleTimeString('th-TH')}</span>
-                    </div>
-                  )}
-                  {participant.Registration_CheckOutTime && (
-                    <div className={styles.statusItem}>
-                      <Clock size={14} />
-                      <span>เช็คเอาท์: {new Date(participant.Registration_CheckOutTime).toLocaleTimeString('th-TH')}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className={styles.participantActions}>
-                  {!participant.Registration_CheckInTime ? (
-                    <button
-                      className={`${styles.actionButton} ${styles.checkInButton}`}
-                      onClick={() => handleCheckIn(participant.Users_ID)}
-                    >
-                      <Check size={16} /> เช็คอิน
-                    </button>
-                  ) : !participant.Registration_CheckOutTime ? (
-                    <button
-                      className={`${styles.actionButton} ${styles.checkOutButton}`}
-                      onClick={() => handleCheckOut(participant.Users_ID)}
-                    >
-                      <X size={16} /> เช็คเอาท์
-                    </button>
-                  ) : (
-                    <span className={styles.completedBadge}>
-                      <Check size={16} /> เสร็จสิ้น
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </>
         )}
       </div>
