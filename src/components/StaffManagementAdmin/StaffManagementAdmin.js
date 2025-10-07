@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../NavigationBar/NavigationBar';
 import styles from './StaffManagementAdmin.module.css';
 import { useNavigate } from "react-router-dom";
-import { FiAward, FiFileText, FiEdit, FiUsers, FiUserPlus, FiClipboard } from "react-icons/fi";
+import { FiAward, FiEdit, FiUsers, FiUserPlus, FiClipboard } from "react-icons/fi";
 
 function StaffManagementAdmin() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -51,10 +51,6 @@ function StaffManagementAdmin() {
           <div className={`${styles.card} ${styles.card03}`} onClick={() => navigate("/staff-management/add-staff")}>
             <FiUserPlus size={36} />
             <span>เพิ่มบัญชีเจ้าหน้าที่</span>
-          </div>
-          <div className={`${styles.card} ${styles.card04}`} onClick={() => navigate("/staff-management/get-activity-create")}>
-            <FiFileText size={36} />
-            <span>ประวัติสร้างกิจกรรม</span>
           </div>
           <div className={`${styles.card} ${styles.card05}`} onClick={() => navigate("/staff-management/get-activity-edit")}>
             <FiEdit size={36} />

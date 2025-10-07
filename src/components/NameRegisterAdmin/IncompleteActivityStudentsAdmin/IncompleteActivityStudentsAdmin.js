@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../../NavigationBar/NavigationBar';
-import styles from './GetDataCreateActivityAdmin.module.css';
+import styles from './IncompleteActivityStudentsAdmin.module.css';
 
-function GetDataCreateActivityAdmin() {
+function IncompleteActivityStudentsAdmin() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
 
@@ -29,7 +29,7 @@ function GetDataCreateActivityAdmin() {
           ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}
       >
         <div className={styles.headerBar}>
-          <h1 className={styles.heading}>ประวัติสร้างกิจกรรม</h1>
+          <h1 className={styles.heading}>นักศึกษาที่กิจกรรมไม่ครบ</h1>
           <div className={styles.headerRight}>
           </div>
         </div>
@@ -38,4 +38,4 @@ function GetDataCreateActivityAdmin() {
   );
 }
 
-export default GetDataCreateActivityAdmin;
+export default IncompleteActivityStudentsAdmin;

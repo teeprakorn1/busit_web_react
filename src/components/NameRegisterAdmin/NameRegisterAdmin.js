@@ -49,7 +49,7 @@ function NameRegisterAdmin() {
             <FiUserCheck size={36} />
             <span>รายชื่ออาจารย์</span>
           </div>
-          <div className={`${styles.card} ${styles.card04}`} onClick={() => navigate("/all-activities")}>
+          <div className={`${styles.card} ${styles.card04}`} onClick={() => navigate("/name-register/student-incomplete-activities")}>
             <FiAlertTriangle size={36} />
             <span>นักศึกษาที่กิจกรรมไม่ครบ</span>
           </div>

@@ -13,6 +13,7 @@ import StaffManagementAdmin from './components/StaffManagementAdmin/StaffManagem
 
 import CreateActivity from './components/ActivityAdmin/CreateActivity/CreateActivity';
 import AdminAllActivity from './components/ActivityAdmin/AdminAllActivity/AdminAllActivity';
+import AdminJoinActivity from './components/ActivityAdmin/AdminJoinActivity/AdminJoinActivity';
 import AdminActivityDetail from './components/ActivityAdmin/AdminActivityDetail/AdminActivityDetail';
 
 import GetPersonTimestampAdmin from './components/ApplicationAdmin/GetPersonTimestampAdmin/GetPersonTimestampAdmin';
@@ -22,12 +23,12 @@ import AddUsersAdmin from './components/ApplicationAdmin/AddUsersAdmin/AddUsersA
 import AdminAllStudents from './components/NameRegisterAdmin/AdminAllStudents/AdminAllStudents';
 import AdminAllTeachers from './components/NameRegisterAdmin/AdminAllTeachers/AdminAllTeachers';
 import AdminAllDepartments from './components/NameRegisterAdmin/AdminAllDepartments/AdminAllDepartments';
+import IncompleteActivityStudentsAdmin from './components/NameRegisterAdmin/IncompleteActivityStudentsAdmin/IncompleteActivityStudentsAdmin';
 import AdminUsersDetail from './components/NameRegisterAdmin/AdminUsersDetail/AdminUsersDetail';
 
 import CertificateEditAdmin from './components/StaffManagementAdmin/CertificateEditAdmin/CertificateEditAdmin';
 import AddStaffAdmin from './components/StaffManagementAdmin/AddStaffAdmin/AddStaffAdmin';
 import AdminAllStaff from './components/StaffManagementAdmin/AdminAllStaff/AdminAllStaff';
-import GetDataCreateActivityAdmin from './components/StaffManagementAdmin/GetDataCreateActivityAdmin/GetDataCreateActivityAdmin';
 import GetDataEditActivityAdmin from './components/StaffManagementAdmin/GetDataEditActivityAdmin/GetDataEditActivityAdmin';
 import GetDataEditUserAdmin from './components/StaffManagementAdmin/GetDataEditUserAdmin/GetDataEditUserAdmin';
 
@@ -55,6 +56,7 @@ function App() {
         {/* Activity Redirects */}
         <Route path='/activity-management/activity-create' element={<ProtectedRoute><CreateActivity /></ProtectedRoute>} />
         <Route path="/activity-management/activity-name" element={<ProtectedRoute><AdminAllActivity /></ProtectedRoute>} />
+        <Route path="/activity-management/activity-join" element={<ProtectedRoute><AdminJoinActivity /></ProtectedRoute>} />
         <Route path='/activity-management/activity-detail/:id' element={<ProtectedRoute><AdminActivityDetail /></ProtectedRoute>} />
 
         {/* Application Redirects */}
@@ -66,6 +68,7 @@ function App() {
         <Route path='/name-register/student-name' element={<ProtectedRoute><AdminAllStudents /></ProtectedRoute>} />
         <Route path='/name-register/teacher-name' element={<ProtectedRoute><AdminAllTeachers /></ProtectedRoute>} />
         <Route path='/name-register/department-name' element={<ProtectedRoute><AdminAllDepartments /></ProtectedRoute>} />
+        <Route path='/name-register/student-incomplete-activities' element={<ProtectedRoute><IncompleteActivityStudentsAdmin /></ProtectedRoute>} />
         <Route path='/name-register/users-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
         <Route path='/name-register/student-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
         <Route path='/name-register/teacher-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
@@ -75,7 +78,6 @@ function App() {
         <Route path='/staff-management/add-staff' element={<ProtectedRoute><AddStaffAdmin /></ProtectedRoute>} />
         <Route path='/staff-management/staff-name' element={<ProtectedRoute><AdminAllStaff /></ProtectedRoute>} />
         <Route path="/staff-management/staff-detail/:id" element={<AdminUsersDetail />} />
-        <Route path="/staff-management/get-activity-create" element={<GetDataCreateActivityAdmin />} />
         <Route path="/staff-management/get-activity-edit" element={<GetDataEditActivityAdmin />} />
         <Route path="/staff-management/get-dataedit-user" element={<GetDataEditUserAdmin />} />
 

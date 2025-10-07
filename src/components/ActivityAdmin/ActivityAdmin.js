@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../NavigationBar/NavigationBar';
 import styles from './ActivityAdmin.module.css';
 import { useNavigate } from "react-router-dom";
-import { FiPlusCircle, FiUsers, FiEdit, FiList } from "react-icons/fi";
+import { FiPlusCircle, FiUsers, FiFileText } from "react-icons/fi";
 
 function ActivityAdmin() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -42,18 +42,15 @@ function ActivityAdmin() {
             <FiPlusCircle size={36} />
             <span>สร้างกิจกรรม</span>
           </div>
+          <div className={`${styles.card} ${styles.card04}`} onClick={() => navigate("/activity-management/activity-name")}>
+            <FiFileText size={36} />
+            <span>จัดการกิจกรรม</span>
+          </div>
           <div className={`${styles.card} ${styles.card02}`} onClick={() => navigate("/activity-management/activity-join")}>
             <FiUsers size={36} />
             <span>จัดการผู้เข้าร่วมกิจกรรม</span>
           </div>
-          <div className={`${styles.card} ${styles.card03}`} onClick={() => navigate("/activity-management/activity-edit")}>
-            <FiEdit size={36} />
-            <span>แก้ไขข้อมูลกิจกรรม</span>
-          </div>
-          <div className={`${styles.card} ${styles.card04}`} onClick={() => navigate("/activity-management/activity-name")}>
-            <FiList size={36} />
-            <span>จัดการกิจกรรม</span>
-          </div>
+
         </div>
       </main>
     </div>

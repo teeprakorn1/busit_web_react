@@ -327,7 +327,7 @@ function CreateActivity() {
               </div>
             )}
             <h1 className={styles.heading}>สร้างกิจกรรม</h1>
-            <div className={styles.headerRight}/>
+            <div className={styles.headerRight} />
           </div>
 
           <ActivityForms

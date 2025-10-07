@@ -139,8 +139,8 @@ const ActivityFiltersForm = memo(({
       >
         <option value="">ทุกประเภท</option>
         {Array.isArray(activityTypes) && activityTypes.map((type) => (
-          <option 
-            key={type.ActivityType_ID} 
+          <option
+            key={type.ActivityType_ID}
             value={type.ActivityType_Name}
           >
             {type.ActivityType_Name}
@@ -155,8 +155,8 @@ const ActivityFiltersForm = memo(({
       >
         <option value="">ทุกสถานะ</option>
         {Array.isArray(activityStatuses) && activityStatuses.map((status) => (
-          <option 
-            key={status.ActivityStatus_ID} 
+          <option
+            key={status.ActivityStatus_ID}
             value={status.ActivityStatus_Name}
           >
             {status.ActivityStatus_Name}

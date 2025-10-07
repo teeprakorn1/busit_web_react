@@ -1,4 +1,4 @@
-// ActivityPagination/ActivityPagination.jsx
+// ActivityPagination/ActivityPagination.js
 import React, { useMemo, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from './ActivityPagination.module.css';
@@ -13,7 +13,7 @@ function ActivityPagination({
 }) {
   const getVisiblePages = useMemo(() => {
     if (totalPages <= 1) return [];
-    
+
     const delta = 2;
     const range = [];
     const rangeWithDots = [];
@@ -79,7 +79,7 @@ function ActivityPagination({
           แสดง {startItem.toLocaleString()}-{endItem.toLocaleString()} จาก {totalItems.toLocaleString()} กิจกรรม
         </div>
       )}
-      
+
       <div className={styles.pagination}>
         <button
           className={`${styles.pageButton} ${styles.navButton}`}
@@ -103,9 +103,8 @@ function ActivityPagination({
           return (
             <button
               key={page}
-              className={`${styles.pageButton} ${
-                isCurrentPage ? styles.activePage : ''
-              }`}
+              className={`${styles.pageButton} ${isCurrentPage ? styles.activePage : ''
+                }`}
               onClick={() => handlePageClick(page)}
               disabled={isCurrentPage}
             >
@@ -123,7 +122,7 @@ function ActivityPagination({
           <ChevronRight className={styles.icon} />
         </button>
       </div>
-      
+
       <div className={styles.mobileInfo}>
         หน้า {currentPage} จาก {totalPages}
       </div>

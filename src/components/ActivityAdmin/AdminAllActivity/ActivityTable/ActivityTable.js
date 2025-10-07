@@ -1,4 +1,4 @@
-// ActivityTable/ActivityTable.jsx
+// ActivityTable/ActivityTable.js
 import React from 'react';
 import { Eye, Edit, Trash2, MapPin, Calendar } from 'lucide-react';
 import styles from './ActivityTable.module.css';
@@ -110,8 +110,8 @@ function ActivityTable({
                     <>
                       <MapPin className={styles.iconSmall} />
                       <span title={activity.locationDetail}>
-                        {activity.locationDetail.length > 20 
-                          ? `${activity.locationDetail.substring(0, 20)}...` 
+                        {activity.locationDetail.length > 20
+                          ? `${activity.locationDetail.substring(0, 20)}...`
                           : activity.locationDetail}
                       </span>
                     </>
