@@ -1,5 +1,8 @@
-import React from 'react';
-import { FiAward, FiPenTool } from 'react-icons/fi';
+// CertificateEditAdmin CertificatePreview.js
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { FiPenTool } from 'react-icons/fi';
+import { Award, Loader } from 'lucide-react';
+import axios from 'axios';
 import styles from './CertificatePreview.module.css';
 
 const CertificatePreview = ({
@@ -8,107 +11,197 @@ const CertificatePreview = ({
   getSignatureName,
   getImageUrl
 }) => {
+  const [templateLoaded, setTemplateLoaded] = useState(false);
+  const [signatureLoaded, setSignatureLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [signatureError, setSignatureError] = useState(false);
+  const [templateBlobUrl, setTemplateBlobUrl] = useState(null);
+  const [signatureBlobUrl, setSignatureBlobUrl] = useState(null);
+
+  const canvasRef = useRef(null);
+  const templateImgRef = useRef(null);
+  const signatureImgRef = useRef(null);
+
+  const baseUrl = `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}`;
+
+  useEffect(() => {
+    return () => {
+      if (templateBlobUrl) {
+        URL.revokeObjectURL(templateBlobUrl);
+      }
+      if (signatureBlobUrl) {
+        URL.revokeObjectURL(signatureBlobUrl);
+      }
+    };
+  }, [templateBlobUrl, signatureBlobUrl]);
+
+  useEffect(() => {
+    if (!selectedItem?.Template_ImageFile || activeTab !== 'templates') return;
+
+    const loadTemplateImage = async () => {
+      try {
+        const response = await axios.get(
+          `${baseUrl}/api/images/certificate-files/${selectedItem.Template_ImageFile}`,
+          {
+            withCredentials: true,
+            responseType: 'blob'
+          }
+        );
+
+        const blobUrl = URL.createObjectURL(response.data);
+        setTemplateBlobUrl(blobUrl);
+        setImageError(false);
+      } catch (error) {
+        console.error('Error loading template image:', error);
+        setImageError(true);
+        setTemplateLoaded(false);
+      }
+    };
+
+    loadTemplateImage();
+  }, [selectedItem?.Template_ImageFile, baseUrl, activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== 'templates') return;
+
+    if (!selectedItem?.Signature_ID || !selectedItem?.Signature_ImageFile) {
+      setSignatureLoaded(true);
+      return;
+    }
+
+    const loadSignatureImage = async () => {
+      try {
+        const response = await axios.get(
+          `${baseUrl}/api/images/certificate-files/${selectedItem.Signature_ImageFile}`,
+          {
+            withCredentials: true,
+            responseType: 'blob'
+          }
+        );
+
+        const blobUrl = URL.createObjectURL(response.data);
+        setSignatureBlobUrl(blobUrl);
+        setSignatureError(false);
+      } catch (error) {
+        console.error('Error loading signature image:', error);
+        setSignatureError(true);
+        setSignatureLoaded(false);
+      }
+    };
+
+    loadSignatureImage();
+  }, [selectedItem?.Signature_ID, selectedItem?.Signature_ImageFile, baseUrl, activeTab]);
+
+  const drawCertificate = useCallback(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    const templateImg = templateImgRef.current;
+
+    if (!canvas || !ctx || !templateImg) return;
+    canvas.width = templateImg.naturalWidth;
+    canvas.height = templateImg.naturalHeight;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(templateImg, 0, 0, canvas.width, canvas.height);
+
+    if (selectedItem?.Signature_ImageFile && signatureImgRef.current && signatureLoaded && !signatureError) {
+      const signatureImg = signatureImgRef.current;
+      const signatureWidth = signatureImg.naturalWidth * 0.3;
+      const signatureHeight = signatureImg.naturalHeight * 0.3;
+      ctx.drawImage(
+        signatureImg,
+        selectedItem.Template_PositionX || 0,
+        selectedItem.Template_PositionY || 0,
+        signatureWidth,
+        signatureHeight
+      );
+    }
+  }, [selectedItem?.Signature_ImageFile, selectedItem?.Template_PositionX, selectedItem?.Template_PositionY, signatureLoaded, signatureError]);
+
+  useEffect(() => {
+    if (activeTab === 'templates' && templateLoaded && (signatureLoaded || !selectedItem?.Signature_ID)) {
+      drawCertificate();
+    }
+  }, [activeTab, templateLoaded, signatureLoaded, selectedItem?.Signature_ID, drawCertificate]);
+
+  const handleTemplateLoad = () => {
+    setTemplateLoaded(true);
+    setImageError(false);
+  };
+
+  const handleSignatureLoad = () => {
+    setSignatureLoaded(true);
+    setSignatureError(false);
+  };
+
+  const handleTemplateError = () => {
+    setImageError(true);
+    setTemplateLoaded(false);
+  };
+
+  const handleSignatureError = () => {
+    setSignatureError(true);
+    setSignatureLoaded(false);
+  };
 
   const renderCertificatePreview = () => {
-    const studentName = "นางสาวปริญญา ใจดี";
-    const courseName = "การพัฒนาเว็บไซต์ด้วย React";
-
-    const templateImageUrl = selectedItem?.Template_ImageFile
-      ? getImageUrl(selectedItem.Template_ImageFile)
-      : null;
-
-    const signatureImageUrl = selectedItem?.Signature_ID
-      ? getImageUrl(
-        selectedItem.Signature_ImageFile ||
-        (typeof getSignatureName === 'function' ? null : null)
-      )
-      : null;
+    if (!selectedItem?.Template_ImageFile) {
+      return (
+        <div className={styles.noTemplate}>
+          <Award size={48} />
+          <p>ไม่มีแม่แบบเกียรติบัตร</p>
+        </div>
+      );
+    }
 
     return (
       <div className={styles.certificatePreview}>
         <div className={styles.previewContainer}>
-          <div className={styles.certificateTemplate}>
-            {templateImageUrl ? (
-              <div className={styles.templateImageContainer}>
-                <img
-                  src={templateImageUrl}
-                  alt={selectedItem?.Template_Name || 'แม่แบบเกียรติบัตร'}
-                  className={styles.templateImage}
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'block';
-                  }}
-                />
-                <div className={styles.templateFallback} style={{ display: 'none' }}>
-                  <FiAward size={64} />
-                  <p>ไม่สามารถโหลดภาพแม่แบบได้</p>
-                </div>
+          {templateBlobUrl && (
+            <img
+              ref={templateImgRef}
+              src={templateBlobUrl}
+              alt="Template"
+              style={{ display: 'none' }}
+              onLoad={handleTemplateLoad}
+              onError={handleTemplateError}
+            />
+          )}
 
-                {signatureImageUrl && (
-                  <img
-                    src={signatureImageUrl}
-                    alt="ลายเซ็น"
-                    className={styles.signatureOverlay}
-                    style={{
-                      left: `${selectedItem.Template_PositionX || 0}px`,
-                      top: `${selectedItem.Template_PositionY || 0}px`
-                    }}
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                )}
-              </div>
-            ) : (
-              <>
-                <div className={styles.universityLogo}>
-                  <div className={styles.logoPlaceholder}>
-                    <FiAward size={48} />
-                  </div>
-                </div>
-                <div className={styles.certificateHeader}>
-                  <h2>มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน</h2>
-                  <h3>คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ</h3>
-                </div>
-                <div className={styles.certificateTitle}>
-                  <h1>ใบประกาศเกียรติ</h1>
-                  <p className={styles.subtitle}>CERTIFICATE OF ACHIEVEMENT</p>
-                </div>
-                <div className={styles.certificateContent}>
-                  <p className={styles.grantedTo}>ขอมอบให้แก่</p>
-                  <h2 className={styles.recipientName}>{studentName}</h2>
-                  <p className={styles.achievementText}>
-                    ได้ผ่านการอบรมหลักสูตร
-                  </p>
-                  <h3 className={styles.courseName}>{courseName}</h3>
-                  <p className={styles.completionText}>
-                    เรียบร้อยแล้ว เมื่อวันที่ 28 กันยายน พ.ศ. 2568
-                  </p>
-                </div>
-                <div className={styles.signatureSection}>
-                  <div className={styles.signatureBlock}>
-                    <div className={styles.signatureImage}>
-                      <div className={styles.signaturePlaceholder}>
-                        <FiPenTool size={48} />
-                      </div>
-                    </div>
-                    <div className={styles.signatureLine}></div>
-                    <p className={styles.signatureName}>
-                      {selectedItem?.Signature_ID ? getSignatureName(selectedItem.Signature_ID) : 'ลายเซ็น'}
-                    </p>
-                    <p className={styles.signatureTitle}>อธิการบดี</p>
-                  </div>
-                </div>
-                <div className={styles.decorativeCorners}>
-                  <div className={styles.cornerTopLeft}></div>
-                  <div className={styles.cornerTopRight}></div>
-                  <div className={styles.cornerBottomLeft}></div>
-                  <div className={styles.cornerBottomRight}></div>
-                </div>
-              </>
-            )}
-          </div>
-          {selectedItem && (
+          {signatureBlobUrl && selectedItem?.Signature_ImageFile && (
+            <img
+              ref={signatureImgRef}
+              src={signatureBlobUrl}
+              alt="Signature"
+              style={{ display: 'none' }}
+              onLoad={handleSignatureLoad}
+              onError={handleSignatureError}
+            />
+          )}
+          {!templateLoaded && !imageError && (
+            <div className={styles.loadingState}>
+              <Loader className={styles.spinner} />
+              <p>กำลังโหลดตัวอย่างเกียรติบัตร...</p>
+            </div>
+          )}
+          {imageError && (
+            <div className={styles.errorState}>
+              <Award size={48} />
+              <p>ไม่สามารถแสดงตัวอย่างเกียรติบัตรได้</p>
+              <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                กรุณาตรวจสอบสิทธิ์การเข้าถึงไฟล์
+              </p>
+            </div>
+          )}
+          {templateLoaded && !imageError && (
+            <div className={styles.certificateWrapper}>
+              <canvas
+                ref={canvasRef}
+                className={styles.certificateCanvas}
+              />
+            </div>
+          )}
+          {selectedItem && templateLoaded && !imageError && (
             <div className={styles.templateInfo}>
               <h4>ข้อมูลแม่แบบ</h4>
               <div className={styles.infoGrid}>
@@ -119,7 +212,7 @@ const CertificatePreview = ({
                 <div className={styles.infoItem}>
                   <span className={styles.infoLabel}>ตำแหน่งลายเซ็น:</span>
                   <span className={styles.infoValue}>
-                    X: {selectedItem.Template_PositionX || 0}, Y: {selectedItem.Template_PositionY || 0}
+                    X: {selectedItem.Template_PositionX || 0}px, Y: {selectedItem.Template_PositionY || 0}px
                   </span>
                 </div>
                 <div className={styles.infoItem}>
@@ -129,6 +222,11 @@ const CertificatePreview = ({
                   </span>
                 </div>
               </div>
+              {selectedItem.Signature_ImageFile && signatureError && (
+                <div className={styles.warningItem}>
+                  <span>ไม่สามารถโหลดลายเซ็นได้</span>
+                </div>
+              )}
             </div>
           )}
         </div>

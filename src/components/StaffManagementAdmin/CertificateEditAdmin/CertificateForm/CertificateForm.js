@@ -179,7 +179,7 @@ const CertificateForm = ({
               className={`${styles.input} ${formErrors.positionX ? styles.inputError : ''}`}
               value={formData.positionX}
               onChange={(e) => handleInputChange('positionX', e.target.value)}
-              placeholder="เช่น 200"
+              placeholder="เช่น 480"
               min="0"
               disabled={loading}
             />
@@ -200,7 +200,7 @@ const CertificateForm = ({
               className={`${styles.input} ${formErrors.positionY ? styles.inputError : ''}`}
               value={formData.positionY}
               onChange={(e) => handleInputChange('positionY', e.target.value)}
-              placeholder="เช่น 350"
+              placeholder="เช่น 600"
               min="0"
               disabled={loading}
             />

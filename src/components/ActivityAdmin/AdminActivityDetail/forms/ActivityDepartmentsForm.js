@@ -75,7 +75,7 @@ const ActivityDepartmentsForm = ({ activityData }) => {
           departments.map((dept, index) => (
             <div key={dept.Department_ID} className={styles.departmentCard}>
               <div className={styles.departmentNumber}>#{index + 1}</div>
-              
+
               <div className={styles.departmentInfo}>
                 <h4>{dept.Department_Name}</h4>
                 <p className={styles.facultyName}>{dept.Faculty_Name}</p>

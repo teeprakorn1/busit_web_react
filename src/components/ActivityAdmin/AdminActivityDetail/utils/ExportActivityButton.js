@@ -14,9 +14,8 @@ const ExportActivityButton = ({ activityData }) => {
     }
 
     setIsExporting(true);
-    
+
     try {
-      // ดึงข้อมูลทั้งหมดที่จำเป็น
       const [participants, departments, stats] = await Promise.all([
         fetchParticipants(activityData.Activity_ID),
         fetchDepartments(activityData.Activity_ID),
@@ -29,10 +28,10 @@ const ExportActivityButton = ({ activityData }) => {
         departments,
         stats
       );
-      
+
       const filename = generateFilename(activityData);
       downloadExcel(workbook, filename);
-      
+
     } catch (error) {
       console.error('Export failed:', error);
       alert('เกิดข้อผิดพลาดในการส่งออกข้อมูล กรุณาลองใหม่อีกครั้ง');
@@ -110,28 +109,21 @@ const ExportActivityButton = ({ activityData }) => {
 
   const createCompleteExcelWorkbook = (data, participants, departments, stats) => {
     const workbook = XLSX.utils.book_new();
-
-    // Sheet 1: สรุปกิจกรรม
     const summarySheet = createSummarySheet(data, stats);
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'สรุปกิจกรรม');
-
-    // Sheet 2: ข้อมูลกิจกรรมละเอียด
     const activitySheet = createActivitySheet(data);
     XLSX.utils.book_append_sheet(workbook, activitySheet, 'ข้อมูลกิจกรรม');
 
-    // Sheet 3: รายชื่อผู้เข้าร่วม
     if (participants.length > 0) {
       const participantsSheet = createParticipantsSheet(participants);
       XLSX.utils.book_append_sheet(workbook, participantsSheet, 'รายชื่อผู้เข้าร่วม');
     }
 
-    // Sheet 4: สถิติแยกตามสาขา
     if (departments.length > 0 && participants.length > 0) {
       const deptStatsSheet = createDepartmentStatsSheet(departments, participants);
       XLSX.utils.book_append_sheet(workbook, deptStatsSheet, 'สถิติแยกสาขา');
     }
 
-    // Sheet 5: สาขาที่เข้าร่วม
     if (departments.length > 0) {
       const departmentsSheet = createDepartmentsSheet(departments);
       XLSX.utils.book_append_sheet(workbook, departmentsSheet, 'สาขาที่เข้าร่วม');
@@ -146,11 +138,11 @@ const ExportActivityButton = ({ activityData }) => {
     const totalCheckedIn = stats?.total_checked_in || 0;
     const totalCheckedOut = stats?.total_checked_out || 0;
 
-    const registrationRate = totalExpected > 0 ? 
+    const registrationRate = totalExpected > 0 ?
       ((totalRegistered / totalExpected) * 100).toFixed(2) : 0;
-    const checkInRate = totalRegistered > 0 ? 
+    const checkInRate = totalRegistered > 0 ?
       ((totalCheckedIn / totalRegistered) * 100).toFixed(2) : 0;
-    const attendanceRate = totalRegistered > 0 ? 
+    const attendanceRate = totalRegistered > 0 ?
       ((totalCheckedOut / totalRegistered) * 100).toFixed(2) : 0;
 
     const summaryData = [
@@ -201,10 +193,10 @@ const ExportActivityButton = ({ activityData }) => {
       ['ข้อมูลเพิ่มเติม'],
       ['เทมเพลต', data.Template_Name || 'ไม่ได้ใช้เทมเพลต'],
       ['ลายเซ็น', data.Signature_Name || 'ไม่มีลายเซ็น'],
-      ['พิกัด GPS', data.Activity_LocationGPS ? 
-        (typeof data.Activity_LocationGPS === 'string' ? 
-          data.Activity_LocationGPS : 
-          `${data.Activity_LocationGPS.lat}, ${data.Activity_LocationGPS.lng}`) : 
+      ['พิกัด GPS', data.Activity_LocationGPS ?
+        (typeof data.Activity_LocationGPS === 'string' ?
+          data.Activity_LocationGPS :
+          `${data.Activity_LocationGPS.lat}, ${data.Activity_LocationGPS.lng}`) :
         'ไม่มีข้อมูล'],
       ['ไฟล์รูปภาพ', data.Activity_ImageFile || 'ไม่มีรูปภาพ']
     ];
@@ -234,35 +226,34 @@ const ExportActivityButton = ({ activityData }) => {
         p.Registration_CheckInTime ? formatThaiTime(p.Registration_CheckInTime) : '',
         p.Registration_CheckOutTime ? 'เช็คเอาท์แล้ว' : 'ยังไม่เช็คเอาท์',
         p.Registration_CheckOutTime ? formatThaiTime(p.Registration_CheckOutTime) : '',
-        p.Registration_CheckOutTime ? 'เสร็จสิ้น' : 
+        p.Registration_CheckOutTime ? 'เสร็จสิ้น' :
           p.Registration_CheckInTime ? 'กำลังเข้าร่วม' : 'ยังไม่เข้าร่วม'
       ]);
     });
 
     const worksheet = XLSX.utils.aoa_to_sheet(participantsData);
     worksheet['!cols'] = [
-      { wch: 8 },   // ลำดับ
-      { wch: 15 },  // รหัส
-      { wch: 20 },  // ชื่อ
-      { wch: 20 },  // นามสกุล
-      { wch: 30 },  // สาขา
-      { wch: 30 },  // คณะ
-      { wch: 15 },  // เช็คอิน
-      { wch: 12 },  // เวลาเช็คอิน
-      { wch: 15 },  // เช็คเอาท์
-      { wch: 12 },  // เวลาเช็คเอาท์
-      { wch: 15 }   // สถานะ
+      { wch: 8 },
+      { wch: 15 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 30 },
+      { wch: 30 },
+      { wch: 15 },
+      { wch: 12 },
+      { wch: 15 },
+      { wch: 12 },
+      { wch: 15 }
     ];
     return worksheet;
   };
 
   const createDepartmentStatsSheet = (departments, participants) => {
-    // คำนวณสถิติแต่ละสาขา
     const deptStats = {};
-    
+
     participants.forEach(p => {
       const deptName = p.Department_Name || 'ไม่ระบุสาขา';
-      
+
       if (!deptStats[deptName]) {
         deptStats[deptName] = {
           facultyName: p.Faculty_Name || 'ไม่ระบุคณะ',
@@ -271,7 +262,7 @@ const ExportActivityButton = ({ activityData }) => {
           checkedOut: 0
         };
       }
-      
+
       deptStats[deptName].total++;
       if (p.Registration_CheckInTime) deptStats[deptName].checkedIn++;
       if (p.Registration_CheckOutTime) deptStats[deptName].checkedOut++;
@@ -285,9 +276,9 @@ const ExportActivityButton = ({ activityData }) => {
 
     let index = 1;
     for (const [deptName, data] of Object.entries(deptStats)) {
-      const checkInRate = data.total > 0 ? 
+      const checkInRate = data.total > 0 ?
         ((data.checkedIn / data.total) * 100).toFixed(2) : 0;
-      const completionRate = data.total > 0 ? 
+      const completionRate = data.total > 0 ?
         ((data.checkedOut / data.total) * 100).toFixed(2) : 0;
 
       statsData.push([
@@ -302,13 +293,12 @@ const ExportActivityButton = ({ activityData }) => {
       ]);
     }
 
-    // เพิ่มแถวรวม
     const totalRegistered = Object.values(deptStats).reduce((sum, d) => sum + d.total, 0);
     const totalCheckedIn = Object.values(deptStats).reduce((sum, d) => sum + d.checkedIn, 0);
     const totalCheckedOut = Object.values(deptStats).reduce((sum, d) => sum + d.checkedOut, 0);
-    const avgCheckInRate = totalRegistered > 0 ? 
+    const avgCheckInRate = totalRegistered > 0 ?
       ((totalCheckedIn / totalRegistered) * 100).toFixed(2) : 0;
-    const avgCompletionRate = totalRegistered > 0 ? 
+    const avgCompletionRate = totalRegistered > 0 ?
       ((totalCheckedOut / totalRegistered) * 100).toFixed(2) : 0;
 
     statsData.push([]);
@@ -325,14 +315,14 @@ const ExportActivityButton = ({ activityData }) => {
 
     const worksheet = XLSX.utils.aoa_to_sheet(statsData);
     worksheet['!cols'] = [
-      { wch: 8 },   // ลำดับ
-      { wch: 35 },  // สาขา
-      { wch: 35 },  // คณะ
-      { wch: 12 },  // ลงทะเบียน
-      { wch: 12 },  // เช็คอิน
-      { wch: 12 },  // % เช็คอิน
-      { wch: 12 },  // เช็คเอาท์
-      { wch: 15 }   // % เสร็จสิ้น
+      { wch: 8 },
+      { wch: 35 },
+      { wch: 35 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 15 }
     ];
     return worksheet;
   };
@@ -353,9 +343,9 @@ const ExportActivityButton = ({ activityData }) => {
       ]);
     });
 
-    const totalExpected = departments.reduce((sum, d) => 
+    const totalExpected = departments.reduce((sum, d) =>
       sum + (d.ActivityDetail_Total || 0), 0);
-    
+
     deptData.push([]);
     deptData.push(['รวมทั้งหมด', `${departments.length} สาขา`, '', totalExpected]);
 
@@ -375,32 +365,32 @@ const ExportActivityButton = ({ activityData }) => {
       .substring(0, 30);
     const date = new Date().toISOString().split('T')[0];
     const time = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
-    
+
     return `Activity_Report_${title}_${date}_${time}.xlsx`;
   };
 
   const downloadExcel = (workbook, filename) => {
     try {
-      const excelBuffer = XLSX.write(workbook, { 
-        bookType: 'xlsx', 
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: 'xlsx',
         type: 'array',
         cellStyles: true
       });
-      
-      const blob = new Blob([excelBuffer], { 
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+
+      const blob = new Blob([excelBuffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       });
-      
+
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
       link.setAttribute('download', filename);
       link.style.visibility = 'hidden';
-      
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       setTimeout(() => URL.revokeObjectURL(url), 100);
     } catch (error) {
       console.error('Download failed:', error);
@@ -413,7 +403,7 @@ const ExportActivityButton = ({ activityData }) => {
   }
 
   return (
-    <button 
+    <button
       className={styles.exportButton}
       onClick={handleExport}
       disabled={isExporting}

@@ -3,7 +3,6 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import styles from './LocationDisplay.module.css';
 
-// แก้ไขปัญหา default marker icon ของ Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -17,19 +16,15 @@ function LocationDisplay({ location, locationDetail, onMapClick, interactive = f
   const markerRef = useRef(null);
 
   useEffect(() => {
-    // ตรวจสอบว่ามี element และมีข้อมูล location
     if (!mapRef.current || !location || !location.lat || !location.lng) {
       return;
     }
-
-    // ทำลาย map เก่าถ้ามี
     if (mapInstanceRef.current) {
       mapInstanceRef.current.remove();
       mapInstanceRef.current = null;
     }
 
     try {
-      // สร้างแผนที่ใหม่
       const map = L.map(mapRef.current, {
         center: [location.lat, location.lng],
         zoom: 16,
@@ -39,14 +34,12 @@ function LocationDisplay({ location, locationDetail, onMapClick, interactive = f
         dragging: interactive,
       });
 
-      // เพิ่ม tile layer (แผนที่พื้นฐาน)
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
         minZoom: 3,
       }).addTo(map);
 
-      // สร้าง custom marker icon (สีแดงเข้ม)
       const customIcon = L.divIcon({
         className: 'custom-marker',
         html: `
@@ -76,7 +69,6 @@ function LocationDisplay({ location, locationDetail, onMapClick, interactive = f
         popupAnchor: [0, -30],
       });
 
-      // เพิ่ม marker พร้อม popup
       const marker = L.marker([location.lat, location.lng], {
         icon: customIcon,
         title: locationDetail || 'ตำแหน่งกิจกรรม',
@@ -85,7 +77,6 @@ function LocationDisplay({ location, locationDetail, onMapClick, interactive = f
 
       markerRef.current = marker;
 
-      // สร้าง popup content
       const popupContent = `
         <div style="font-family: 'Noto Sans', sans-serif; padding: 4px;">
           <strong style="color: #1f2937; font-size: 14px;">
@@ -121,32 +112,27 @@ function LocationDisplay({ location, locationDetail, onMapClick, interactive = f
         className: 'custom-popup'
       }).openPopup();
 
-      // ถ้าเป็นโหมดแก้ไข ให้คลิกแผนที่ได้
       if (interactive && onMapClick) {
         map.on('click', (e) => {
           onMapClick(e);
-          // อัปเดตตำแหน่ง marker
           marker.setLatLng(e.latlng);
           marker.openPopup();
         });
 
-        // ถ้าลาก marker
         marker.on('dragend', (e) => {
           const newLatLng = e.target.getLatLng();
           onMapClick({ latlng: newLatLng });
         });
       }
 
-      // เพิ่มวงกลมรัศมี (แสดงพื้นที่โดยรอบ)
       L.circle([location.lat, location.lng], {
         color: '#3b82f6',
         fillColor: '#3b82f6',
         fillOpacity: 0.15,
-        radius: 200, // รัศมี 200 เมตร
+        radius: 200,
         weight: 2,
       }).addTo(map);
 
-      // เพิ่ม scale control
       L.control.scale({
         imperial: false,
         metric: true,
@@ -154,8 +140,6 @@ function LocationDisplay({ location, locationDetail, onMapClick, interactive = f
       }).addTo(map);
 
       mapInstanceRef.current = map;
-
-      // รอให้แผนที่โหลดเสร็จแล้วจึง invalidate size
       setTimeout(() => {
         if (mapInstanceRef.current) {
           mapInstanceRef.current.invalidateSize();
@@ -166,7 +150,6 @@ function LocationDisplay({ location, locationDetail, onMapClick, interactive = f
       console.error('Error creating map:', error);
     }
 
-    // Cleanup function
     return () => {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
@@ -175,16 +158,15 @@ function LocationDisplay({ location, locationDetail, onMapClick, interactive = f
     };
   }, [location, locationDetail, interactive, onMapClick]);
 
-  // ถ้าไม่มีข้อมูล location ให้แสดงข้อความแจ้งเตือน
   if (!location || !location.lat || !location.lng) {
     return (
       <div className={styles.noLocation}>
-        <svg 
-          width="48" 
-          height="48" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
+        <svg
+          width="48"
+          height="48"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
           strokeWidth="2"
         >
           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>

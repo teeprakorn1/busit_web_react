@@ -34,13 +34,12 @@ const ActivityParticipantsForm = ({ activityData }) => {
     fetchParticipants();
   }, [fetchParticipants]);
 
-  // คำนวณสถิติสาขา
   const departmentStats = useMemo(() => {
     const stats = {};
-    
+
     participants.forEach(participant => {
       const deptName = participant.Department_Name || 'ไม่ระบุสาขา';
-      
+
       if (!stats[deptName]) {
         stats[deptName] = {
           total: 0,
@@ -49,19 +48,18 @@ const ActivityParticipantsForm = ({ activityData }) => {
           facultyName: participant.Faculty_Name || 'ไม่ระบุคณะ'
         };
       }
-      
+
       stats[deptName].total++;
-      
+
       if (participant.Registration_CheckInTime) {
         stats[deptName].checkedIn++;
       }
-      
+
       if (participant.Registration_CheckOutTime) {
         stats[deptName].completed++;
       }
     });
 
-    // แปลงเป็น array และเรียงตามจำนวนคน
     return Object.entries(stats)
       .map(([name, data]) => ({
         name,
@@ -159,8 +157,8 @@ const ActivityParticipantsForm = ({ activityData }) => {
         </h4>
         <div className={styles.departmentStatsGrid}>
           {departmentStats.map((dept, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className={`${styles.deptStatCard} ${selectedDepartment === dept.name ? styles.selected : ''}`}
               onClick={() => setSelectedDepartment(selectedDepartment === dept.name ? 'all' : dept.name)}
               style={{ cursor: 'pointer' }}
@@ -189,7 +187,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
                 </div>
               </div>
               <div className={styles.deptStatProgress}>
-                <div 
+                <div
                   className={styles.deptStatProgressBar}
                   style={{ width: `${dept.completionRate}%` }}
                 />
@@ -200,7 +198,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
         {selectedDepartment !== 'all' && (
           <div className={styles.filterActive}>
             กำลังกรองสาขา: <strong>{selectedDepartment}</strong>
-            <button 
+            <button
               className={styles.clearFilter}
               onClick={() => setSelectedDepartment('all')}
             >

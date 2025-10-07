@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Activity, Edit, Save, X, Loader, Upload, MapPin } from 'lucide-react';
+import { Activity, Edit, Save, X, Loader, Upload, MapPin, Award } from 'lucide-react';
+import CertificatePreview from '../CertificatePreview/CertificatePreview';
 import LocationDisplay from '../LocationDisplay/LocationDisplay';
 import axios from 'axios';
 import styles from './ActivityForms.module.css';
@@ -8,8 +9,10 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [activityStatuses, setActivityStatuses] = useState([]);
   const [activityTypes, setActivityTypes] = useState([]);
+  const [templates, setTemplates] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [templatePreview, setTemplatePreview] = useState(null);
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -21,7 +24,8 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
     isRequired: false,
     locationGPS: null,
     statusId: '',
-    typeId: ''
+    typeId: '',
+    templateId: ''
   });
 
   useEffect(() => {
@@ -50,14 +54,23 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
         isRequired: activityData.Activity_IsRequire || false,
         locationGPS: parseGPSLocation(activityData.Activity_LocationGPS),
         statusId: activityData.ActivityStatus_ID || '',
-        typeId: activityData.ActivityType_ID || ''
+        typeId: activityData.ActivityType_ID || '',
+        templateId: activityData.Template_ID || ''
       });
+
+      if (activityData.Template_ImageFile) {
+        setTemplatePreview({
+          filename: activityData.Template_ImageFile,
+          name: activityData.Template_Name
+        });
+      }
     }
   }, [activityData]);
 
   useEffect(() => {
     fetchActivityStatuses();
     fetchActivityTypes();
+    fetchTemplates();
   }, []);
 
   const fetchActivityStatuses = async () => {
@@ -88,9 +101,23 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
     }
   };
 
+  const fetchTemplates = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/admin/templates`,
+        { withCredentials: true }
+      );
+      if (response.data?.status) {
+        setTemplates(response.data.data);
+      }
+    } catch (err) {
+      console.error('Fetch templates error:', err);
+    }
+  };
+
   const parseGPSLocation = (gpsString) => {
     if (!gpsString) return null;
-    
+
     try {
       if (typeof gpsString === 'string') {
         if (gpsString.includes(',')) {
@@ -99,16 +126,16 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
             return { lat, lng };
           }
         }
-        
+
         const parsed = JSON.parse(gpsString);
         if (parsed.lat && parsed.lng) {
-          return { 
-            lat: parseFloat(parsed.lat), 
-            lng: parseFloat(parsed.lng) 
+          return {
+            lat: parseFloat(parsed.lat),
+            lng: parseFloat(parsed.lng)
           };
         }
       }
-      
+
       if (gpsString.lat && gpsString.lng) {
         return {
           lat: parseFloat(gpsString.lat),
@@ -118,7 +145,7 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
     } catch (error) {
       console.error('GPS parsing error:', error);
     }
-    
+
     return null;
   };
 
@@ -128,6 +155,30 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  const handleTemplateChange = (e) => {
+    const templateId = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      templateId: templateId
+    }));
+
+    if (templateId) {
+      const selectedTemplate = templates.find(t => t.Template_ID === parseInt(templateId));
+      if (selectedTemplate) {
+        setTemplatePreview({
+          filename: selectedTemplate.Template_ImageFile,
+          name: selectedTemplate.Template_Name,
+          signatureName: selectedTemplate.Signature_Name,
+          signatureFile: selectedTemplate.Signature_ImageFile,
+          positionX: selectedTemplate.Template_PositionX || 0,
+          positionY: selectedTemplate.Template_PositionY || 0
+        });
+      }
+    } else {
+      setTemplatePreview(null);
+    }
   };
 
   const handleImageChange = (e) => {
@@ -155,10 +206,10 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
 
   const handleMapClick = (e) => {
     if (!isEditing) return;
-    
+
     const lat = parseFloat(e.latlng.lat.toFixed(6));
     const lng = parseFloat(e.latlng.lng.toFixed(6));
-    
+
     setFormData(prev => ({
       ...prev,
       locationGPS: { lat, lng }
@@ -223,7 +274,8 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
         activityIsRequire: formData.isRequired,
         activityLocationGPS: formData.locationGPS ? JSON.stringify(formData.locationGPS) : null,
         activityStatusId: formData.statusId,
-        activityTypeId: formData.typeId
+        activityTypeId: formData.typeId,
+        templateId: formData.templateId || null
       };
 
       if (selectedImage) {
@@ -272,8 +324,18 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
         isRequired: activityData.Activity_IsRequire || false,
         locationGPS: parseGPSLocation(activityData.Activity_LocationGPS),
         statusId: activityData.ActivityStatus_ID || '',
-        typeId: activityData.ActivityType_ID || ''
+        typeId: activityData.ActivityType_ID || '',
+        templateId: activityData.Template_ID || ''
       });
+
+      if (activityData.Template_ImageFile) {
+        setTemplatePreview({
+          filename: activityData.Template_ImageFile,
+          name: activityData.Template_Name
+        });
+      } else {
+        setTemplatePreview(null);
+      }
     }
     setIsEditing(false);
     setSelectedImage(null);
@@ -594,13 +656,13 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
                 </div>
               </div>
               <p className={styles.gpsHint}>
-                💡 คลิกบนแผนที่เพื่อเลือกตำแหน่ง หรือกรอกพิกัดด้านบน
+                คลิกบนแผนที่เพื่อเลือกตำแหน่ง หรือกรอกพิกัดด้านบน
               </p>
             </>
           )}
 
           {formData.locationGPS ? (
-            <LocationDisplay 
+            <LocationDisplay
               location={formData.locationGPS}
               locationDetail={activityData.Activity_LocationDetail}
               onMapClick={isEditing ? handleMapClick : null}
@@ -613,6 +675,75 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
               {isEditing && <p className={styles.gpsHint}>กรุณากรอกพิกัดด้านบนหรือคลิกบนแผนที่</p>}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* ส่วนเลือก/แสดงตัวอย่างเกียรติบัตร */}
+      <div className={styles.infoSection} style={{ marginTop: '24px' }}>
+        <h4>
+          <Award size={18} style={{ display: 'inline', marginRight: '8px' }} />
+          แม่แบบเกียรติบัตร
+        </h4>
+        <div className={styles.infoCard}>
+          <div className={styles.certificatePreviewSection}>
+            {isEditing && (
+              <div className={styles.templateSelectSection}>
+                <div className={styles.infoRow}>
+                  <span className={styles.label}>เลือกแม่แบบ:</span>
+                  <select
+                    name="templateId"
+                    value={formData.templateId}
+                    onChange={handleTemplateChange}
+                    className={styles.selectField}
+                    disabled={loading}
+                  >
+                    <option value="">ไม่ใช้แม่แบบเกียรติบัตร</option>
+                    {templates.map(template => (
+                      <option key={template.Template_ID} value={template.Template_ID}>
+                        {template.Template_Name}
+                        {template.Signature_Name && ` (ลายเซ็น: ${template.Signature_Name})`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {!isEditing && activityData.Template_ID && (
+              <div className={styles.certificateInfo}>
+                <div className={styles.infoRow}>
+                  <span className={styles.label}>แม่แบบที่ใช้:</span>
+                  <span className={styles.value}>{activityData.Template_Name || 'ไม่มีแม่แบบ'}</span>
+                </div>
+                {activityData.Signature_Name && (
+                  <div className={styles.infoRow}>
+                    <span className={styles.label}>ลายเซ็น:</span>
+                    <span className={styles.value}>{activityData.Signature_Name}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Certificate Preview with Signature */}
+            {(templatePreview || activityData.Template_ImageFile) && (
+              <CertificatePreview
+                templateImageFile={isEditing ? templatePreview?.filename : activityData.Template_ImageFile}
+                signatureImageFile={isEditing ? templatePreview?.signatureFile : activityData.Signature_ImageFile}
+                positionX={isEditing ? templatePreview?.positionX : activityData.Template_PositionX}
+                positionY={isEditing ? templatePreview?.positionY : activityData.Template_PositionY}
+                templateName={isEditing ? templatePreview?.name : activityData.Template_Name}
+                signatureName={isEditing ? templatePreview?.signatureName : activityData.Signature_Name}
+              />
+            )}
+
+            {!templatePreview && !activityData.Template_ID && (
+              <div className={styles.noTemplate}>
+                <Award size={48} />
+                <p>ไม่มีแม่แบบเกียรติบัตร</p>
+                {isEditing && <p className={styles.gpsHint}>เลือกแม่แบบด้านบนเพื่อดูตัวอย่าง</p>}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -50,6 +50,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -68,7 +69,7 @@
     padding: 8px 10px;
     font-size: 12px;
   }
-  
+
   .exportButton span {
     display: none;
   }
