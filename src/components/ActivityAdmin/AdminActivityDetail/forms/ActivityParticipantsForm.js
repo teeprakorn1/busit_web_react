@@ -222,7 +222,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
   }, [fetchParticipantImages]);
 
   const handleDownloadImage = useCallback((imageFile) => {
-    const imageUrl = `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/images/registration-images/${imageFile}`;
+    const imageUrl = `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/admin/images/registration-images/${imageFile}`;
     
     const link = document.createElement('a');
     link.href = imageUrl;
@@ -308,7 +308,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
                     <div key={img.RegistrationPicture_ID} className={styles.imageCard}>
                       <div className={styles.imageWrapper}>
                         <img
-                          src={`${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/images/registration-images/${img.RegistrationPicture_ImageFile}`}
+                          src={`${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/admin/images/registration-images/${img.RegistrationPicture_ImageFile}`}
                           alt={`รูปภาพ ${index + 1}`}
                           className={styles.participantImage}
                         />
