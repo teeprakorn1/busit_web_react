@@ -23,7 +23,7 @@ function CreateActivity() {
     if (!referrer) return { show: false };
 
     switch (referrer) {
-      case '/activity-management/activities':
+      case '/activity-management/activity-name':
         return {
           show: true,
           title: "กลับไปหน้ารายการกิจกรรม",
@@ -241,7 +241,7 @@ function CreateActivity() {
         });
         setErrors({});
         setTimeout(() => {
-          navigate('/activity-management/activities');
+          navigate('/activity-management/activity-name');
         }, 2000);
       } else {
         const failTimestampName = generateTimestampName('Failed to create');
@@ -283,7 +283,7 @@ function CreateActivity() {
     if (backButtonInfo.destination) {
       navigate(backButtonInfo.destination);
     } else {
-      navigate('/activity-management/activities');
+      navigate('/activity-management/activity-name');
     }
   };
 

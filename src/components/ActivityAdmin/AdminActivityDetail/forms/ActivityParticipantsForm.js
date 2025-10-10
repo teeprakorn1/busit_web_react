@@ -1,5 +1,6 @@
+// ActivityParticipantsForm.js - Enhanced with Image Display
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Users, Search, Check, X, Clock, Building2 } from 'lucide-react';
+import { Users, Search, Check, X, Clock, Building2, Image as ImageIcon, Eye, Download, CheckCircle, XCircle } from 'lucide-react';
 import axios from 'axios';
 import styles from './ActivityForms.module.css';
 import { logActivityParticipantsView, logActivityParticipantCheckIn, logActivityParticipantCheckOut } from '../../../../utils/systemLog';
@@ -10,6 +11,10 @@ const ActivityParticipantsForm = ({ activityData }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedDepartment, setSelectedDepartment] = useState('all');
+  const [selectedParticipant, setSelectedParticipant] = useState(null);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [participantImages, setParticipantImages] = useState({});
+  const [loadingImages, setLoadingImages] = useState({});
 
   const fetchParticipants = useCallback(async () => {
     if (!activityData?.Activity_ID) return;
@@ -23,8 +28,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
 
       if (response.data?.status) {
         setParticipants(response.data.data);
-        
-        // Log participants view
+
         await logActivityParticipantsView(
           activityData.Activity_ID,
           activityData.Activity_Title
@@ -36,6 +40,34 @@ const ActivityParticipantsForm = ({ activityData }) => {
       setLoading(false);
     }
   }, [activityData?.Activity_ID, activityData?.Activity_Title]);
+
+  const fetchParticipantImages = useCallback(async (userId) => {
+    if (loadingImages[userId] || participantImages[userId]) return;
+
+    setLoadingImages(prev => ({ ...prev, [userId]: true }));
+
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/activities/${activityData.Activity_ID}/pictures`,
+        {
+          withCredentials: true,
+          params: { userId }
+        }
+      );
+
+      if (response.data?.status && response.data.data) {
+        const userImages = response.data.data.filter(img => img.Users_ID === userId);
+        setParticipantImages(prev => ({
+          ...prev,
+          [userId]: userImages
+        }));
+      }
+    } catch (err) {
+      console.error('Fetch images error:', err);
+    } finally {
+      setLoadingImages(prev => ({ ...prev, [userId]: false }));
+    }
+  }, [activityData?.Activity_ID, loadingImages, participantImages]);
 
   useEffect(() => {
     fetchParticipants();
@@ -87,8 +119,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
 
       if (response.data?.status) {
         fetchParticipants();
-        
-        // Log check-in
+
         await logActivityParticipantCheckIn(
           activityData.Activity_ID,
           activityData.Activity_Title,
@@ -97,6 +128,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
       }
     } catch (err) {
       console.error('Check-in error:', err);
+      alert(err.response?.data?.message || 'ไม่สามารถเช็คอินได้');
     }
   };
 
@@ -110,8 +142,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
 
       if (response.data?.status) {
         fetchParticipants();
-        
-        // Log check-out
+
         await logActivityParticipantCheckOut(
           activityData.Activity_ID,
           activityData.Activity_Title,
@@ -120,8 +151,27 @@ const ActivityParticipantsForm = ({ activityData }) => {
       }
     } catch (err) {
       console.error('Check-out error:', err);
+      alert(err.response?.data?.message || 'ไม่สามารถเช็คเอาต์ได้');
     }
   };
+
+  const handleViewImages = useCallback((participant) => {
+    setSelectedParticipant(participant);
+    fetchParticipantImages(participant.Users_ID);
+    setShowImageModal(true);
+  }, [fetchParticipantImages]);
+
+  const handleDownloadImage = useCallback((imageFile) => {
+    const imageUrl = `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/images/registration-images/${imageFile}`;
+
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = imageFile;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, []);
 
   const filteredParticipants = participants.filter(p => {
     const matchesSearch = searchQuery === '' ||
@@ -140,6 +190,101 @@ const ActivityParticipantsForm = ({ activityData }) => {
 
     return matchesSearch && matchesStatus && matchesDepartment;
   });
+
+  const ImageModal = () => {
+    if (!showImageModal || !selectedParticipant) return null;
+
+    const images = participantImages[selectedParticipant.Users_ID] || [];
+    const isLoading = loadingImages[selectedParticipant.Users_ID];
+
+    return (
+      <div className={styles.modalOverlay} onClick={() => setShowImageModal(false)}>
+        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.modalHeader}>
+            <h3>
+              <ImageIcon size={20} />
+              รูปภาพยืนยันการเข้าร่วม
+            </h3>
+            <button
+              className={styles.modalCloseButton}
+              onClick={() => setShowImageModal(false)}
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className={styles.modalBody}>
+            <div className={styles.participantInfoHeader}>
+              <h4>
+                {selectedParticipant.Student_FirstName} {selectedParticipant.Student_LastName}
+              </h4>
+              <p className={styles.participantCode}>
+                {selectedParticipant.Student_Code}
+              </p>
+              <p className={styles.participantDept}>
+                {selectedParticipant.Department_Name}
+              </p>
+            </div>
+
+            {isLoading ? (
+              <div className={styles.loadingContainer}>
+                <div className={styles.spinner}></div>
+                <p>กำลังโหลดรูปภาพ...</p>
+              </div>
+            ) : images.length === 0 ? (
+              <div className={styles.noImages}>
+                <ImageIcon size={48} />
+                <p>ยังไม่มีรูปภาพยืนยัน</p>
+              </div>
+            ) : (
+              <div className={styles.imageGrid}>
+                {images.map((img, index) => (
+                  <div key={img.RegistrationPicture_ID} className={styles.imageCard}>
+                    <div className={styles.imageWrapper}>
+                      <img
+                        src={`${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/images/registration-images/${img.RegistrationPicture_ImageFile}`}
+                        alt={`รูปภาพ ${index + 1}`}
+                        className={styles.participantImage}
+                      />
+                      <div className={styles.imageOverlay}>
+                        <button
+                          className={styles.imageActionButton}
+                          onClick={() => handleDownloadImage(img.RegistrationPicture_ImageFile)}
+                          title="ดาวน์โหลด"
+                        >
+                          <Download size={16} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className={styles.imageInfo}>
+                      <div className={styles.imageStatus}>
+                        {img.RegistrationPictureStatus_Name === 'อนุมัติแล้ว' ? (
+                          <span className={styles.statusApproved}>
+                            <CheckCircle size={14} /> อนุมัติแล้ว
+                          </span>
+                        ) : img.RegistrationPictureStatus_Name === 'ปฏิเสธ' ? (
+                          <span className={styles.statusRejected}>
+                            <XCircle size={14} /> ปฏิเสธ
+                          </span>
+                        ) : (
+                          <span className={styles.statusPending}>
+                            <Clock size={14} /> รออนุมัติ
+                          </span>
+                        )}
+                      </div>
+                      <p className={styles.imageTime}>
+                        {new Date(img.RegistrationPicture_RegisTime).toLocaleString('th-TH')}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -165,6 +310,9 @@ const ActivityParticipantsForm = ({ activityData }) => {
           </span>
           <span className={styles.summaryItem}>
             เช็คอินแล้ว: {participants.filter(p => p.Registration_CheckInTime).length} คน
+          </span>
+          <span className={styles.summaryItem}>
+            เสร็จสิ้น: {participants.filter(p => p.Registration_CheckOutTime).length} คน
           </span>
         </div>
       </div>
@@ -286,7 +434,8 @@ const ActivityParticipantsForm = ({ activityData }) => {
             </div>
             {filteredParticipants.map((participant, index) => {
               const fullName = `${participant.Student_FirstName} ${participant.Student_LastName}`;
-              
+              const hasCheckedIn = !!participant.Registration_CheckInTime;
+
               return (
                 <div key={participant.Users_ID} className={styles.participantCard}>
                   <div className={styles.participantInfo}>
@@ -317,6 +466,16 @@ const ActivityParticipantsForm = ({ activityData }) => {
                   </div>
 
                   <div className={styles.participantActions}>
+                    {hasCheckedIn && (
+                      <button
+                        className={`${styles.actionButton} ${styles.viewImageButton}`}
+                        onClick={() => handleViewImages(participant)}
+                        title="ดูรูปภาพยืนยัน"
+                      >
+                        <Eye size={16} /> ดูรูป
+                      </button>
+                    )}
+
                     {!participant.Registration_CheckInTime ? (
                       <button
                         className={`${styles.actionButton} ${styles.checkInButton}`}
@@ -343,6 +502,8 @@ const ActivityParticipantsForm = ({ activityData }) => {
           </>
         )}
       </div>
+
+      <ImageModal />
     </div>
   );
 };
