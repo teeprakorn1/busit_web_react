@@ -1,5 +1,5 @@
 // ActivityParticipantsForm.js
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Users, Search, Check, X, Clock, Building2, Image as ImageIcon, Eye, Download, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import styles from './ActivityForms.module.css';
@@ -17,6 +17,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
   const [loadingImages, setLoadingImages] = useState({});
   const [processingImageAction, setProcessingImageAction] = useState({});
   const [imageBlobUrls, setImageBlobUrls] = useState({});
+  const isMountedRef = useRef(true);
 
   const fetchParticipants = useCallback(async () => {
     if (!activityData?.Activity_ID) return;
@@ -30,7 +31,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
 
       if (response.data?.status) {
         setParticipants(response.data.data);
-        
+
         await logActivityParticipantsView(
           activityData.Activity_ID,
           activityData.Activity_Title
@@ -43,8 +44,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
     }
   }, [activityData?.Activity_ID, activityData?.Activity_Title]);
 
-  const fetchImageBlob = async (imageFile) => {
-    // Skip if already loaded
+  const fetchImageBlob = useCallback(async (imageFile) => {
     if (imageBlobUrls[imageFile]) return;
 
     try {
@@ -57,14 +57,19 @@ const ActivityParticipantsForm = ({ activityData }) => {
       );
 
       const blobUrl = URL.createObjectURL(response.data);
-      setImageBlobUrls(prev => ({
-        ...prev,
-        [imageFile]: blobUrl
-      }));
+
+      if (isMountedRef.current) {
+        setImageBlobUrls(prev => ({
+          ...prev,
+          [imageFile]: blobUrl
+        }));
+      } else {
+        URL.revokeObjectURL(blobUrl);
+      }
     } catch (err) {
       console.error('Fetch image blob error:', err);
     }
-  };
+  }, [imageBlobUrls]);
 
   const fetchParticipantImages = useCallback(async (userId, forceRefresh = false) => {
     if (!forceRefresh && (loadingImages[userId] || participantImages[userId])) return;
@@ -74,7 +79,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
     try {
       const response = await axios.get(
         `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/activities/${activityData.Activity_ID}/pictures`,
-        { 
+        {
           withCredentials: true,
           params: { userId }
         }
@@ -97,18 +102,20 @@ const ActivityParticipantsForm = ({ activityData }) => {
     } finally {
       setLoadingImages(prev => ({ ...prev, [userId]: false }));
     }
-  }, [activityData?.Activity_ID]);
+  }, [activityData?.Activity_ID, fetchImageBlob, loadingImages, participantImages]);
 
   useEffect(() => {
+    isMountedRef.current = true;
     fetchParticipants();
-    
+
     // Cleanup blob URLs on unmount
     return () => {
+      isMountedRef.current = false;
       Object.values(imageBlobUrls).forEach(url => {
         URL.revokeObjectURL(url);
       });
     };
-  }, [fetchParticipants]);
+  }, [fetchParticipants, imageBlobUrls]);
 
   const departmentStats = useMemo(() => {
     const stats = {};
@@ -156,7 +163,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
 
       if (response.data?.status) {
         fetchParticipants();
-        
+
         await logActivityParticipantCheckIn(
           activityData.Activity_ID,
           activityData.Activity_Title,
@@ -179,7 +186,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
 
       if (response.data?.status) {
         fetchParticipants();
-        
+
         await logActivityParticipantCheckOut(
           activityData.Activity_ID,
           activityData.Activity_Title,
@@ -269,15 +276,13 @@ const ActivityParticipantsForm = ({ activityData }) => {
 
       const blob = response.data;
       const blobUrl = URL.createObjectURL(blob);
-      
+
       const link = document.createElement('a');
       link.href = blobUrl;
       link.download = imageFile;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
-      // Clean up blob URL
       URL.revokeObjectURL(blobUrl);
     } catch (err) {
       console.error('Download image error:', err);
@@ -303,6 +308,8 @@ const ActivityParticipantsForm = ({ activityData }) => {
     return matchesSearch && matchesStatus && matchesDepartment;
   });
 
+  // เพิ่มใน ImageModal component ของ ActivityParticipantsForm.js
+
   const ImageModal = () => {
     if (!showImageModal || !selectedParticipant) return null;
 
@@ -317,7 +324,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
               <ImageIcon size={20} />
               รูปภาพยืนยันการเข้าร่วม
             </h3>
-            <button 
+            <button
               className={styles.modalCloseButton}
               onClick={() => setShowImageModal(false)}
             >
@@ -356,6 +363,10 @@ const ActivityParticipantsForm = ({ activityData }) => {
                   const isRejected = img.RegistrationPictureStatus_Name === 'ปฏิเสธ';
                   const isProcessing = processingImageAction[img.RegistrationPicture_ID];
 
+                  // AI Status
+                  const aiSuccess = img.RegistrationPicture_IsAiSuccess;
+                  const hasAiResult = aiSuccess !== null && aiSuccess !== undefined;
+
                   return (
                     <div key={img.RegistrationPicture_ID} className={styles.imageCard}>
                       <div className={styles.imageWrapper}>
@@ -370,6 +381,22 @@ const ActivityParticipantsForm = ({ activityData }) => {
                             <div className={styles.spinner}></div>
                           </div>
                         )}
+
+                        {/* AI Badge on Image */}
+                        {hasAiResult && (
+                          <div className={styles.aiBadge}>
+                            {aiSuccess === 1 ? (
+                              <span className={styles.aiSuccess}>
+                                <CheckCircle size={12} /> AI: Real
+                              </span>
+                            ) : (
+                              <span className={styles.aiFailed}>
+                                <XCircle size={12} /> AI: Fake
+                              </span>
+                            )}
+                          </div>
+                        )}
+
                         <div className={styles.imageOverlay}>
                           <button
                             className={styles.imageActionButton}
@@ -380,7 +407,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
                           </button>
                         </div>
                       </div>
-                      
+
                       <div className={styles.imageInfo}>
                         <div className={styles.imageStatus}>
                           {isApproved ? (
@@ -397,7 +424,23 @@ const ActivityParticipantsForm = ({ activityData }) => {
                             </span>
                           )}
                         </div>
-                        
+
+                        {/* AI Verification Details */}
+                        {hasAiResult && (
+                          <div className={styles.aiStatusDetail}>
+                            <span className={styles.aiLabel}>การตรวจสอบ AI:</span>
+                            {aiSuccess === 1 ? (
+                              <span className={styles.aiStatusSuccess}>
+                                <CheckCircle size={14} /> รูปภาพจริง
+                              </span>
+                            ) : (
+                              <span className={styles.aiStatusFailed}>
+                                <AlertCircle size={14} /> ตรวจพบรูปปลอม
+                              </span>
+                            )}
+                          </div>
+                        )}
+
                         <p className={styles.imageTime}>
                           {new Date(img.RegistrationPicture_RegisTime).toLocaleString('th-TH')}
                         </p>
@@ -606,7 +649,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
             {filteredParticipants.map((participant, index) => {
               const fullName = `${participant.Student_FirstName} ${participant.Student_LastName}`;
               const hasCheckedIn = !!participant.Registration_CheckInTime;
-              
+
               return (
                 <div key={participant.Users_ID} className={styles.participantCard}>
                   <div className={styles.participantInfo}>
@@ -646,7 +689,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
                         <Eye size={16} /> ดูรูป
                       </button>
                     )}
-                    
+
                     {!participant.Registration_CheckInTime ? (
                       <button
                         className={`${styles.actionButton} ${styles.checkInButton}`}
