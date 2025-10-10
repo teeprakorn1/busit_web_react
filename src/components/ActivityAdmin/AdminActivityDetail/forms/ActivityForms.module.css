@@ -1499,3 +1499,115 @@
     justify-content: center;
   }
 }
+
+/* Image Action Buttons */
+.imageActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.imageApproveButton,
+.imageRejectButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Noto Sans', sans-serif;
+}
+
+.imageApproveButton {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+
+.imageApproveButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.imageRejectButton {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
+}
+
+.imageRejectButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.imageApproveButton:disabled,
+.imageRejectButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.imageApproveButton.processing,
+.imageRejectButton.processing {
+  pointer-events: none;
+}
+
+/* Small Spinner for Buttons */
+.smallSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Reject Reason */
+.rejectReason {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #991b1b;
+}
+
+.rejectReason svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.rejectReason span {
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* Enhanced Image Card States */
+.imageCard {
+  position: relative;
+}
+
+.imageCard[data-status="approved"] {
+  border-color: #10b981;
+}
+
+.imageCard[data-status="rejected"] {
+  border-color: #ef4444;
+  opacity: 0.7;
+}
+
+.imageCard[data-status="pending"] {
+  border-color: #f59e0b;
+}

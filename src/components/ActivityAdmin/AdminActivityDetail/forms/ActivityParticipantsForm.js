@@ -1,6 +1,6 @@
-// ActivityParticipantsForm.js
+// ActivityParticipantsForm.js - Enhanced with Image Approval
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Users, Search, Check, X, Clock, Building2, Image as ImageIcon, Eye, Download, CheckCircle, XCircle } from 'lucide-react';
+import { Users, Search, Check, X, Clock, Building2, Image as ImageIcon, Eye, Download, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import styles from './ActivityForms.module.css';
 import { logActivityParticipantsView, logActivityParticipantCheckIn, logActivityParticipantCheckOut } from '../../../../utils/systemLog';
@@ -15,6 +15,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
   const [showImageModal, setShowImageModal] = useState(false);
   const [participantImages, setParticipantImages] = useState({});
   const [loadingImages, setLoadingImages] = useState({});
+  const [processingImageAction, setProcessingImageAction] = useState({});
 
   const fetchParticipants = useCallback(async () => {
     if (!activityData?.Activity_ID) return;
@@ -28,7 +29,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
 
       if (response.data?.status) {
         setParticipants(response.data.data);
-
+        
         await logActivityParticipantsView(
           activityData.Activity_ID,
           activityData.Activity_Title
@@ -41,15 +42,15 @@ const ActivityParticipantsForm = ({ activityData }) => {
     }
   }, [activityData?.Activity_ID, activityData?.Activity_Title]);
 
-  const fetchParticipantImages = useCallback(async (userId) => {
-    if (loadingImages[userId] || participantImages[userId]) return;
+  const fetchParticipantImages = useCallback(async (userId, forceRefresh = false) => {
+    if (!forceRefresh && (loadingImages[userId] || participantImages[userId])) return;
 
     setLoadingImages(prev => ({ ...prev, [userId]: true }));
 
     try {
       const response = await axios.get(
         `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/activities/${activityData.Activity_ID}/pictures`,
-        {
+        { 
           withCredentials: true,
           params: { userId }
         }
@@ -119,7 +120,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
 
       if (response.data?.status) {
         fetchParticipants();
-
+        
         await logActivityParticipantCheckIn(
           activityData.Activity_ID,
           activityData.Activity_Title,
@@ -142,7 +143,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
 
       if (response.data?.status) {
         fetchParticipants();
-
+        
         await logActivityParticipantCheckOut(
           activityData.Activity_ID,
           activityData.Activity_Title,
@@ -155,6 +156,65 @@ const ActivityParticipantsForm = ({ activityData }) => {
     }
   };
 
+  const handleApproveImage = async (imageId, userId) => {
+    if (processingImageAction[imageId]) return;
+
+    const confirmed = window.confirm('คุณต้องการอนุมัติรูปภาพนี้หรือไม่?');
+    if (!confirmed) return;
+
+    setProcessingImageAction(prev => ({ ...prev, [imageId]: true }));
+
+    try {
+      const response = await axios.patch(
+        `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/registration-pictures/${imageId}/approve`,
+        {},
+        { withCredentials: true }
+      );
+
+      if (response.data?.status) {
+        // Refresh images
+        await fetchParticipantImages(userId, true);
+        alert('อนุมัติรูปภาพสำเร็จ');
+      }
+    } catch (err) {
+      console.error('Approve image error:', err);
+      alert(err.response?.data?.message || 'ไม่สามารถอนุมัติรูปภาพได้');
+    } finally {
+      setProcessingImageAction(prev => ({ ...prev, [imageId]: false }));
+    }
+  };
+
+  const handleRejectImage = async (imageId, userId) => {
+    if (processingImageAction[imageId]) return;
+
+    const reason = window.prompt('กรุณาระบุเหตุผลในการปฏิเสธ (ถ้ามี):');
+    if (reason === null) return; // User cancelled
+
+    const confirmed = window.confirm('คุณต้องการปฏิเสธรูปภาพนี้หรือไม่?');
+    if (!confirmed) return;
+
+    setProcessingImageAction(prev => ({ ...prev, [imageId]: true }));
+
+    try {
+      const response = await axios.patch(
+        `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/registration-pictures/${imageId}/reject`,
+        { reason: reason || 'ไม่ระบุเหตุผล' },
+        { withCredentials: true }
+      );
+
+      if (response.data?.status) {
+        // Refresh images
+        await fetchParticipantImages(userId, true);
+        alert('ปฏิเสธรูปภาพสำเร็จ');
+      }
+    } catch (err) {
+      console.error('Reject image error:', err);
+      alert(err.response?.data?.message || 'ไม่สามารถปฏิเสธรูปภาพได้');
+    } finally {
+      setProcessingImageAction(prev => ({ ...prev, [imageId]: false }));
+    }
+  };
+
   const handleViewImages = useCallback((participant) => {
     setSelectedParticipant(participant);
     fetchParticipantImages(participant.Users_ID);
@@ -163,7 +223,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
 
   const handleDownloadImage = useCallback((imageFile) => {
     const imageUrl = `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/images/registration-images/${imageFile}`;
-
+    
     const link = document.createElement('a');
     link.href = imageUrl;
     link.download = imageFile;
@@ -205,7 +265,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
               <ImageIcon size={20} />
               รูปภาพยืนยันการเข้าร่วม
             </h3>
-            <button
+            <button 
               className={styles.modalCloseButton}
               onClick={() => setShowImageModal(false)}
             >
@@ -238,46 +298,97 @@ const ActivityParticipantsForm = ({ activityData }) => {
               </div>
             ) : (
               <div className={styles.imageGrid}>
-                {images.map((img, index) => (
-                  <div key={img.RegistrationPicture_ID} className={styles.imageCard}>
-                    <div className={styles.imageWrapper}>
-                      <img
-                        src={`${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/images/registration-images/${img.RegistrationPicture_ImageFile}`}
-                        alt={`รูปภาพ ${index + 1}`}
-                        className={styles.participantImage}
-                      />
-                      <div className={styles.imageOverlay}>
-                        <button
-                          className={styles.imageActionButton}
-                          onClick={() => handleDownloadImage(img.RegistrationPicture_ImageFile)}
-                          title="ดาวน์โหลด"
-                        >
-                          <Download size={16} />
-                        </button>
+                {images.map((img, index) => {
+                  const isPending = img.RegistrationPictureStatus_Name === 'รออนุมัติ';
+                  const isApproved = img.RegistrationPictureStatus_Name === 'อนุมัติแล้ว';
+                  const isRejected = img.RegistrationPictureStatus_Name === 'ปฏิเสธ';
+                  const isProcessing = processingImageAction[img.RegistrationPicture_ID];
+
+                  return (
+                    <div key={img.RegistrationPicture_ID} className={styles.imageCard}>
+                      <div className={styles.imageWrapper}>
+                        <img
+                          src={`${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/images/registration-images/${img.RegistrationPicture_ImageFile}`}
+                          alt={`รูปภาพ ${index + 1}`}
+                          className={styles.participantImage}
+                        />
+                        <div className={styles.imageOverlay}>
+                          <button
+                            className={styles.imageActionButton}
+                            onClick={() => handleDownloadImage(img.RegistrationPicture_ImageFile)}
+                            title="ดาวน์โหลด"
+                          >
+                            <Download size={16} />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                    <div className={styles.imageInfo}>
-                      <div className={styles.imageStatus}>
-                        {img.RegistrationPictureStatus_Name === 'อนุมัติแล้ว' ? (
-                          <span className={styles.statusApproved}>
-                            <CheckCircle size={14} /> อนุมัติแล้ว
-                          </span>
-                        ) : img.RegistrationPictureStatus_Name === 'ปฏิเสธ' ? (
-                          <span className={styles.statusRejected}>
-                            <XCircle size={14} /> ปฏิเสธ
-                          </span>
-                        ) : (
-                          <span className={styles.statusPending}>
-                            <Clock size={14} /> รออนุมัติ
-                          </span>
+                      
+                      <div className={styles.imageInfo}>
+                        <div className={styles.imageStatus}>
+                          {isApproved ? (
+                            <span className={styles.statusApproved}>
+                              <CheckCircle size={14} /> อนุมัติแล้ว
+                            </span>
+                          ) : isRejected ? (
+                            <span className={styles.statusRejected}>
+                              <XCircle size={14} /> ปฏิเสธ
+                            </span>
+                          ) : (
+                            <span className={styles.statusPending}>
+                              <Clock size={14} /> รออนุมัติ
+                            </span>
+                          )}
+                        </div>
+                        
+                        <p className={styles.imageTime}>
+                          {new Date(img.RegistrationPicture_RegisTime).toLocaleString('th-TH')}
+                        </p>
+
+                        {isPending && (
+                          <div className={styles.imageActions}>
+                            <button
+                              className={`${styles.imageApproveButton} ${isProcessing ? styles.processing : ''}`}
+                              onClick={() => handleApproveImage(img.RegistrationPicture_ID, selectedParticipant.Users_ID)}
+                              disabled={isProcessing}
+                              title="อนุมัติรูปภาพ"
+                            >
+                              {isProcessing ? (
+                                <div className={styles.smallSpinner}></div>
+                              ) : (
+                                <>
+                                  <CheckCircle size={14} />
+                                  อนุมัติ
+                                </>
+                              )}
+                            </button>
+                            <button
+                              className={`${styles.imageRejectButton} ${isProcessing ? styles.processing : ''}`}
+                              onClick={() => handleRejectImage(img.RegistrationPicture_ID, selectedParticipant.Users_ID)}
+                              disabled={isProcessing}
+                              title="ปฏิเสธรูปภาพ"
+                            >
+                              {isProcessing ? (
+                                <div className={styles.smallSpinner}></div>
+                              ) : (
+                                <>
+                                  <XCircle size={14} />
+                                  ปฏิเสธ
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        )}
+
+                        {isRejected && img.RegistrationPicture_RejectReason && (
+                          <div className={styles.rejectReason}>
+                            <AlertCircle size={14} />
+                            <span>เหตุผล: {img.RegistrationPicture_RejectReason}</span>
+                          </div>
                         )}
                       </div>
-                      <p className={styles.imageTime}>
-                        {new Date(img.RegistrationPicture_RegisTime).toLocaleString('th-TH')}
-                      </p>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -317,7 +428,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
         </div>
       </div>
 
-      {/* สถิติสาขา */}
+      {/* Department Stats Section */}
       <div className={styles.departmentStatsSection}>
         <h4>
           <Building2 size={18} style={{ display: 'inline', marginRight: '8px' }} />
@@ -376,6 +487,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
         )}
       </div>
 
+      {/* Filter Section */}
       <div className={styles.filterSection}>
         <div className={styles.searchBox}>
           <Search size={16} />
@@ -416,6 +528,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
         </div>
       </div>
 
+      {/* Participants List */}
       <div className={styles.participantsList}>
         {filteredParticipants.length === 0 ? (
           <div className={styles.emptyState}>
@@ -435,7 +548,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
             {filteredParticipants.map((participant, index) => {
               const fullName = `${participant.Student_FirstName} ${participant.Student_LastName}`;
               const hasCheckedIn = !!participant.Registration_CheckInTime;
-
+              
               return (
                 <div key={participant.Users_ID} className={styles.participantCard}>
                   <div className={styles.participantInfo}>
@@ -475,7 +588,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
                         <Eye size={16} /> ดูรูป
                       </button>
                     )}
-
+                    
                     {!participant.Registration_CheckInTime ? (
                       <button
                         className={`${styles.actionButton} ${styles.checkInButton}`}
