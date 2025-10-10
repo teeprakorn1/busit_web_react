@@ -1,4 +1,4 @@
-// ActivityParticipantsForm.js - Enhanced with Image Display
+// ActivityParticipantsForm.js
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Users, Search, Check, X, Clock, Building2, Image as ImageIcon, Eye, Download, CheckCircle, XCircle } from 'lucide-react';
 import axios from 'axios';
