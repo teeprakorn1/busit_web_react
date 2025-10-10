@@ -1,4 +1,4 @@
-// ActivityParticipantsForm.js - Enhanced with Image Approval
+// ActivityParticipantsForm.js
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Users, Search, Check, X, Clock, Building2, Image as ImageIcon, Eye, Download, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import axios from 'axios';
@@ -16,6 +16,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
   const [participantImages, setParticipantImages] = useState({});
   const [loadingImages, setLoadingImages] = useState({});
   const [processingImageAction, setProcessingImageAction] = useState({});
+  const [imageBlobUrls, setImageBlobUrls] = useState({});
 
   const fetchParticipants = useCallback(async () => {
     if (!activityData?.Activity_ID) return;
@@ -42,6 +43,29 @@ const ActivityParticipantsForm = ({ activityData }) => {
     }
   }, [activityData?.Activity_ID, activityData?.Activity_Title]);
 
+  const fetchImageBlob = async (imageFile) => {
+    // Skip if already loaded
+    if (imageBlobUrls[imageFile]) return;
+
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/admin/images/registration-images/${imageFile}`,
+        {
+          withCredentials: true,
+          responseType: 'blob'
+        }
+      );
+
+      const blobUrl = URL.createObjectURL(response.data);
+      setImageBlobUrls(prev => ({
+        ...prev,
+        [imageFile]: blobUrl
+      }));
+    } catch (err) {
+      console.error('Fetch image blob error:', err);
+    }
+  };
+
   const fetchParticipantImages = useCallback(async (userId, forceRefresh = false) => {
     if (!forceRefresh && (loadingImages[userId] || participantImages[userId])) return;
 
@@ -62,16 +86,28 @@ const ActivityParticipantsForm = ({ activityData }) => {
           ...prev,
           [userId]: userImages
         }));
+
+        // Fetch blob URLs for each image
+        for (const img of userImages) {
+          await fetchImageBlob(img.RegistrationPicture_ImageFile);
+        }
       }
     } catch (err) {
       console.error('Fetch images error:', err);
     } finally {
       setLoadingImages(prev => ({ ...prev, [userId]: false }));
     }
-  }, [activityData?.Activity_ID, loadingImages, participantImages]);
+  }, [activityData?.Activity_ID]);
 
   useEffect(() => {
     fetchParticipants();
+    
+    // Cleanup blob URLs on unmount
+    return () => {
+      Object.values(imageBlobUrls).forEach(url => {
+        URL.revokeObjectURL(url);
+      });
+    };
   }, [fetchParticipants]);
 
   const departmentStats = useMemo(() => {
@@ -221,16 +257,32 @@ const ActivityParticipantsForm = ({ activityData }) => {
     setShowImageModal(true);
   }, [fetchParticipantImages]);
 
-  const handleDownloadImage = useCallback((imageFile) => {
-    const imageUrl = `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/admin/images/registration-images/${imageFile}`;
-    
-    const link = document.createElement('a');
-    link.href = imageUrl;
-    link.download = imageFile;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownloadImage = useCallback(async (imageFile) => {
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/admin/images/registration-images/${imageFile}`,
+        {
+          withCredentials: true,
+          responseType: 'blob'
+        }
+      );
+
+      const blob = response.data;
+      const blobUrl = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = imageFile;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up blob URL
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error('Download image error:', err);
+      alert('ไม่สามารถดาวน์โหลดรูปภาพได้');
+    }
   }, []);
 
   const filteredParticipants = participants.filter(p => {
@@ -307,11 +359,17 @@ const ActivityParticipantsForm = ({ activityData }) => {
                   return (
                     <div key={img.RegistrationPicture_ID} className={styles.imageCard}>
                       <div className={styles.imageWrapper}>
-                        <img
-                          src={`${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/admin/images/registration-images/${img.RegistrationPicture_ImageFile}`}
-                          alt={`รูปภาพ ${index + 1}`}
-                          className={styles.participantImage}
-                        />
+                        {imageBlobUrls[img.RegistrationPicture_ImageFile] ? (
+                          <img
+                            src={imageBlobUrls[img.RegistrationPicture_ImageFile]}
+                            alt={`รูปภาพ ${index + 1}`}
+                            className={styles.participantImage}
+                          />
+                        ) : (
+                          <div className={styles.imageLoading}>
+                            <div className={styles.spinner}></div>
+                          </div>
+                        )}
                         <div className={styles.imageOverlay}>
                           <button
                             className={styles.imageActionButton}
