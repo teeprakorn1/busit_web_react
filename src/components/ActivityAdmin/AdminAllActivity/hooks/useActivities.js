@@ -1,5 +1,5 @@
-// hooks/useActivities.js
-import { useState, useCallback } from 'react'; // ลบ useEffect ออก
+// hooks/useActivities.js - Updated to include allowTeachers
+import { useState, useCallback } from 'react';
 import axios from 'axios';
 
 const getApiUrl = (endpoint) => {
@@ -54,6 +54,7 @@ export const useActivities = () => {
           endTime: activity.Activity_EndTime,
           imageFile: activity.Activity_ImageFile,
           isRequire: activity.Activity_IsRequire,
+          allowTeachers: activity.Activity_AllowTeachers || false, // เพิ่มฟิลด์นี้
           typeName: activity.ActivityType_Name,
           statusName: activity.ActivityStatus_Name,
           templateName: activity.Template_Name,

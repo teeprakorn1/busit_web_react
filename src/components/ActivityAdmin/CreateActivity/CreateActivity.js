@@ -48,6 +48,7 @@ function CreateActivity() {
     startTime: '',
     endTime: '',
     isRequire: false,
+    allowTeachers: false, // เพิ่มฟิลด์ใหม่
     activityTypeId: '',
     activityStatusId: '',
     templateId: '',
@@ -138,7 +139,8 @@ function CreateActivity() {
     });
 
     const activityTitle = formData.title || 'activity';
-    return `${action} activity "${activityTitle}" at ${dateStr} ${timeStr} in Website.`;
+    const participantType = formData.allowTeachers ? 'students and teachers' : 'students only';
+    return `${action} activity "${activityTitle}" (${participantType}) at ${dateStr} ${timeStr} in Website.`;
   };
 
   useEffect(() => {
@@ -171,6 +173,7 @@ function CreateActivity() {
     submitData.append('activityStartTime', formData.startTime);
     submitData.append('activityEndTime', formData.endTime);
     submitData.append('activityIsRequire', formData.isRequire);
+    submitData.append('allowTeachers', formData.allowTeachers); // เพิ่มข้อมูลนี้
 
     if (formData.activityTypeId) {
       submitData.append('activityTypeId', formData.activityTypeId);
@@ -224,7 +227,12 @@ function CreateActivity() {
         const timestampTypeId = 50;
         await insertTimestamp(successTimestampName, timestampTypeId);
 
-        setAlertMessage(`สร้างกิจกรรมสำเร็จ!`);
+        const participantInfo = formData.allowTeachers 
+          ? `รวมนักศึกษา ${response.data.data.totalStudents} คนและอาจารย์ ${response.data.data.totalTeachers} คน` 
+          : `นักศึกษา ${response.data.data.totalStudents} คน`;
+
+        setAlertMessage(`สร้างกิจกรรมสำเร็จ! (${participantInfo})`);
+        
         setFormData({
           title: '',
           description: '',
@@ -233,6 +241,7 @@ function CreateActivity() {
           startTime: '',
           endTime: '',
           isRequire: false,
+          allowTeachers: false,
           activityTypeId: '',
           activityStatusId: '',
           templateId: '',
@@ -240,9 +249,10 @@ function CreateActivity() {
           selectedDepartments: []
         });
         setErrors({});
+        
         setTimeout(() => {
           navigate('/activity-management/activity-name');
-        }, 2000);
+        }, 2500);
       } else {
         const failTimestampName = generateTimestampName('Failed to create');
         const timestampTypeId = 50;

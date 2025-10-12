@@ -1648,7 +1648,6 @@
   backdrop-filter: blur(4px);
 }
 
-/* AI Status ในส่วนข้อมูล */
 .aiStatus {
   display: flex;
   align-items: center;
@@ -1703,5 +1702,206 @@
 
   .aiStatus {
     font-size: 12px;
+  }
+}
+
+.teacherBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-radius: 12px;
+  font-size: 0.75em;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+.teacherTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #047857;
+  border-radius: 10px;
+  font-size: 0.7em;
+  font-weight: 700;
+  border: 1px solid #6ee7b7;
+  margin-left: 8px;
+}
+
+.participantHeaderWithType {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.participantNameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.participantNameRow h4 {
+  margin: 0;
+}
+
+.participantsSummary .summaryItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.deptStatDetails .deptStatItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.deptStatLabel {
+  font-size: 0.85em;
+  color: #64748b;
+}
+
+.deptStatValue {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.filterButtons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.filterButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filterButton:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.filterButton.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border-color: #3b82f6;
+}
+
+.participantCard:has(.teacherTag) {
+  border-left: 3px solid #10b981;
+  background: linear-gradient(to right, #ffffff, #f0fdf4);
+}
+
+.participantInfoHeader {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.participantInfoHeader h4 {
+  margin: 0 0 8px 0;
+  font-size: 1.3em;
+  color: #1e293b;
+}
+
+.deptStatCard {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+.deptStatCard:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+  transform: translateY(-2px);
+}
+
+.deptStatCard.selected {
+  border-color: #10b981;
+  background: linear-gradient(to bottom, #ffffff, #f0fdf4);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+@keyframes teacherPulse {
+  0%, 100% {
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 8px rgba(16, 185, 129, 0.5);
+  }
+}
+
+.teacherTag, .teacherBadge {
+  animation: teacherPulse 2s ease-in-out infinite;
+}
+
+@media (max-width: 768px) {
+  .participantHeaderWithType {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .participantNameRow {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .teacherTag {
+    margin-left: 0;
+  }
+
+  .filterButtons {
+    width: 100%;
+  }
+
+  .filterButton {
+    flex: 1;
+    justify-content: center;
+    min-width: 100px;
+  }
+
+  .deptStatDetails {
+    font-size: 0.9em;
+  }
+}
+
+.filterButton:focus,
+.teacherTag:focus,
+.teacherBadge:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+@media print {
+  .teacherTag,
+  .teacherBadge {
+    background: #10b981 !important;
+    color: white !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .participantCard:has(.teacherTag) {
+    border-left-color: #10b981 !important;
   }
 }

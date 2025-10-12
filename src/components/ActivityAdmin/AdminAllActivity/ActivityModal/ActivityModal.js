@@ -1,6 +1,6 @@
-// ActivityModal/ActivityModal.js
+// ActivityModal/ActivityModal.js - Updated to show teachers
 import React, { useEffect, useState, useCallback } from 'react';
-import { X, Calendar, MapPin, Clock, Users, FileText, AlertCircle, Loader, Building2, GraduationCap } from 'lucide-react';
+import { X, Calendar, MapPin, Clock, Users, FileText, AlertCircle, Loader, Building2, GraduationCap, UserCheck } from 'lucide-react';
 import styles from './ActivityModal.module.css';
 import LocationDisplay from './LocationDisplay';
 import axios from 'axios';
@@ -25,8 +25,8 @@ function ActivityModal({ isOpen, onClose, activityId }) {
   const [error, setError] = useState(null);
   const [participants, setParticipants] = useState([]);
   const [stats, setStats] = useState(null);
+  const [participantStats, setParticipantStats] = useState({ students: 0, teachers: 0, total: 0 });
 
-  // Define fetch functions first
   const fetchActivityDetail = useCallback(async () => {
     if (!activityId) return;
     try {
@@ -59,6 +59,10 @@ function ActivityModal({ isOpen, onClose, activityId }) {
 
       if (response.data?.status) {
         setParticipants(response.data.data);
+        // ตั้งค่าสถิติจาก API response
+        if (response.data.stats) {
+          setParticipantStats(response.data.stats);
+        }
       }
     } catch (err) {
       console.error('Fetch participants error:', err);
@@ -81,7 +85,6 @@ function ActivityModal({ isOpen, onClose, activityId }) {
     }
   }, [activityId]);
 
-  // Use useEffect after functions are defined
   useEffect(() => {
     if (isOpen && activityId) {
       fetchActivityDetail();
@@ -92,6 +95,7 @@ function ActivityModal({ isOpen, onClose, activityId }) {
       setParticipants([]);
       setStats(null);
       setError(null);
+      setParticipantStats({ students: 0, teachers: 0, total: 0 });
     }
   }, [isOpen, activityId, fetchActivityDetail, fetchParticipants, fetchStats]);
 
@@ -166,6 +170,12 @@ function ActivityModal({ isOpen, onClose, activityId }) {
               </span>
               {activityDetail.Activity_IsRequire && (
                 <span className={styles.requireBadge}>บังคับเข้าร่วม</span>
+              )}
+              {activityDetail.Activity_AllowTeachers && (
+                <span className={styles.teacherBadge}>
+                  <UserCheck size={14} />
+                  เปิดให้อาจารย์เข้าร่วม
+                </span>
               )}
             </div>
           </div>
@@ -292,7 +302,7 @@ function ActivityModal({ isOpen, onClose, activityId }) {
               <div className={styles.departmentsSummary}>
                 <div className={styles.summaryCard}>
                   <div className={styles.summaryValue}>{activityDetail.total_expected}</div>
-                  <div className={styles.summaryLabel}>นักศึกษาที่คาดหวัง</div>
+                  <div className={styles.summaryLabel}>ผู้เข้าร่วมที่คาดหวัง</div>
                 </div>
                 <div className={styles.summaryCard}>
                   <div className={styles.summaryValue}>{activityDetail.total_registered}</div>
@@ -303,6 +313,26 @@ function ActivityModal({ isOpen, onClose, activityId }) {
                   <div className={styles.summaryLabel}>เช็คอินแล้ว</div>
                 </div>
               </div>
+
+              {/* แสดงสถิติแยกนักศึกษาและอาจารย์ถ้ามี */}
+              {activityDetail.Activity_AllowTeachers && (
+                <div className={styles.participantTypeStats}>
+                  <div className={styles.statTypeCard}>
+                    <GraduationCap className={styles.statIcon} />
+                    <div className={styles.statContent}>
+                      <div className={styles.statLabel}>นักศึกษา</div>
+                      <div className={styles.statValue}>{activityDetail.total_students || 0} คน</div>
+                    </div>
+                  </div>
+                  <div className={styles.statTypeCard}>
+                    <UserCheck className={styles.statIcon} />
+                    <div className={styles.statContent}>
+                      <div className={styles.statLabel}>อาจารย์</div>
+                      <div className={styles.statValue}>{activityDetail.total_teachers || 0} คน</div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className={styles.departmentsList}>
                 {activityDetail.departments.map((dept, index) => (
@@ -325,6 +355,18 @@ function ActivityModal({ isOpen, onClose, activityId }) {
                         <span className={styles.statLabel}>ลงทะเบียน:</span>
                         <span className={styles.statValue}>{dept.registered_count} คน</span>
                       </div>
+                      {activityDetail.Activity_AllowTeachers && (
+                        <>
+                          <div className={styles.statItem}>
+                            <span className={styles.statLabel}>นักศึกษา:</span>
+                            <span className={styles.statValue}>{dept.student_count || 0} คน</span>
+                          </div>
+                          <div className={styles.statItem}>
+                            <span className={styles.statLabel}>อาจารย์:</span>
+                            <span className={styles.statValue}>{dept.teacher_count || 0} คน</span>
+                          </div>
+                        </>
+                      )}
                       <div className={styles.statItem}>
                         <span className={styles.statLabel}>เช็คอิน:</span>
                         <span className={styles.statValue}>{dept.checked_in_count} คน</span>
@@ -380,15 +422,38 @@ function ActivityModal({ isOpen, onClose, activityId }) {
                 <Users size={18} />
                 รายชื่อผู้เข้าร่วม ({participants.length} คน)
               </h3>
+              
+              {/* แสดงสถิติแยกประเภท */}
+              {activityDetail.Activity_AllowTeachers && participantStats.total > 0 && (
+                <div className={styles.participantTypeSummary}>
+                  <span className={styles.summaryItem}>
+                    <GraduationCap size={16} />
+                    นักศึกษา: {participantStats.students} คน
+                  </span>
+                  <span className={styles.summaryItem}>
+                    <UserCheck size={16} />
+                    อาจารย์: {participantStats.teachers} คน
+                  </span>
+                </div>
+              )}
+
               <div className={styles.participantsList}>
                 {participants.slice(0, 10).map((participant, index) => (
                   <div key={index} className={styles.participantItem}>
                     <div className={styles.participantInfo}>
-                      <span className={styles.participantName}>
-                        {participant.Student_FirstName} {participant.Student_LastName}
-                      </span>
+                      <div className={styles.participantHeader}>
+                        <span className={styles.participantName}>
+                          {participant.FirstName} {participant.LastName}
+                        </span>
+                        {participant.isTeacher && (
+                          <span className={styles.teacherTag}>
+                            <UserCheck size={12} />
+                            อาจารย์
+                          </span>
+                        )}
+                      </div>
                       <span className={styles.participantDetail}>
-                        {participant.Student_Code} | {participant.Department_Name}
+                        {participant.Code} | {participant.Department_Name}
                       </span>
                     </div>
                     <span className={styles.participantStatus}>

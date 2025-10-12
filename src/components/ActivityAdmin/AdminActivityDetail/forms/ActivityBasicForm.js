@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Activity, Edit, Save, X, Loader, Upload, MapPin, Award } from 'lucide-react';
+import { Activity, Edit, Save, X, Loader, Upload, MapPin, Award, UserCheck } from 'lucide-react';
 import CertificatePreview from '../CertificatePreview/CertificatePreview';
 import LocationDisplay from '../LocationDisplay/LocationDisplay';
 import axios from 'axios';
@@ -23,6 +23,7 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
     startTime: '',
     endTime: '',
     isRequired: false,
+    allowTeachers: false, // เพิ่มฟิลด์สำหรับอนุญาตอาจารย์
     locationGPS: null,
     statusId: '',
     typeId: '',
@@ -53,6 +54,7 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
         startTime: formatDateTimeLocal(activityData.Activity_StartTime),
         endTime: formatDateTimeLocal(activityData.Activity_EndTime),
         isRequired: activityData.Activity_IsRequire || false,
+        allowTeachers: activityData.Activity_AllowTeachers || false, // โหลดค่า allowTeachers จาก database
         locationGPS: parseGPSLocation(activityData.Activity_LocationGPS),
         statusId: activityData.ActivityStatus_ID || '',
         typeId: activityData.ActivityType_ID || '',
@@ -240,7 +242,6 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
   const handleEditStart = async () => {
     setIsEditing(true);
     
-    // Log edit start
     if (activityData?.Activity_ID && activityData?.Activity_Title) {
       await logActivityEditStart(
         activityData.Activity_ID,
@@ -285,6 +286,7 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
         activityStartTime: formData.startTime,
         activityEndTime: formData.endTime,
         activityIsRequire: formData.isRequired,
+        allowTeachers: formData.allowTeachers, // ส่งค่า allowTeachers ไปยัง API
         activityLocationGPS: formData.locationGPS ? JSON.stringify(formData.locationGPS) : null,
         activityStatusId: formData.statusId,
         activityTypeId: formData.typeId,
@@ -312,7 +314,6 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
   };
 
   const handleCancel = async () => {
-    // Log cancel action
     if (activityData?.Activity_ID && activityData?.Activity_Title) {
       await logActivityEditCancel(
         activityData.Activity_ID,
@@ -343,6 +344,7 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
         startTime: formatDateTimeLocal(activityData.Activity_StartTime),
         endTime: formatDateTimeLocal(activityData.Activity_EndTime),
         isRequired: activityData.Activity_IsRequire || false,
+        allowTeachers: activityData.Activity_AllowTeachers || false, // Reset ค่า allowTeachers
         locationGPS: parseGPSLocation(activityData.Activity_LocationGPS),
         statusId: activityData.ActivityStatus_ID || '',
         typeId: activityData.ActivityType_ID || '',
@@ -421,7 +423,6 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
         )}
       </div>
 
-      {/* Rest of the component remains the same as the original */}
       <div className={styles.infoGrid}>
         <div className={styles.infoSection}>
           <h4>ข้อมูลหลัก</h4>
@@ -528,6 +529,46 @@ const ActivityBasicForm = ({ activityData, onUpdate, loading, canEdit }) => {
               ) : (
                 <span className={styles.value}>
                   {activityData.Activity_IsRequire ? 'บังคับ' : 'ไม่บังคับ'}
+                </span>
+              )}
+            </div>
+
+            {/* เพิ่มส่วนนี้: ฟิลด์สำหรับอนุญาตอาจารย์ */}
+            <div className={styles.infoRow}>
+              <span className={styles.label}>
+                <UserCheck size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} />
+                เปิดให้อาจารย์เข้าร่วม:
+              </span>
+              {isEditing ? (
+                <label className={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    name="allowTeachers"
+                    checked={formData.allowTeachers}
+                    onChange={handleChange}
+                    className={styles.checkboxField}
+                    disabled={loading}
+                  />
+                  อนุญาตให้อาจารย์เข้าร่วมกิจกรรม
+                </label>
+              ) : (
+                <span className={styles.value}>
+                  {activityData.Activity_AllowTeachers ? (
+                    <span style={{ 
+                      color: '#10b981', 
+                      fontWeight: 600,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}>
+                      <UserCheck size={16} />
+                      อนุญาต
+                    </span>
+                  ) : (
+                    <span style={{ color: '#64748b' }}>
+                      ไม่อนุญาต
+                    </span>
+                  )}
                 </span>
               )}
             </div>

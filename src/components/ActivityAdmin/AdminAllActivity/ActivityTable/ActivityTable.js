@@ -1,6 +1,6 @@
-// ActivityTable/ActivityTable.js
+// ActivityTable/ActivityTable.js - Updated to show teacher participation
 import React from 'react';
-import { Eye, Edit, Trash2, MapPin, Calendar } from 'lucide-react';
+import { Eye, Edit, Trash2, MapPin, Calendar, UserCheck } from 'lucide-react';
 import styles from './ActivityTable.module.css';
 import { useUserPermissions } from '../hooks/useUserPermissions';
 
@@ -70,7 +70,7 @@ function ActivityTable({
               วันที่สิ้นสุด {getSortIcon('endTime')}
             </th>
             <th>สถานที่</th>
-            <th>บังคับเข้าร่วม</th>
+            <th>ผู้เข้าร่วม</th>
             <th>จัดการ</th>
           </tr>
         </thead>
@@ -80,6 +80,11 @@ function ActivityTable({
               <td>
                 <div className={styles.activityTitle}>
                   <span className={styles.titleText}>{activity.title}</span>
+                  {activity.allowTeachers && (
+                    <span className={styles.teacherIndicator} title="เปิดให้อาจารย์เข้าร่วม">
+                      <UserCheck size={14} />
+                    </span>
+                  )}
                 </div>
               </td>
               <td>
@@ -119,9 +124,17 @@ function ActivityTable({
                 </div>
               </td>
               <td>
-                <span className={`${styles.requireBadge} ${activity.isRequire ? styles.required : styles.optional}`}>
-                  {activity.isRequire ? 'บังคับ' : 'ไม่บังคับ'}
-                </span>
+                <div className={styles.participantInfo}>
+                  <span className={`${styles.requireBadge} ${activity.isRequire ? styles.required : styles.optional}`}>
+                    {activity.isRequire ? 'บังคับ' : 'ไม่บังคับ'}
+                  </span>
+                  {activity.allowTeachers && (
+                    <span className={styles.teacherAllowedBadge} title="เปิดให้อาจารย์เข้าร่วม">
+                      <UserCheck size={12} />
+                      อาจารย์
+                    </span>
+                  )}
+                </div>
               </td>
               <td>
                 <div className={styles.actions}>

@@ -1,17 +1,31 @@
 /* AdminJoinActivity.module.css */
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap");
 
 :root {
   --primary-color: #2563eb;
-  --primary-hover: #1e4fd6;
+  --primary-hover: #1e40af;
+  --primary-light: #3b82f6;
+  --success-color: #10b981;
+  --success-hover: #059669;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+  --danger-hover: #dc2626;
   --bg-light: #f9fafb;
-  --text-dark: #374151;
+  --bg-lighter: #f3f4f6;
+  --text-dark: #1f2937;
+  --text-normal: #374151;
   --text-muted: #6b7280;
   --card-bg: #ffffff;
+  --border-color: #e5e7eb;
+  --border-light: #f3f4f6;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
-/* Main Container */
+/* ===== Main Container ===== */
 .container {
   height: 100vh;
   display: flex;
@@ -22,7 +36,7 @@
 
 .mainContent {
   flex-grow: 1;
-  padding: 20px 30px;
+  padding: 24px 32px;
   transition: margin-left 0.3s ease;
   overflow-y: auto;
 }
@@ -35,16 +49,21 @@
   margin-left: 0;
 }
 
-/* Header */
+/* ===== Header Bar ===== */
 .headerBar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 15px;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 15px;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
 }
 
 .heading {
@@ -52,69 +71,337 @@
   color: var(--text-dark);
   font-size: 28px;
   font-weight: 700;
-  padding-left: 0;
-  transition: padding-left 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  letter-spacing: -0.02em;
 }
 
-/* Header Right */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.separator {
+  color: var(--border-color);
+}
+
+.currentPage {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
 .headerRight {
   display: flex;
   align-items: center;
-  gap: 15px;
-  margin-left: auto;
-  justify-content: flex-end;
+  gap: 12px;
 }
 
-/* Dashboard Section */
-.dashboardSection {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+/* ===== Filter Button ===== */
+.filterButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: white;
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-normal);
+  transition: all 0.2s ease;
+  font-family: 'Noto Sans', sans-serif;
+}
+
+.filterButton:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: var(--bg-lighter);
+}
+
+.filterButton.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+/* ===== Loading Container ===== */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
   gap: 20px;
 }
 
-.card {
-  background: var(--card-bg);
-  padding: 24px;
-  border-radius: 14px;
-  box-shadow: var(--shadow);
-  font-size: 18px;
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-light);
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loadingContainer p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 15px;
   font-weight: 500;
-  color: var(--text-dark);
+}
+
+/* ===== Error States ===== */
+.errorContainer {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  min-height: 500px;
+  gap: 24px;
+  text-align: center;
+  padding: 40px;
 }
 
-.card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+.errorIcon {
+  color: var(--danger-color);
+  width: 64px;
+  height: 64px;
 }
 
-/* Responsive */
+.errorContainer h2 {
+  margin: 0;
+  color: var(--text-dark);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.errorContainer p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 16px;
+  max-width: 500px;
+}
+
+.retryButton {
+  padding: 12px 28px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-md);
+  font-family: 'Noto Sans', sans-serif;
+}
+
+.retryButton:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.errorBox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  border: 1px solid var(--danger-color);
+  border-radius: 12px;
+  color: var(--danger-color);
+  margin-bottom: 20px;
+}
+
+.errorBox span {
+  flex: 1;
+  font-weight: 500;
+}
+
+.retryButtonSmall {
+  padding: 6px 16px;
+  background: var(--danger-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  font-family: 'Noto Sans', sans-serif;
+}
+
+.retryButtonSmall:hover {
+  background: var(--danger-hover);
+}
+
+/* ===== Empty State ===== */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+  gap: 20px;
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 16px;
+  border: 2px dashed var(--border-color);
+}
+
+.emptyState svg {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.emptyState h3 {
+  margin: 0;
+  color: var(--text-dark);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.emptyState p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 15px;
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+/* ===== Responsive Design ===== */
+@media (max-width: 1024px) {
+  .mainContent {
+    padding: 20px 24px;
+  }
+}
+
 @media (max-width: 768px) {
   .mainContent {
+    padding: 16px 20px;
     margin-left: 0;
-    padding: 15px 20px;
-  }
-
-  .dashboardSection {
-    grid-template-columns: 1fr;
-  }
-
-  .headerBar {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .headerRight {
-    width: auto;
-    justify-content: flex-end;
   }
 
   .heading {
-    padding-left: 50px;
     font-size: 22px;
   }
+
+  .headerBar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+  }
+
+  .headerRight {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .filterButton span {
+    display: none;
+  }
+
+  .breadcrumb {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .mainContent {
+    padding: 12px 16px;
+  }
+
+  .heading {
+    font-size: 20px;
+  }
+
+  .heading svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .emptyState {
+    min-height: 400px;
+    padding: 40px 20px;
+  }
+
+  .emptyState svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .emptyState h3 {
+    font-size: 18px;
+  }
+
+  .emptyState p {
+    font-size: 14px;
+  }
+}
+
+/* ===== Scrollbar Styling ===== */
+.mainContent::-webkit-scrollbar {
+  width: 8px;
+}
+
+.mainContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mainContent::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.mainContent::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ===== Animations ===== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.headerBar {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.emptyState,
+.errorContainer,
+.loadingContainer {
+  animation: fadeIn 0.4s ease-out;
 }

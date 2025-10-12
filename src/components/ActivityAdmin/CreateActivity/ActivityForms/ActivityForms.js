@@ -7,6 +7,7 @@ import DepartmentSelector from '../DepartmentSelector/DepartmentSelector';
 function ActivityForms({ formData, setFormData, errors = {}, activityTypes, activityStatuses, templates }) {
     const [imagePreview, setImagePreview] = useState(null);
     const [showLocationPicker, setShowLocationPicker] = useState(false);
+
     const formatDateTimeForDisplay = (datetimeLocal) => {
         if (!datetimeLocal) return '';
 
@@ -158,7 +159,29 @@ function ActivityForms({ formData, setFormData, errors = {}, activityTypes, acti
                         เลือกหากกิจกรรมนี้เป็นกิจกรรมที่นักศึกษาต้องเข้าร่วม
                     </small>
                 </div>
+
+                {/* ส่วนใหม่: อนุญาตให้อาจารย์เข้าร่วม */}
+                <div className={styles.fieldGroup}>
+                    <label className={styles.checkboxLabel}>
+                        <input
+                            type="checkbox"
+                            name="allowTeachers"
+                            checked={formData?.allowTeachers || false}
+                            onChange={handleChange}
+                            className={styles.checkbox}
+                        />
+                        <span>
+                            อนุญาตให้อาจารย์เข้าร่วมกิจกรรม
+                        </span>
+                    </label>
+                    <small className={styles.helpText}>
+                        เลือกหากต้องการให้อาจารย์สามารถลงทะเบียนและเข้าร่วมกิจกรรมนี้ได้
+                        <br />
+                        <strong>หมายเหตุ:</strong> จำนวนผู้เข้าร่วมที่คาดหวังจะนับรวมอาจารย์ด้วย
+                    </small>
+                </div>
             </div>
+
             <div className={styles.formContainer}>
                 <h3 className={styles.formTitle}>
                     <FiCalendar className={styles.titleIcon} />
@@ -286,11 +309,14 @@ function ActivityForms({ formData, setFormData, errors = {}, activityTypes, acti
                     </small>
                 </div>
             </div>
+
             <DepartmentSelector
                 selectedDepartments={formData?.selectedDepartments || []}
                 onDepartmentsChange={handleDepartmentsChange}
                 errors={errors}
+                allowTeachers={formData?.allowTeachers || false}
             />
+
             <div className={styles.formContainer}>
                 <h3 className={styles.formTitle}>เกียรติบัตร</h3>
 
@@ -317,6 +343,7 @@ function ActivityForms({ formData, setFormData, errors = {}, activityTypes, acti
                     </small>
                 </div>
             </div>
+
             <div className={styles.formContainer}>
                 <h3 className={styles.formTitle}>
                     <FiUpload className={styles.titleIcon} />
@@ -353,6 +380,7 @@ function ActivityForms({ formData, setFormData, errors = {}, activityTypes, acti
                     )}
                 </div>
             </div>
+
             {showLocationPicker && (
                 <LocationPicker
                     selectedLocation={formData?.locationGPS}

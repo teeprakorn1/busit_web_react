@@ -109,21 +109,28 @@ const ExportActivityButton = ({ activityData }) => {
 
   const createCompleteExcelWorkbook = (data, participants, departments, stats) => {
     const workbook = XLSX.utils.book_new();
-    const summarySheet = createSummarySheet(data, stats);
+    
+    // Sheet 1: สรุปกิจกรรม
+    const summarySheet = createSummarySheet(data, stats, participants);
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'สรุปกิจกรรม');
+    
+    // Sheet 2: ข้อมูลกิจกรรม
     const activitySheet = createActivitySheet(data);
     XLSX.utils.book_append_sheet(workbook, activitySheet, 'ข้อมูลกิจกรรม');
 
+    // Sheet 3: รายชื่อผู้เข้าร่วม
     if (participants.length > 0) {
-      const participantsSheet = createParticipantsSheet(participants);
+      const participantsSheet = createParticipantsSheet(participants, data.Activity_AllowTeachers);
       XLSX.utils.book_append_sheet(workbook, participantsSheet, 'รายชื่อผู้เข้าร่วม');
     }
 
+    // Sheet 4: สถิติแยกสาขา
     if (departments.length > 0 && participants.length > 0) {
-      const deptStatsSheet = createDepartmentStatsSheet(departments, participants);
+      const deptStatsSheet = createDepartmentStatsSheet(departments, participants, data.Activity_AllowTeachers);
       XLSX.utils.book_append_sheet(workbook, deptStatsSheet, 'สถิติแยกสาขา');
     }
 
+    // Sheet 5: สาขาที่เข้าร่วม
     if (departments.length > 0) {
       const departmentsSheet = createDepartmentsSheet(departments);
       XLSX.utils.book_append_sheet(workbook, departmentsSheet, 'สาขาที่เข้าร่วม');
@@ -132,7 +139,7 @@ const ExportActivityButton = ({ activityData }) => {
     return workbook;
   };
 
-  const createSummarySheet = (data, stats) => {
+  const createSummarySheet = (data, stats, participants) => {
     const totalExpected = stats?.expected_participants || 0;
     const totalRegistered = stats?.total_registered || 0;
     const totalCheckedIn = stats?.total_checked_in || 0;
@@ -154,6 +161,7 @@ const ExportActivityButton = ({ activityData }) => {
       ['สถานะ:', data.ActivityStatus_Name || ''],
       ['เวลาเริ่ม:', formatThaiDateTime(data.Activity_StartTime)],
       ['เวลาสิ้นสุด:', formatThaiDateTime(data.Activity_EndTime)],
+      ['อนุญาตอาจารย์:', data.Activity_AllowTeachers ? 'ใช่' : 'ไม่'],
       [],
       ['สถิติการเข้าร่วม'],
       ['ตัวชี้วัด', 'จำนวน', 'เปอร์เซ็นต์'],
@@ -161,14 +169,35 @@ const ExportActivityButton = ({ activityData }) => {
       ['ลงทะเบียนแล้ว', totalRegistered, `${registrationRate}%`],
       ['เช็คอินแล้ว', totalCheckedIn, `${checkInRate}%`],
       ['เช็คเอาท์แล้ว (เสร็จสิ้น)', totalCheckedOut, `${attendanceRate}%`],
-      [],
-      ['สรุปรายละเอียด'],
-      ['รายการ', 'จำนวน'],
-      ['ยังไม่ได้ลงทะเบียน', totalExpected - totalRegistered],
-      ['ลงทะเบียนแต่ยังไม่เช็คอิน', totalRegistered - totalCheckedIn],
-      ['เช็คอินแต่ยังไม่เช็คเอาท์', totalCheckedIn - totalCheckedOut],
-      ['เสร็จสิ้นกิจกรรม', totalCheckedOut]
     ];
+
+    // เพิ่มสถิติแยกประเภทถ้ามีอาจารย์
+    if (data.Activity_AllowTeachers && participants.length > 0) {
+      const studentCount = participants.filter(p => p.isStudent).length;
+      const teacherCount = participants.filter(p => p.isTeacher).length;
+      
+      summaryData.push([]);
+      summaryData.push(['สถิติแยกตามประเภท']);
+      summaryData.push(['ประเภท', 'จำนวน', 'เปอร์เซ็นต์']);
+      summaryData.push([
+        'นักศึกษา', 
+        studentCount, 
+        totalRegistered > 0 ? `${((studentCount / totalRegistered) * 100).toFixed(2)}%` : '0%'
+      ]);
+      summaryData.push([
+        'อาจารย์', 
+        teacherCount, 
+        totalRegistered > 0 ? `${((teacherCount / totalRegistered) * 100).toFixed(2)}%` : '0%'
+      ]);
+    }
+
+    summaryData.push([]);
+    summaryData.push(['สรุปรายละเอียด']);
+    summaryData.push(['รายการ', 'จำนวน']);
+    summaryData.push(['ยังไม่ได้ลงทะเบียน', totalExpected - totalRegistered]);
+    summaryData.push(['ลงทะเบียนแต่ยังไม่เช็คอิน', totalRegistered - totalCheckedIn]);
+    summaryData.push(['เช็คอินแต่ยังไม่เช็คเอาท์', totalCheckedIn - totalCheckedOut]);
+    summaryData.push(['เสร็จสิ้นกิจกรรม', totalCheckedOut]);
 
     const worksheet = XLSX.utils.aoa_to_sheet(summaryData);
     worksheet['!cols'] = [{ wch: 30 }, { wch: 20 }, { wch: 15 }];
@@ -189,6 +218,7 @@ const ExportActivityButton = ({ activityData }) => {
       ['ประเภทกิจกรรม', data.ActivityType_Name || ''],
       ['สถานะ', data.ActivityStatus_Name || ''],
       ['กิจกรรมบังคับ', data.Activity_IsRequire ? 'ใช่' : 'ไม่'],
+      ['อนุญาตให้อาจารย์เข้าร่วม', data.Activity_AllowTeachers ? 'ใช่' : 'ไม่'], // เพิ่มบรรทัดนี้
       [],
       ['ข้อมูลเพิ่มเติม'],
       ['เทมเพลต', data.Template_Name || 'ไม่ได้ใช้เทมเพลต'],
@@ -206,20 +236,45 @@ const ExportActivityButton = ({ activityData }) => {
     return worksheet;
   };
 
-  const createParticipantsSheet = (participants) => {
+  const createParticipantsSheet = (participants, allowTeachers) => {
+    // สร้าง header แบบมีเงื่อนไข
+    const headers = ['ลำดับ'];
+    
+    if (allowTeachers) {
+      headers.push('ประเภท'); // เพิ่มคอลัมน์ประเภท
+    }
+    
+    headers.push(
+      'รหัส',
+      'ชื่อ',
+      'นามสกุล',
+      'สาขา',
+      'คณะ',
+      'เช็คอิน',
+      'เวลาเช็คอิน',
+      'เช็คเอาท์',
+      'เวลาเช็คเอาท์',
+      'สถานะ'
+    );
+
     const participantsData = [
       ['รายชื่อผู้เข้าร่วมกิจกรรม'],
       ['จำนวนทั้งหมด:', participants.length, 'คน'],
       [],
-      ['ลำดับ', 'รหัสนักศึกษา', 'ชื่อ', 'นามสกุล', 'สาขา', 'คณะ', 'เช็คอิน', 'เวลาเช็คอิน', 'เช็คเอาท์', 'เวลาเช็คเอาท์', 'สถานะ']
+      headers
     ];
 
     participants.forEach((p, index) => {
-      participantsData.push([
-        index + 1,
-        p.Student_Code || '',
-        p.Student_FirstName || '',
-        p.Student_LastName || '',
+      const row = [index + 1];
+      
+      if (allowTeachers) {
+        row.push(p.isTeacher ? 'อาจารย์' : 'นักศึกษา'); // เพิ่มประเภท
+      }
+      
+      row.push(
+        p.Code || p.Student_Code || '',
+        p.FirstName || p.Student_FirstName || '',
+        p.LastName || p.Student_LastName || '',
         p.Department_Name || '',
         p.Faculty_Name || '',
         p.Registration_CheckInTime ? 'เช็คอินแล้ว' : 'ยังไม่เช็คอิน',
@@ -228,27 +283,38 @@ const ExportActivityButton = ({ activityData }) => {
         p.Registration_CheckOutTime ? formatThaiTime(p.Registration_CheckOutTime) : '',
         p.Registration_CheckOutTime ? 'เสร็จสิ้น' :
           p.Registration_CheckInTime ? 'กำลังเข้าร่วม' : 'ยังไม่เข้าร่วม'
-      ]);
+      );
+      
+      participantsData.push(row);
     });
 
     const worksheet = XLSX.utils.aoa_to_sheet(participantsData);
-    worksheet['!cols'] = [
-      { wch: 8 },
-      { wch: 15 },
-      { wch: 20 },
-      { wch: 20 },
-      { wch: 30 },
-      { wch: 30 },
-      { wch: 15 },
-      { wch: 12 },
-      { wch: 15 },
-      { wch: 12 },
-      { wch: 15 }
-    ];
+    
+    // ปรับความกว้างคอลัมน์ตามจำนวน header
+    const colWidths = [{ wch: 8 }]; // ลำดับ
+    
+    if (allowTeachers) {
+      colWidths.push({ wch: 12 }); // ประเภท
+    }
+    
+    colWidths.push(
+      { wch: 15 }, // รหัส
+      { wch: 20 }, // ชื่อ
+      { wch: 20 }, // นามสกุล
+      { wch: 30 }, // สาขา
+      { wch: 30 }, // คณะ
+      { wch: 15 }, // เช็คอิน
+      { wch: 12 }, // เวลาเช็คอิน
+      { wch: 15 }, // เช็คเอาท์
+      { wch: 12 }, // เวลาเช็คเอาท์
+      { wch: 15 }  // สถานะ
+    );
+    
+    worksheet['!cols'] = colWidths;
     return worksheet;
   };
 
-  const createDepartmentStatsSheet = (departments, participants) => {
+  const createDepartmentStatsSheet = (departments, participants, allowTeachers) => {
     const deptStats = {};
 
     participants.forEach(p => {
@@ -258,20 +324,37 @@ const ExportActivityButton = ({ activityData }) => {
         deptStats[deptName] = {
           facultyName: p.Faculty_Name || 'ไม่ระบุคณะ',
           total: 0,
+          students: 0,
+          teachers: 0,
           checkedIn: 0,
           checkedOut: 0
         };
       }
 
       deptStats[deptName].total++;
+      
+      if (allowTeachers) {
+        if (p.isStudent) deptStats[deptName].students++;
+        if (p.isTeacher) deptStats[deptName].teachers++;
+      }
+      
       if (p.Registration_CheckInTime) deptStats[deptName].checkedIn++;
       if (p.Registration_CheckOutTime) deptStats[deptName].checkedOut++;
     });
 
+    // สร้าง header แบบมีเงื่อนไข
+    const headers = ['ลำดับ', 'สาขา', 'คณะ'];
+    
+    if (allowTeachers) {
+      headers.push('นักศึกษา', 'อาจารย์');
+    }
+    
+    headers.push('ลงทะเบียน', 'เช็คอิน', '% เช็คอิน', 'เช็คเอาท์', '% เสร็จสิ้น');
+
     const statsData = [
       ['สถิติการเข้าร่วมแยกตามสาขา'],
       [],
-      ['ลำดับ', 'สาขา', 'คณะ', 'ลงทะเบียน', 'เช็คอิน', '% เช็คอิน', 'เช็คเอาท์', '% เสร็จสิ้น']
+      headers
     ];
 
     let index = 1;
@@ -281,19 +364,30 @@ const ExportActivityButton = ({ activityData }) => {
       const completionRate = data.total > 0 ?
         ((data.checkedOut / data.total) * 100).toFixed(2) : 0;
 
-      statsData.push([
+      const row = [
         index++,
         deptName,
-        data.facultyName,
+        data.facultyName
+      ];
+      
+      if (allowTeachers) {
+        row.push(data.students, data.teachers);
+      }
+      
+      row.push(
         data.total,
         data.checkedIn,
         `${checkInRate}%`,
         data.checkedOut,
         `${completionRate}%`
-      ]);
+      );
+
+      statsData.push(row);
     }
 
     const totalRegistered = Object.values(deptStats).reduce((sum, d) => sum + d.total, 0);
+    const totalStudents = Object.values(deptStats).reduce((sum, d) => sum + d.students, 0);
+    const totalTeachers = Object.values(deptStats).reduce((sum, d) => sum + d.teachers, 0);
     const totalCheckedIn = Object.values(deptStats).reduce((sum, d) => sum + d.checkedIn, 0);
     const totalCheckedOut = Object.values(deptStats).reduce((sum, d) => sum + d.checkedOut, 0);
     const avgCheckInRate = totalRegistered > 0 ?
@@ -302,28 +396,49 @@ const ExportActivityButton = ({ activityData }) => {
       ((totalCheckedOut / totalRegistered) * 100).toFixed(2) : 0;
 
     statsData.push([]);
-    statsData.push([
+    
+    const summaryRow = [
       'รวม',
       `${Object.keys(deptStats).length} สาขา`,
-      '',
+      ''
+    ];
+    
+    if (allowTeachers) {
+      summaryRow.push(totalStudents, totalTeachers);
+    }
+    
+    summaryRow.push(
       totalRegistered,
       totalCheckedIn,
       `${avgCheckInRate}%`,
       totalCheckedOut,
       `${avgCompletionRate}%`
-    ]);
+    );
+    
+    statsData.push(summaryRow);
 
     const worksheet = XLSX.utils.aoa_to_sheet(statsData);
-    worksheet['!cols'] = [
-      { wch: 8 },
-      { wch: 35 },
-      { wch: 35 },
-      { wch: 12 },
-      { wch: 12 },
-      { wch: 12 },
-      { wch: 12 },
-      { wch: 15 }
+    
+    // ปรับความกว้างคอลัมน์
+    const colWidths = [
+      { wch: 8 },  // ลำดับ
+      { wch: 35 }, // สาขา
+      { wch: 35 }  // คณะ
     ];
+    
+    if (allowTeachers) {
+      colWidths.push({ wch: 12 }, { wch: 12 }); // นักศึกษา, อาจารย์
+    }
+    
+    colWidths.push(
+      { wch: 12 }, // ลงทะเบียน
+      { wch: 12 }, // เช็คอิน
+      { wch: 12 }, // % เช็คอิน
+      { wch: 12 }, // เช็คเอาท์
+      { wch: 15 }  // % เสร็จสิ้น
+    );
+    
+    worksheet['!cols'] = colWidths;
     return worksheet;
   };
 

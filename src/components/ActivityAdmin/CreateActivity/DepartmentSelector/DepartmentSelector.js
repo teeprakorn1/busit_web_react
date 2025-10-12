@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import styles from './DepartmentSelector.module.css';
-import { FiChevronDown, FiChevronUp, FiCheck, FiUsers } from 'react-icons/fi';
+import { FiChevronDown, FiChevronUp, FiCheck, FiUsers, FiUserCheck } from 'react-icons/fi';
 
-function DepartmentSelector({ selectedDepartments, onDepartmentsChange, errors = {} }) {
+function DepartmentSelector({ selectedDepartments, onDepartmentsChange, errors = {}, allowTeachers = false }) {
     const [faculties, setFaculties] = useState([]);
     const [departments, setDepartments] = useState([]);
+    const [departmentStats, setDepartmentStats] = useState({}); // เก็บสถิตินักศึกษาและอาจารย์
     const [expandedFaculties, setExpandedFaculties] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -28,12 +29,30 @@ function DepartmentSelector({ selectedDepartments, onDepartmentsChange, errors =
                     { withCredentials: true }
                 );
 
+                // ดึงข้อมูลจำนวนนักศึกษาและอาจารย์ในแต่ละสาขา
+                const statsRes = await axios.get(
+                    getApiUrl('/api/admin/departments/stats'),
+                    { withCredentials: true }
+                );
+
                 if (facultiesRes.data.status) {
                     setFaculties(facultiesRes.data.data);
                 }
 
                 if (departmentsRes.data.status) {
                     setDepartments(departmentsRes.data.data);
+                }
+
+                if (statsRes.data.status) {
+                    // แปลงข้อมูลสถิติให้อยู่ในรูป object key-value
+                    const statsMap = {};
+                    statsRes.data.data.forEach(stat => {
+                        statsMap[stat.Department_ID] = {
+                            studentCount: stat.studentCount || 0,
+                            teacherCount: stat.teacherCount || 0
+                        };
+                    });
+                    setDepartmentStats(statsMap);
                 }
 
                 setIsLoading(false);
@@ -109,6 +128,26 @@ function DepartmentSelector({ selectedDepartments, onDepartmentsChange, errors =
         onDepartmentsChange([]);
     };
 
+    // คำนวณจำนวนผู้เข้าร่วมรวม
+    const getTotalParticipants = () => {
+        let totalStudents = 0;
+        let totalTeachers = 0;
+
+        selectedDepartments.forEach(deptId => {
+            const stats = departmentStats[deptId];
+            if (stats) {
+                totalStudents += stats.studentCount;
+                if (allowTeachers) {
+                    totalTeachers += stats.teacherCount;
+                }
+            }
+        });
+
+        return { totalStudents, totalTeachers, total: totalStudents + totalTeachers };
+    };
+
+    const participantTotals = getTotalParticipants();
+
     if (isLoading) {
         return (
             <div className={styles.loadingContainer}>
@@ -144,8 +183,25 @@ function DepartmentSelector({ selectedDepartments, onDepartmentsChange, errors =
             </div>
 
             {selectedDepartments.length > 0 && (
-                <div className={styles.selectedCount}>
-                    เลือกแล้ว: <strong>{selectedDepartments.length}</strong> สาขา
+                <div className={styles.statsContainer}>
+                    <div className={styles.selectedCount}>
+                        เลือกแล้ว: <strong>{selectedDepartments.length}</strong> สาขา
+                    </div>
+                    <div className={styles.participantStats}>
+                        <div className={styles.statItem}>
+                            <FiUsers className={styles.statIcon} />
+                            <span>นักศึกษา: <strong>{participantTotals.totalStudents.toLocaleString()}</strong> คน</span>
+                        </div>
+                        {allowTeachers && (
+                            <div className={styles.statItem}>
+                                <FiUserCheck className={styles.statIcon} />
+                                <span>อาจารย์: <strong>{participantTotals.totalTeachers.toLocaleString()}</strong> คน</span>
+                            </div>
+                        )}
+                        <div className={`${styles.statItem} ${styles.totalStat}`}>
+                            <span>รวมทั้งหมด: <strong>{participantTotals.total.toLocaleString()}</strong> คน</span>
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -197,22 +253,46 @@ function DepartmentSelector({ selectedDepartments, onDepartmentsChange, errors =
                             {isExpanded && (
                                 <div className={styles.departmentList}>
                                     {facultyDepts.length > 0 ? (
-                                        facultyDepts.map(dept => (
-                                            <label
-                                                key={dept.Department_ID}
-                                                className={styles.departmentItem}
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isDepartmentSelected(dept.Department_ID)}
-                                                    onChange={() => toggleDepartment(dept.Department_ID)}
-                                                    className={styles.checkbox}
-                                                />
-                                                <span className={styles.departmentName}>
-                                                    {dept.Department_Name}
-                                                </span>
-                                            </label>
-                                        ))
+                                        facultyDepts.map(dept => {
+                                            const stats = departmentStats[dept.Department_ID] || { studentCount: 0, teacherCount: 0 };
+                                            const totalCount = allowTeachers 
+                                                ? stats.studentCount + stats.teacherCount 
+                                                : stats.studentCount;
+
+                                            return (
+                                                <label
+                                                    key={dept.Department_ID}
+                                                    className={styles.departmentItem}
+                                                >
+                                                    <div className={styles.deptInfo}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={isDepartmentSelected(dept.Department_ID)}
+                                                            onChange={() => toggleDepartment(dept.Department_ID)}
+                                                            className={styles.checkbox}
+                                                        />
+                                                        <span className={styles.departmentName}>
+                                                            {dept.Department_Name}
+                                                        </span>
+                                                    </div>
+                                                    <div className={styles.deptStats}>
+                                                        <span className={styles.deptStatItem}>
+                                                            <FiUsers size={14} />
+                                                            {stats.studentCount}
+                                                        </span>
+                                                        {allowTeachers && (
+                                                            <span className={styles.deptStatItem}>
+                                                                <FiUserCheck size={14} />
+                                                                {stats.teacherCount}
+                                                            </span>
+                                                        )}
+                                                        <span className={styles.deptTotal}>
+                                                            รวม: {totalCount}
+                                                        </span>
+                                                    </div>
+                                                </label>
+                                            );
+                                        })
                                     ) : (
                                         <div className={styles.noDepartments}>
                                             ไม่มีสาขาในคณะนี้
@@ -228,6 +308,12 @@ function DepartmentSelector({ selectedDepartments, onDepartmentsChange, errors =
             <div className={styles.helpText}>
                 <strong>คำแนะนำ:</strong> คลิกที่คณะเพื่อเลือก/ยกเลิกสาขาทั้งหมดในคณะ
                 หรือคลิกที่ปุ่มขยายเพื่อเลือกสาขาเฉพาะ
+                {allowTeachers && (
+                    <>
+                        <br />
+                        <strong>หมายเหตุ:</strong> กิจกรรมนี้เปิดให้อาจารย์เข้าร่วม จำนวนผู้เข้าร่วมจะรวมทั้งนักศึกษาและอาจารย์
+                    </>
+                )}
             </div>
         </div>
     );
