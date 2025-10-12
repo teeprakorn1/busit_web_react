@@ -1,4 +1,4 @@
-// components/ParticipantStats/ParticipantStats.jsx
+// components/ParticipantStats/ParticipantStats.js
 import React, { useMemo } from 'react';
 import { 
   FaUsers, FaCheckCircle, FaClock, FaGraduationCap, FaUserCheck, 
@@ -16,7 +16,6 @@ const ParticipantStats = ({ participants, filteredCount, selectedCount, activity
     const students = participants.filter(p => p.isStudent).length;
     const teachers = participants.filter(p => p.isTeacher).length;
 
-    // Calculate percentages
     const expectedTotal = activity?.expected_participants || total || 1;
     const registrationRate = ((total / expectedTotal) * 100).toFixed(1);
     const checkInRate = total > 0 ? ((checkedIn / total) * 100).toFixed(1) : 0;

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { exportFilteredStudentsToExcel } from '../utils/excelExportUtils';
 import { useUserPermissions } from './useUserPermissions';
 import {
-  // Data Edit functions
   logStudentView,
   logStudentEdit,
   logStudentStatusConfirm,
@@ -12,26 +11,23 @@ import {
   logStudentFilter,
   logBulkOperation,
   logSystemAction,
-  
-  // Timestamp functions
   logStudentViewTimestamp,
   logStudentEditTimestamp,
   logStudentStatusChangeTimestamp,
   logStudentExportTimestamp,
   logStudentSearchTimestamp,
   logStudentFilterTimestamp
-} from './../../../..//utils/systemLog';
+} from './../../../../utils/systemLog';
 
-export const useStudentActions = ({ 
-  validateId, 
-  sanitizeInput, 
-  setSecurityAlert, 
-  showModal, 
-  closeModal, 
+export const useStudentActions = ({
+  validateId,
+  sanitizeInput,
+  setSecurityAlert,
+  showModal,
+  closeModal,
   openStudentModal,
   toggleStudentStatus,
   fetchStudents
-  // ลบ logBulkOperation parameter เพราะตอนนี้ import จาก systemLog แล้ว
 }) => {
   const navigate = useNavigate();
   const permissions = useUserPermissions();
@@ -49,8 +45,6 @@ export const useStudentActions = ({
     }
 
     const studentName = `${student.firstName} ${student.lastName}`;
-
-    // Log both data edit and timestamp
     try {
       await Promise.all([
         logStudentView(student.id, studentName, student.code),
@@ -76,8 +70,6 @@ export const useStudentActions = ({
     }
 
     const studentName = `${student.firstName} ${student.lastName}`;
-
-    // Log both data edit and timestamp
     try {
       await Promise.all([
         logStudentEdit(student.id, studentName, student.code),
@@ -107,7 +99,7 @@ export const useStudentActions = ({
     const lastName = sanitizeInput(student.lastName || '');
     const studentName = `${firstName} ${lastName}`;
     const confirmMessage = `คุณต้องการ${action}การใช้งานของ ${studentName} หรือไม่?`;
-    
+
     showModal(confirmMessage, [
       {
         label: 'ยกเลิก',
@@ -117,12 +109,11 @@ export const useStudentActions = ({
         label: 'ยืนยัน',
         onClick: async () => {
           closeModal();
-          
+
           try {
             const result = await toggleStudentStatus(student);
-            
+
             if (result.success) {
-              // Log both data edit and timestamp for status change confirmation
               await Promise.all([
                 logStudentStatusConfirm(student.id, studentName, student.code, action),
                 logStudentStatusChangeTimestamp(studentName, student.code, action)
@@ -149,7 +140,6 @@ export const useStudentActions = ({
     }
 
     try {
-      // Log both data edit and timestamp
       await Promise.all([
         logStudentExport(students.length, filterInfo),
         logStudentExportTimestamp(students.length, filterInfo)
@@ -167,16 +157,15 @@ export const useStudentActions = ({
       setSecurityAlert('ไม่มีสิทธิ์ในการเพิ่มนักศึกษา - ต้องเป็น Staff เท่านั้น');
       return;
     }
-    
-    // Log the add student action initiation
+
     try {
       await logSystemAction(0, 'เริ่มกระบวนการเพิ่มนักศึกษาใหม่');
     } catch (error) {
       console.warn('Failed to log add student initiation:', error);
     }
-    
-    navigate('/application/add-user', { 
-      state: { from: '/name-register/student-name' } 
+
+    navigate('/application/add-user', {
+      state: { from: '/name-register/student-name' }
     });
   }, [navigate, permissions.canAddStudents, setSecurityAlert]);
 
@@ -187,7 +176,7 @@ export const useStudentActions = ({
   const handleSmartBack = useCallback((searchParams, currentPath) => {
     const departmentId = searchParams?.get('departmentId');
     const fromParam = searchParams?.get('from');
-    
+
     if (departmentId) {
       navigate('/name-register/department-name');
     } else if (fromParam) {
@@ -217,7 +206,6 @@ export const useStudentActions = ({
       return;
     }
 
-    // Log the summary view action
     try {
       await logSystemAction(
         0,
@@ -234,15 +222,15 @@ export const useStudentActions = ({
     const studyingStudents = totalStudents - graduatedStudents;
 
     const summaryMessage = `
-สรุปข้อมูลนักศึกษา:
+    สรุปข้อมูลนักศึกษา:
 
-จำนวนทั้งหมด: ${totalStudents} คน
-- กำลังใช้งาน: ${activeStudents} คน
-- ระงับการใช้งาน: ${inactiveStudents} คน
+    จำนวนทั้งหมด: ${totalStudents} คน
+    - กำลังใช้งาน: ${activeStudents} คน
+    - ระงับการใช้งาน: ${inactiveStudents} คน
 
-สถานะการศึกษา:
-- กำลังศึกษา: ${studyingStudents} คน
-- จบการศึกษา: ${graduatedStudents} คน
+    สถานะการศึกษา:
+    - กำลังศึกษา: ${studyingStudents} คน
+    - จบการศึกษา: ${graduatedStudents} คน
 
 ${filterInfo?.department ? `สาขา: ${filterInfo.department}` : ''}
 ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
@@ -266,9 +254,8 @@ ${filterInfo?.academicYear ? `ปีการศึกษา: ${filterInfo.acade
 
   const handleRefreshStudents = useCallback(async () => {
     try {
-      // Log the refresh action
       await logSystemAction(0, 'รีเฟรชข้อมูลนักศึกษาทั้งหมด');
-      
+
       await fetchStudents();
     } catch (error) {
       console.warn('Failed to refresh student data:', error);
@@ -293,13 +280,13 @@ ${filterInfo?.academicYear ? `ปีการศึกษา: ${filterInfo.acade
     }
 
     const confirmMessage = `
-คุณต้องการส่งออกข้อมูลนักศึกษาทั้งหมด ${students.length} คน เป็นไฟล์ Excel หรือไม่?
+    คุณต้องการส่งออกข้อมูลนักศึกษาทั้งหมด ${students.length} คน เป็นไฟล์ Excel หรือไม่?
 
-ข้อมูลที่จะส่งออก:
-- ข้อมูลส่วนตัวนักศึกษา
-- ข้อมูลการศึกษา
-- สถานะการใช้งาน
-- สรุปตามสาขาและคณะ
+    ข้อมูลที่จะส่งออก:
+    - ข้อมูลส่วนตัวนักศึกษา
+    - ข้อมูลการศึกษา
+    - สถานะการใช้งาน
+    - สรุปตามสาขาและคณะ
 
 ${filterInfo?.department ? `สาขา: ${filterInfo.department}` : ''}
 ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
@@ -314,9 +301,8 @@ ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
         label: 'ส่งออกข้อมูล',
         onClick: async () => {
           closeModal();
-          
+
           try {
-            // Log both data edit and timestamp
             await Promise.all([
               logBulkOperation(
                 'ส่งออกข้อมูลนักศึกษาแบบ Bulk',
@@ -337,7 +323,6 @@ ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
             }
           } catch (error) {
             console.warn('Failed to log bulk export:', error);
-            // Continue with export even if logging fails
             const success = exportFilteredStudentsToExcel(students, filterInfo, options);
             if (success) {
               showModal('ส่งออกข้อมูลเรียบร้อยแล้ว', [
@@ -353,7 +338,6 @@ ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
     ]);
   }, [permissions.canExportData, setSecurityAlert, showModal, closeModal]);
 
-  // New function to log search operations
   const handleSearch = useCallback(async (searchCriteria) => {
     try {
       await Promise.all([
@@ -365,7 +349,6 @@ ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
     }
   }, []);
 
-  // New function to log filter operations  
   const handleFilter = useCallback(async (filterCriteria) => {
     try {
       await Promise.all([

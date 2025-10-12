@@ -35,8 +35,6 @@ const useAdminActivityDetail = (id) => {
 
       if (response.data?.status) {
         setActivityData(response.data.data);
-
-        // Log activity view
         if (response.data.data) {
           await logActivityView(
             response.data.data.Activity_ID,
@@ -71,6 +69,7 @@ const useAdminActivityDetail = (id) => {
       formData.append('activityStartTime', updatedData.activityStartTime);
       formData.append('activityEndTime', updatedData.activityEndTime);
       formData.append('activityIsRequire', updatedData.activityIsRequire);
+      formData.append('allowTeachers', updatedData.allowTeachers || false);
 
       if (updatedData.activityTypeId) {
         formData.append('activityTypeId', updatedData.activityTypeId);
@@ -85,7 +84,6 @@ const useAdminActivityDetail = (id) => {
         formData.append('activityLocationGPS', updatedData.activityLocationGPS);
       }
 
-      // Track changes for logging
       const changes = [];
       let hasImageUpload = false;
       let hasStatusChange = false;
@@ -115,6 +113,11 @@ const useAdminActivityDetail = (id) => {
         changes.push('เปลี่ยนแม่แบบเกียรติบัตร');
       }
 
+      if (updatedData.allowTeachers !== activityData?.Activity_AllowTeachers) {
+        const statusText = updatedData.allowTeachers ? 'เปิด' : 'ปิด';
+        changes.push(`${statusText}การให้อาจารย์เข้าร่วม`);
+      }
+
       const response = await axios.put(
         `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/admin/activities/${id}`,
         formData,
@@ -129,8 +132,6 @@ const useAdminActivityDetail = (id) => {
       if (response.data?.status) {
         await new Promise(resolve => setTimeout(resolve, 500));
         await fetchActivityData();
-
-        // Log the update
         const changesText = changes.length > 0 ? changes.join(', ') : 'แก้ไขข้อมูล';
         await logActivityEditSave(
           parseInt(id),
@@ -138,7 +139,6 @@ const useAdminActivityDetail = (id) => {
           changesText
         );
 
-        // Log specific changes
         if (hasImageUpload) {
           await logActivityImageUpload(
             parseInt(id),

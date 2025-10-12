@@ -1,4 +1,4 @@
-// AdminAllActivity.jsx - Updated
+// AdminAllActivity.js
 import React, { useEffect, useMemo } from 'react';
 import { AlertCircle, Loader, Activity as ActivityIcon } from 'lucide-react';
 

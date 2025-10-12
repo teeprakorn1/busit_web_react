@@ -1,4 +1,4 @@
-// components/FilterPanel/FilterPanel.jsx
+// components/FilterPanel/FilterPanel.js
 import React, { useMemo } from 'react';
 import { 
   Search, X, Calendar, Users, Building2, 
@@ -26,7 +26,6 @@ const FilterPanel = ({
     filters.registrationDate !== 'all' || 
     filters.pictureStatus !== 'all';
 
-  // Get unique departments and faculties from participants
   const { departments, faculties } = useMemo(() => {
     const deptSet = new Set();
     const facSet = new Set();

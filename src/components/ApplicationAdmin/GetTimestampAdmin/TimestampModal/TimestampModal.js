@@ -63,34 +63,34 @@ function TimestampModal({
             <div className={styles.modalLabel}>ชื่อเหตุการณ์:</div>
             <div className={styles.modalValue}>{timestamp.Timestamp_Name || 'N/A'}</div>
           </div>
-          
+
           <div className={styles.modalRow}>
             <div className={styles.modalLabel}>อีเมล:</div>
             <div className={styles.modalValue}>{timestamp.Users_Email || 'N/A'}</div>
           </div>
-          
+
           <div className={styles.modalRow}>
             <div className={styles.modalLabel}>ประเภทผู้ใช้:</div>
             <div className={styles.modalValue}>{getUserTypeDisplay(timestamp.Users_Type)}</div>
           </div>
-          
+
           <div className={styles.modalRow}>
             <div className={styles.modalLabel}>ประเภทเหตุการณ์:</div>
             <div className={styles.modalValue}>{formatEventType(timestamp.TimestampType_Name)}</div>
           </div>
-          
+
           <div className={styles.modalRow}>
             <div className={styles.modalLabel}>IP Address:</div>
             <div className={styles.modalValue}>{timestamp.Timestamp_IP_Address || 'N/A'}</div>
           </div>
-          
+
           <div className={styles.modalRow}>
             <div className={styles.modalLabel}>User Agent:</div>
             <div className={styles.modalValue} title={timestamp.Timestamp_UserAgent}>
               {timestamp.Timestamp_UserAgent || 'N/A'}
             </div>
           </div>
-          
+
           <div className={styles.modalRow}>
             <div className={styles.modalLabel}>วันที่ / เวลา:</div>
             <div className={styles.modalValue}>

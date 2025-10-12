@@ -1,4 +1,4 @@
-// utils/activityExportUtils.js - Updated to include teacher information
+// utils/activityExportUtils.js
 import { utils, writeFileXLSX } from 'xlsx';
 
 const formatDate = (date) => {
@@ -27,7 +27,7 @@ export const exportActivitiesToExcel = (activities) => {
       "วันที่สิ้นสุด": formatDate(activity.endTime),
       "สถานที่": activity.locationDetail || 'N/A',
       "บังคับเข้าร่วม": activity.isRequire ? "ใช่" : "ไม่",
-      "อนุญาตอาจารย์": activity.allowTeachers ? "ใช่" : "ไม่", // เพิ่มคอลัมน์นี้
+      "อนุญาตอาจารย์": activity.allowTeachers ? "ใช่" : "ไม่",
       "แม่แบบเกียรติบัตร": activity.templateName || 'ไม่มี',
       "วันที่สร้าง": formatDate(activity.regisTime),
       "วันที่แก้ไขล่าสุด": formatDate(activity.updateTime)
@@ -36,7 +36,6 @@ export const exportActivitiesToExcel = (activities) => {
     const wb = utils.book_new();
     const ws = utils.json_to_sheet(data);
 
-    // กำหนดความกว้างคอลัมน์
     ws['!cols'] = [
       { wch: 8 },   // ลำดับ
       { wch: 40 },  // ชื่อกิจกรรม
@@ -46,7 +45,7 @@ export const exportActivitiesToExcel = (activities) => {
       { wch: 20 },  // วันที่สิ้นสุด
       { wch: 30 },  // สถานที่
       { wch: 15 },  // บังคับเข้าร่วม
-      { wch: 15 },  // อนุญาตอาจารย์ (คอลัมน์ใหม่)
+      { wch: 15 },  // อนุญาตอาจารย์
       { wch: 25 },  // แม่แบบเกียรติบัตร
       { wch: 20 },  // วันที่สร้าง
       { wch: 20 }   // วันที่แก้ไขล่าสุด
@@ -66,7 +65,6 @@ export const exportActivitiesToExcel = (activities) => {
   }
 };
 
-// ฟังก์ชันสำหรับ export รายชื่อผู้เข้าร่วม (รวมอาจารย์)
 export const exportParticipantsToExcel = (participants, activityTitle) => {
   try {
     if (!participants || participants.length === 0) {
@@ -85,11 +83,11 @@ export const exportParticipantsToExcel = (participants, activityTitle) => {
       "สาขา": participant.Department_Name || 'N/A',
       "คณะ": participant.Faculty_Name || 'N/A',
       "วันที่ลงทะเบียน": formatDate(participant.Registration_RegisTime),
-      "วันที่เช็คอิน": participant.Registration_CheckInTime 
-        ? formatDate(participant.Registration_CheckInTime) 
+      "วันที่เช็คอิน": participant.Registration_CheckInTime
+        ? formatDate(participant.Registration_CheckInTime)
         : 'ยังไม่ได้เช็คอิน',
-      "วันที่เช็คเอาท์": participant.Registration_CheckOutTime 
-        ? formatDate(participant.Registration_CheckOutTime) 
+      "วันที่เช็คเอาท์": participant.Registration_CheckOutTime
+        ? formatDate(participant.Registration_CheckOutTime)
         : 'ยังไม่ได้เช็คเอาท์',
       "สถานะ": participant.RegistrationStatus_Name || 'N/A'
     }));
@@ -97,7 +95,6 @@ export const exportParticipantsToExcel = (participants, activityTitle) => {
     const wb = utils.book_new();
     const ws = utils.json_to_sheet(data);
 
-    // กำหนดความกว้างคอลัมน์
     ws['!cols'] = [
       { wch: 8 },   // ลำดับ
       { wch: 12 },  // ประเภท
@@ -129,7 +126,6 @@ export const exportParticipantsToExcel = (participants, activityTitle) => {
   }
 };
 
-// ฟังก์ชันสำหรับ export สถิติ (แยกนักศึกษาและอาจารย์)
 export const exportActivityStatsToExcel = (activityDetail, participants) => {
   try {
     if (!activityDetail) {
@@ -138,8 +134,6 @@ export const exportActivityStatsToExcel = (activityDetail, participants) => {
     }
 
     const wb = utils.book_new();
-
-    // Sheet 1: ข้อมูลกิจกรรม
     const activityData = [{
       "ชื่อกิจกรรม": activityDetail.Activity_Title,
       "รายละเอียด": activityDetail.Activity_Description,
@@ -162,8 +156,6 @@ export const exportActivityStatsToExcel = (activityDetail, participants) => {
 
     const ws1 = utils.json_to_sheet(activityData);
     utils.book_append_sheet(wb, ws1, "ข้อมูลกิจกรรม");
-
-    // Sheet 2: สถิติตามสาขา
     if (activityDetail.departments && activityDetail.departments.length > 0) {
       const deptData = activityDetail.departments.map((dept, index) => {
         const row = {
@@ -190,7 +182,6 @@ export const exportActivityStatsToExcel = (activityDetail, participants) => {
       utils.book_append_sheet(wb, ws2, "สถิติตามสาขา");
     }
 
-    // Sheet 3: รายชื่อผู้เข้าร่วม
     if (participants && participants.length > 0) {
       const participantData = participants.map((p, index) => ({
         "ลำดับ": index + 1,

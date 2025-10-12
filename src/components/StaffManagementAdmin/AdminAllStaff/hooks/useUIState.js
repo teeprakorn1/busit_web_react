@@ -26,9 +26,8 @@ export const useUIState = () => {
   }, [sidebarOpen]);
 
   const showModal = useCallback((message, buttons = []) => {
-    // ป้องกันการเปิด modal ซ้ำ
     if (modalOpen) return;
-    
+
     setModalMessage(message);
     setModalButtons(buttons);
     setModalOpen(true);
@@ -41,17 +40,15 @@ export const useUIState = () => {
   }, []);
 
   const openStaffModal = useCallback((staffId) => {
-    // ป้องกันการเปิด modal ซ้ำ
     if (staffModalOpen) return;
-    
+
     setSelectedStaffId(staffId);
     setStaffModalOpen(true);
   }, [staffModalOpen]);
 
   const closeStaffModal = useCallback(() => {
-    // ป้องกันการปิด modal ซ้ำ
     if (!staffModalOpen) return;
-    
+
     setStaffModalOpen(false);
     setSelectedStaffId(null);
   }, [staffModalOpen]);

@@ -1,83 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, ExternalLink, Filter } from 'lucide-react';
+// RecentActivitiesForm.js
+import React, { useState } from 'react';
+import { Calendar, ExternalLink, Filter, Clock, MapPin, Award } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import styles from './ActivityForms.module.css';
 
-// Mock activities data
-  const mockActivities = [
-    {
-      id: 1,
-      name: 'การบรรยายพิเศษ: นวัตกรรมเทคโนโลยี AI',
-      type: 'บรรยายพิเศษ',
-      date: '2024-02-15',
-      time: '13:00-15:00',
-      location: 'หอประชุมใหญ่',
-      status: 'completed',
-      hours: 2,
-      registeredDate: '2024-02-10T09:30:00',
-      completedDate: '2024-02-15T15:00:00'
-    },
-    {
-      id: 2,
-      name: 'กิจกรรมจิตอาสา: ปลูกป่าชุมชน',
-      type: 'จิตอาสา',
-      date: '2024-02-20',
-      time: '08:00-16:00',
-      location: 'วัดป่าสักงาม อ.เมือง',
-      status: 'completed',
-      hours: 8,
-      registeredDate: '2024-02-12T14:20:00',
-      completedDate: '2024-02-20T16:00:00'
-    },
-    {
-      id: 3,
-      name: 'สัมมนาวิชาการ: การพัฒนาซอฟต์แวร์สมัยใหม่',
-      type: 'สัมมนาวิชาการ',
-      date: '2024-03-01',
-      time: '09:00-12:00',
-      location: 'ห้องประชุม IT-201',
-      status: 'registered',
-      hours: 3,
-      registeredDate: '2024-02-25T10:15:00'
-    },
-    {
-      id: 4,
-      name: 'การแข่งขันตอบปัญหาทางวิทยาศาสตร์',
-      type: 'การแข่งขัน',
-      date: '2024-03-05',
-      time: '13:00-17:00',
-      location: 'อาคารวิทยาศาสตร์',
-      status: 'cancelled',
-      hours: 4,
-      registeredDate: '2024-02-28T16:45:00',
-      cancelledDate: '2024-03-04T09:00:00'
-    }
-  ];
-
-const RecentActivitiesForm = ({ userData }) => {
-  const [activities, setActivities] = useState([]);
-  const [loading, setLoading] = useState(true);
+const RecentActivitiesForm = ({ userData, activities, loading, stats }) => {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState('all');
 
-  useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setActivities(mockActivities);
-      setLoading(false);
-    }, 1000);
-  }, []);
+  const getStatusDisplay = (activity) => {
+    if (activity.Registration_IsCancelled) return 'ยกเลิก';
+    if (activity.Registration_CheckOutTime) return 'เข้าร่วมแล้ว';
+    if (activity.Registration_CheckInTime) return 'เช็คอินแล้ว';
+    return 'ลงทะเบียนแล้ว';
+  };
 
-  const getStatusDisplay = (status) => {
-    switch (status) {
-      case 'completed': return 'เข้าร่วมแล้ว';
-      case 'registered': return 'ลงทะเบียนแล้ว';
-      case 'cancelled': return 'ยกเลิก';
-      default: return status;
-    }
+  const getStatusValue = (activity) => {
+    if (activity.Registration_IsCancelled) return 'cancelled';
+    if (activity.Registration_CheckOutTime) return 'completed';
+    if (activity.Registration_CheckInTime) return 'checkedIn';
+    return 'registered';
   };
 
   const getStatusClass = (status) => {
     switch (status) {
       case 'completed': return styles.completed;
+      case 'checkedIn': return styles.registered;
       case 'registered': return styles.registered;
       case 'cancelled': return styles.cancelled;
       default: return '';
@@ -86,12 +34,12 @@ const RecentActivitiesForm = ({ userData }) => {
 
   const filteredActivities = activities.filter(activity => {
     if (filter === 'all') return true;
-    return activity.status === filter;
+    return getStatusValue(activity) === filter;
   });
 
-  const totalCompletedHours = activities
-    .filter(activity => activity.status === 'completed')
-    .reduce((total, activity) => total + activity.hours, 0);
+  const handleViewActivity = (activityId) => {
+    navigate(`/activity-management/activity-detail/${activityId}`);
+  };
 
   if (loading) {
     return (
@@ -114,28 +62,25 @@ const RecentActivitiesForm = ({ userData }) => {
           </h3>
           <div className={styles.summary}>
             <span className={styles.totalHours}>
-              รวม {totalCompletedHours} ชั่วโมง จาก {activities.filter(a => a.status === 'completed').length} กิจกรรม
+              รวม {stats.completedHours} ชั่วโมง จาก {stats.completedActivities} กิจกรรม
             </span>
           </div>
         </div>
         <div className={styles.headerRight}>
           <div className={styles.filterContainer}>
             <Filter size={16} />
-            <select 
-              value={filter} 
+            <select
+              value={filter}
               onChange={(e) => setFilter(e.target.value)}
               className={styles.filterSelect}
             >
-              <option value="all">ทั้งหมด</option>
-              <option value="completed">เข้าร่วมแล้ว</option>
+              <option value="all">ทั้งหมด ({stats.totalActivities})</option>
+              <option value="completed">เข้าร่วมแล้ว ({stats.completedActivities})</option>
+              <option value="checkedIn">เช็คอินแล้ว ({stats.registeredActivities})</option>
               <option value="registered">ลงทะเบียนแล้ว</option>
-              <option value="cancelled">ยกเลิก</option>
+              <option value="cancelled">ยกเลิก ({stats.cancelledActivities})</option>
             </select>
           </div>
-          <button className={styles.viewAllButton}>
-            <ExternalLink size={16} />
-            ดูทั้งหมด
-          </button>
         </div>
       </div>
 
@@ -144,70 +89,93 @@ const RecentActivitiesForm = ({ userData }) => {
           <Calendar size={48} />
           <h4>ไม่พบกิจกรรม</h4>
           <p>
-            {filter === 'all' 
-              ? 'ยังไม่มีกิจกรรมที่ลงทะเบียน' 
-              : `ไม่พบกิจกรรมที่มีสถานะ "${getStatusDisplay(filter)}"`
+            {filter === 'all'
+              ? 'ยังไม่มีกิจกรรมที่ลงทะเบียน'
+              : `ไม่พบกิจกรรมที่มีสถานะ "${getStatusDisplay({ Registration_IsCancelled: filter === 'cancelled', Registration_CheckOutTime: filter === 'completed', Registration_CheckInTime: filter === 'checkedIn' })}"`
             }
           </p>
         </div>
       ) : (
         <div className={styles.activitiesList}>
-          {filteredActivities.map((activity) => (
-            <div key={activity.id} className={styles.activityItem}>
-              <div className={styles.activityHeader}>
-                <h4>{activity.name}</h4>
-                <span className={`${styles.statusBadge} ${getStatusClass(activity.status)}`}>
-                  {getStatusDisplay(activity.status)}
-                </span>
-              </div>
-              
-              <div className={styles.activityInfo}>
-                <div className={styles.infoRow}>
-                  <span className={styles.label}>ประเภท:</span>
-                  <span className={styles.value}>{activity.type}</span>
-                </div>
-                <div className={styles.infoRow}>
-                  <span className={styles.label}>วันที่:</span>
-                  <span className={styles.value}>
-                    {new Date(activity.date).toLocaleDateString('th-TH', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </span>
-                </div>
-                <div className={styles.infoRow}>
-                  <span className={styles.label}>เวลา:</span>
-                  <span className={styles.value}>{activity.time}</span>
-                </div>
-                <div className={styles.infoRow}>
-                  <span className={styles.label}>สถานที่:</span>
-                  <span className={styles.value}>{activity.location}</span>
-                </div>
-                <div className={styles.infoRow}>
-                  <span className={styles.label}>จำนวนชั่วโมง:</span>
-                  <span className={styles.value}>{activity.hours} ชั่วโมง</span>
-                </div>
-              </div>
+          {filteredActivities.map((activity) => {
+            const status = getStatusValue(activity);
 
-              <div className={styles.activityTimeline}>
-                <div className={styles.timelineItem}>
-                  <span className={styles.timelineLabel}>ลงทะเบียน:</span>
-                  <span className={styles.timelineValue}>
-                    {new Date(activity.registeredDate).toLocaleDateString('th-TH', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+            return (
+              <div
+                key={activity.Activity_ID}
+                className={styles.activityItem}
+                onClick={() => handleViewActivity(activity.Activity_ID)}
+                style={{ cursor: 'pointer' }}
+              >
+                <div className={styles.activityHeader}>
+                  <h4>{activity.Activity_Title}</h4>
+                  <span className={`${styles.statusBadge} ${getStatusClass(status)}`}>
+                    {getStatusDisplay(activity)}
                   </span>
                 </div>
-                {activity.completedDate && (
+
+                <div className={styles.activityInfo}>
+                  <div className={styles.infoRow}>
+                    <span className={styles.label}>
+                      <Award size={14} />
+                      ประเภท:
+                    </span>
+                    <span className={styles.value}>{activity.ActivityType_Name || 'ไม่ระบุ'}</span>
+                  </div>
+
+                  <div className={styles.infoRow}>
+                    <span className={styles.label}>
+                      <Calendar size={14} />
+                      วันที่:
+                    </span>
+                    <span className={styles.value}>
+                      {new Date(activity.Activity_StartTime).toLocaleDateString('th-TH', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </span>
+                  </div>
+
+                  <div className={styles.infoRow}>
+                    <span className={styles.label}>
+                      <Clock size={14} />
+                      เวลา:
+                    </span>
+                    <span className={styles.value}>
+                      {new Date(activity.Activity_StartTime).toLocaleTimeString('th-TH', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                      {' - '}
+                      {new Date(activity.Activity_EndTime).toLocaleTimeString('th-TH', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                  </div>
+
+                  {activity.Activity_LocationDetail && (
+                    <div className={styles.infoRow}>
+                      <span className={styles.label}>
+                        <MapPin size={14} />
+                        สถานที่:
+                      </span>
+                      <span className={styles.value}>{activity.Activity_LocationDetail}</span>
+                    </div>
+                  )}
+
+                  <div className={styles.infoRow}>
+                    <span className={styles.label}>จำนวนชั่วโมง:</span>
+                    <span className={styles.value}>{activity.Activity_TotalHours || 0} ชั่วโมง</span>
+                  </div>
+                </div>
+
+                <div className={styles.activityTimeline}>
                   <div className={styles.timelineItem}>
-                    <span className={styles.timelineLabel}>เข้าร่วม:</span>
+                    <span className={styles.timelineLabel}>ลงทะเบียน:</span>
                     <span className={styles.timelineValue}>
-                      {new Date(activity.completedDate).toLocaleDateString('th-TH', {
+                      {new Date(activity.Registration_RegisTime).toLocaleDateString('th-TH', {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric',
@@ -216,24 +184,66 @@ const RecentActivitiesForm = ({ userData }) => {
                       })}
                     </span>
                   </div>
-                )}
-                {activity.cancelledDate && (
-                  <div className={styles.timelineItem}>
-                    <span className={styles.timelineLabel}>ยกเลิก:</span>
-                    <span className={styles.timelineValue}>
-                      {new Date(activity.cancelledDate).toLocaleDateString('th-TH', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </span>
-                  </div>
-                )}
+
+                  {activity.Registration_CheckInTime && (
+                    <div className={styles.timelineItem}>
+                      <span className={styles.timelineLabel}>เช็คอิน:</span>
+                      <span className={styles.timelineValue}>
+                        {new Date(activity.Registration_CheckInTime).toLocaleDateString('th-TH', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                  )}
+
+                  {activity.Registration_CheckOutTime && (
+                    <div className={styles.timelineItem}>
+                      <span className={styles.timelineLabel}>เช็คเอาท์:</span>
+                      <span className={styles.timelineValue}>
+                        {new Date(activity.Registration_CheckOutTime).toLocaleDateString('th-TH', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                  )}
+
+                  {activity.Registration_IsCancelled && activity.Registration_CancelTime && (
+                    <div className={styles.timelineItem}>
+                      <span className={styles.timelineLabel}>ยกเลิก:</span>
+                      <span className={styles.timelineValue}>
+                        {new Date(activity.Registration_CancelTime).toLocaleDateString('th-TH', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  className={styles.viewDetailButton}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewActivity(activity.Activity_ID);
+                  }}
+                >
+                  <ExternalLink size={14} />
+                  ดูรายละเอียด
+                </button>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -15,7 +15,7 @@ export const useBulkActions = (selectedParticipants, selectedActivity, refreshCa
 
   const handleBulkApprove = useCallback(async (pictureIds = null) => {
     const idsToApprove = pictureIds || Array.from(selectedParticipants);
-    
+
     if (idsToApprove.length === 0) {
       alert('กรุณาเลือกรายการที่ต้องการอนุมัติ');
       return;
@@ -37,14 +37,24 @@ export const useBulkActions = (selectedParticipants, selectedActivity, refreshCa
       );
 
       if (response.data?.status) {
-        alert(response.data.message || 'อนุมัติสำเร็จ');
+        const approvedCount = response.data.data?.approved_count || 0;
+        const skippedCount = response.data.data?.skipped_count || 0;
+
+        let message = `อนุมัติสำเร็จ ${approvedCount} รายการ`;
+        if (skippedCount > 0) {
+          message += ` (ข้าม ${skippedCount} รายการที่ไม่สามารถอนุมัติได้)`;
+        }
+
+        alert(message);
+
         if (refreshCallback) {
           await refreshCallback();
         }
       }
     } catch (err) {
       console.error('Bulk approve error:', err);
-      alert(err.response?.data?.message || 'เกิดข้อผิดพลาดในการอนุมัติ');
+      const errorMsg = err.response?.data?.message || 'เกิดข้อผิดพลาดในการอนุมัติ';
+      alert(errorMsg);
     } finally {
       setBulkApproving(false);
     }
@@ -52,7 +62,7 @@ export const useBulkActions = (selectedParticipants, selectedActivity, refreshCa
 
   const handleBulkReject = useCallback(async (pictureIds = null) => {
     const idsToReject = pictureIds || Array.from(selectedParticipants);
-    
+
     if (idsToReject.length === 0) {
       alert('กรุณาเลือกรายการที่ต้องการปฏิเสธ');
       return;
@@ -70,26 +80,34 @@ export const useBulkActions = (selectedParticipants, selectedActivity, refreshCa
     try {
       setBulkRejecting(true);
 
-      // Note: สามารถสร้าง bulk reject endpoint ได้เหมือน bulk approve
-      // ในที่นี้จะทำทีละรายการ
-      const promises = idsToReject.map(id =>
-        axios.patch(
-          getApiUrl(`/api/registration-pictures/${id}/reject`),
-          { reason: reason || 'ไม่ระบุเหตุผล' },
-          { withCredentials: true }
-        )
+      const response = await axios.patch(
+        getApiUrl('/api/registration-pictures/bulk-reject'),
+        {
+          pictureIds: idsToReject,
+          reason: reason || 'ไม่ระบุเหตุผล'
+        },
+        { withCredentials: true }
       );
 
-      await Promise.all(promises);
-      
-      alert(`ปฏิเสธ ${idsToReject.length} รายการสำเร็จ`);
-      
-      if (refreshCallback) {
-        await refreshCallback();
+      if (response.data?.status) {
+        const rejectedCount = response.data.data?.rejected_count || 0;
+        const skippedCount = response.data.data?.skipped_count || 0;
+
+        let message = `ปฏิเสธสำเร็จ ${rejectedCount} รายการ`;
+        if (skippedCount > 0) {
+          message += ` (ข้าม ${skippedCount} รายการที่ไม่สามารถปฏิเสธได้)`;
+        }
+
+        alert(message);
+
+        if (refreshCallback) {
+          await refreshCallback();
+        }
       }
     } catch (err) {
       console.error('Bulk reject error:', err);
-      alert(err.response?.data?.message || 'เกิดข้อผิดพลาดในการปฏิเสธ');
+      const errorMsg = err.response?.data?.message || 'เกิดข้อผิดพลาดในการปฏิเสธ';
+      alert(errorMsg);
     } finally {
       setBulkRejecting(false);
     }
@@ -97,7 +115,7 @@ export const useBulkActions = (selectedParticipants, selectedActivity, refreshCa
 
   const handleBulkCheckIn = useCallback(async (userIds = null) => {
     const idsToCheckIn = userIds || Array.from(selectedParticipants);
-    
+
     if (idsToCheckIn.length === 0 || !selectedActivity) {
       alert('กรุณาเลือกรายการที่ต้องการเช็คอิน');
       return;
@@ -120,10 +138,21 @@ export const useBulkActions = (selectedParticipants, selectedActivity, refreshCa
         )
       );
 
-      await Promise.all(promises);
-      
-      alert(`เช็คอิน ${idsToCheckIn.length} คนสำเร็จ`);
-      
+      const results = await Promise.allSettled(promises);
+
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      const failCount = results.filter(r => r.status === 'rejected').length;
+
+      if (successCount > 0) {
+        let message = `เช็คอินสำเร็จ ${successCount} คน`;
+        if (failCount > 0) {
+          message += ` (ล้มเหลว ${failCount} คน)`;
+        }
+        alert(message);
+      } else {
+        alert('ไม่สามารถเช็คอินได้');
+      }
+
       if (refreshCallback) {
         await refreshCallback();
       }
@@ -137,7 +166,7 @@ export const useBulkActions = (selectedParticipants, selectedActivity, refreshCa
 
   const handleBulkCheckOut = useCallback(async (userIds = null) => {
     const idsToCheckOut = userIds || Array.from(selectedParticipants);
-    
+
     if (idsToCheckOut.length === 0 || !selectedActivity) {
       alert('กรุณาเลือกรายการที่ต้องการเช็คเอาท์');
       return;
@@ -160,10 +189,21 @@ export const useBulkActions = (selectedParticipants, selectedActivity, refreshCa
         )
       );
 
-      await Promise.all(promises);
-      
-      alert(`เช็คเอาท์ ${idsToCheckOut.length} คนสำเร็จ`);
-      
+      const results = await Promise.allSettled(promises);
+
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      const failCount = results.filter(r => r.status === 'rejected').length;
+
+      if (successCount > 0) {
+        let message = `เช็คเอาท์สำเร็จ ${successCount} คน`;
+        if (failCount > 0) {
+          message += ` (ล้มเหลว ${failCount} คน)`;
+        }
+        alert(message);
+      } else {
+        alert('ไม่สามารถเช็คเอาท์ได้');
+      }
+
       if (refreshCallback) {
         await refreshCallback();
       }
@@ -191,13 +231,13 @@ export const useBulkActions = (selectedParticipants, selectedActivity, refreshCa
         'ประเภท': p.isTeacher ? 'อาจารย์' : 'นักศึกษา',
         'สาขา': p.Department_Name || '',
         'คณะ': p.Faculty_Name || '',
-        'วันที่ลงทะเบียน': p.Registration_RegisTime 
+        'วันที่ลงทะเบียน': p.Registration_RegisTime
           ? new Date(p.Registration_RegisTime).toLocaleString('th-TH')
           : '',
-        'เช็คอิน': p.Registration_CheckInTime 
+        'เช็คอิน': p.Registration_CheckInTime
           ? new Date(p.Registration_CheckInTime).toLocaleString('th-TH')
           : 'ยังไม่เช็คอิน',
-        'เช็คเอาท์': p.Registration_CheckOutTime 
+        'เช็คเอาท์': p.Registration_CheckOutTime
           ? new Date(p.Registration_CheckOutTime).toLocaleString('th-TH')
           : 'ยังไม่เช็คเอาท์',
         'สถานะ': p.RegistrationStatus_Name || ''
@@ -207,7 +247,6 @@ export const useBulkActions = (selectedParticipants, selectedActivity, refreshCa
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'ผู้เข้าร่วม');
 
-      // Auto-size columns
       const maxWidth = exportData.reduce((w, r) => Math.max(w, r['ชื่อ']?.length || 0), 10);
       ws['!cols'] = [
         { wch: 8 },  // ลำดับ
@@ -225,8 +264,9 @@ export const useBulkActions = (selectedParticipants, selectedActivity, refreshCa
       ];
 
       const activityName = selectedActivity?.Activity_Title || 'กิจกรรม';
-      const filename = `รายชื่อผู้เข้าร่วม_${activityName}_${new Date().toLocaleDateString('th-TH')}.xlsx`;
-      
+      const timestamp = new Date().toLocaleDateString('th-TH').replace(/\//g, '-');
+      const filename = `รายชื่อผู้เข้าร่วม_${activityName}_${timestamp}.xlsx`;
+
       XLSX.writeFile(wb, filename);
       alert(`Export สำเร็จ ${participantsData.length} รายการ`);
     } catch (err) {

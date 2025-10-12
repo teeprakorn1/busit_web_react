@@ -1,11 +1,11 @@
-// AdminJoinActivity.jsx
+// AdminJoinActivity.js
 import React, { useEffect } from 'react';
 import { Users, Filter, AlertCircle } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 import Navbar from '../../NavigationBar/NavigationBar';
 import styles from './AdminJoinActivity.module.css';
 
-// Components
 import ActivitySelector from './components/ActivitySelector/ActivitySelector';
 import ParticipantsTable from './components/ParticipantsTable/ParticipantsTable';
 import FilterPanel from './components/FilterPanel/FilterPanel';
@@ -13,7 +13,6 @@ import BulkActions from './components/BulkActions/BulkActions';
 import ParticipantStats from './components/ParticipantStats/ParticipantStats';
 import ImageGallery from './components/ImageGallery/ImageGallery';
 
-// Hooks
 import { useUIState } from './hooks/useUIState';
 import { useActivities } from './hooks/useActivities';
 import { useParticipants } from './hooks/useParticipants';
@@ -22,6 +21,8 @@ import { useSelection } from './hooks/useSelection';
 import { useBulkActions } from './hooks/useBulkActions';
 
 function AdminJoinActivity() {
+  const location = useLocation();
+
   const {
     isMobile,
     sidebarOpen,
@@ -76,6 +77,7 @@ function AdminJoinActivity() {
     bulkApproving,
     bulkRejecting,
     bulkCheckingIn,
+    bulkCheckingOut,
     handleBulkApprove,
     handleBulkReject,
     handleBulkCheckIn,
@@ -87,6 +89,17 @@ function AdminJoinActivity() {
     fetchActivities();
   }, [fetchActivities]);
 
+  useEffect(() => {
+    const preselectedActivityId = location.state?.preselectedActivityId;
+
+    if (preselectedActivityId && activities.length > 0 && !selectedActivity) {
+      const activity = activities.find(a => a.Activity_ID === preselectedActivityId);
+      if (activity) {
+        setSelectedActivity(activity);
+      }
+    }
+  }, [location.state, activities, selectedActivity, setSelectedActivity]);
+
   const handleActivityChange = (activity) => {
     setSelectedActivity(activity);
     deselectAll();
@@ -96,6 +109,25 @@ function AdminJoinActivity() {
     const images = participantImages[participant.Users_ID] || [];
     setSelectedImages(images);
     setShowImageGallery(true);
+  };
+
+  const getSelectedParticipantsData = () => {
+    return filteredParticipants.filter(p =>
+      selectedParticipants.has(p.Users_ID)
+    );
+  };
+
+  const getSelectedPictureIds = () => {
+    const pictureIds = [];
+    selectedParticipants.forEach(userId => {
+      const images = participantImages[userId] || [];
+      images.forEach(img => {
+        if (img.RegistrationPictureStatus_ID === 1) {
+          pictureIds.push(img.RegistrationPicture_ID);
+        }
+      });
+    });
+    return pictureIds;
   };
 
   if (activitiesLoading && !activities.length) {
@@ -204,15 +236,35 @@ function AdminJoinActivity() {
             {selectedCount > 0 && (
               <BulkActions
                 selectedCount={selectedCount}
-                onApprove={handleBulkApprove}
-                onReject={handleBulkReject}
-                onCheckIn={handleBulkCheckIn}
-                onCheckOut={handleBulkCheckOut}
-                onExport={handleExportSelected}
+                selectedParticipants={selectedParticipants}
+                onApprove={() => {
+                  const pictureIds = getSelectedPictureIds();
+                  if (pictureIds.length > 0) {
+                    handleBulkApprove(pictureIds);
+                  } else {
+                    alert('ไม่มีรูปภาพที่รออนุมัติในรายการที่เลือก');
+                  }
+                }}
+                onReject={() => {
+                  const pictureIds = getSelectedPictureIds();
+                  if (pictureIds.length > 0) {
+                    handleBulkReject(pictureIds);
+                  } else {
+                    alert('ไม่มีรูปภาพที่รออนุมัติในรายการที่เลือก');
+                  }
+                }}
+                onCheckIn={() => handleBulkCheckIn(Array.from(selectedParticipants))}
+                onCheckOut={() => handleBulkCheckOut(Array.from(selectedParticipants))}
+                onExport={() => {
+                  const data = getSelectedParticipantsData();
+                  handleExportSelected(data);
+                }}
                 onDeselectAll={deselectAll}
                 approving={bulkApproving}
                 rejecting={bulkRejecting}
                 checkingIn={bulkCheckingIn}
+                checkingOut={bulkCheckingOut}
+                getSelectedParticipantsData={getSelectedParticipantsData}
               />
             )}
 

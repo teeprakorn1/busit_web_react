@@ -176,28 +176,23 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
         return emailRegex.test(email);
     };
 
-    // ฟังก์ชันตรวจสอบปีการศึกษาทั้ง พ.ศ. และ ค.ศ.
     const isValidAcademicYear = (year) => {
         const yearNum = parseInt(year);
         if (isNaN(yearNum)) return false;
-        
+
         const currentChristianYear = new Date().getFullYear();
         const currentBuddhistYear = currentChristianYear + 543;
-        
-        // ตรวจสอบ ค.ศ. (1950-2040)
         if (yearNum >= 1950 && yearNum <= currentChristianYear + 10) {
             return true;
         }
-        
-        // ตรวจสอบ พ.ศ. (2493-2583)
+
         if (yearNum >= 2493 && yearNum <= currentBuddhistYear + 10) {
             return true;
         }
-        
+
         return false;
     };
 
-    // ฟังก์ชันตรวจสอบวันเกิดทั้ง พ.ศ. และ ค.ศ.
     const isValidBirthDate = (dateString) => {
         if (!dateString || dateString.trim() === '') return true;
 
@@ -213,14 +208,10 @@ function InfoForms({ formData, setFormData, userType = 'student', errors = {} })
         if (month < 1 || month > 12) return false;
 
         let testYear = year;
-        
-        // ตรวจสอบว่าเป็น พ.ศ. หรือ ค.ศ.
         if (year > 2400) {
-            // พ.ศ. - แปลงเป็น ค.ศ.
             testYear = year - 543;
             if (year < 2400 || year > 2600) return false;
         } else {
-            // ค.ศ.
             if (year < 1900 || year > 2100) return false;
         }
 

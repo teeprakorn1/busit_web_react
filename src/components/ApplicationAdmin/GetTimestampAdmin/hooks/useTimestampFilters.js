@@ -2,7 +2,6 @@ import { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export const useTimestampFilters = () => {
-  // Filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [userTypeFilter, setUserTypeFilter] = useState("");
   const [eventTypeFilter, setEventTypeFilter] = useState("");
@@ -12,14 +11,12 @@ export const useTimestampFilters = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Apply search query from criteria
   const setSearchFromCriteria = useCallback((criteria) => {
     if (criteria && (criteria.type === 'email' || criteria.type === 'ip')) {
       setSearchQuery(criteria.value);
     }
   }, []);
 
-  // Filter timestamps
   const getFilteredTimestamps = useCallback((timestamps) => {
     if (!Array.isArray(timestamps)) return [];
 
@@ -51,12 +48,10 @@ export const useTimestampFilters = () => {
     });
   }, [searchQuery, userTypeFilter, eventTypeFilter, dateFilter]);
 
-  // Get unique event types for dropdown
   const getUniqueEventTypes = useCallback((timestamps) => {
     return Array.from(new Set(timestamps.map(ts => ts.TimestampType_Name).filter(Boolean)));
   }, []);
 
-  // Reset all filters
   const resetFilters = useCallback((keepSearchCriteria = false) => {
     if (!keepSearchCriteria) {
       setSearchQuery("");
@@ -65,7 +60,7 @@ export const useTimestampFilters = () => {
     setEventTypeFilter("");
     setDateFilter(null);
     setCurrentPage(1);
-    
+
     if (!keepSearchCriteria) {
       navigate({
         pathname: location.pathname,
@@ -74,13 +69,11 @@ export const useTimestampFilters = () => {
     }
   }, [navigate, location.pathname]);
 
-  // Check if any filters are active
   const hasActiveFilters = useMemo(() => {
     return !!(searchQuery || userTypeFilter || eventTypeFilter || dateFilter);
   }, [searchQuery, userTypeFilter, eventTypeFilter, dateFilter]);
 
   return {
-    // Filter states
     searchQuery,
     setSearchQuery,
     userTypeFilter,
@@ -91,11 +84,7 @@ export const useTimestampFilters = () => {
     setDateFilter,
     currentPage,
     setCurrentPage,
-
-    // Computed values
     hasActiveFilters,
-
-    // Functions
     getFilteredTimestamps,
     getUniqueEventTypes,
     resetFilters,

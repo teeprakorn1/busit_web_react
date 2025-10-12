@@ -1905,3 +1905,704 @@
     border-left-color: #10b981 !important;
   }
 }
+
+/* Management Button */
+.managementButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.managementButton:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
+/* Info Banner */
+.infoBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  border-left: 4px solid #3b82f6;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.infoBanner svg {
+  flex-shrink: 0;
+  color: #1e40af;
+  margin-top: 2px;
+}
+
+.infoBannerText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.infoBannerText strong {
+  color: #1e3a8a;
+  font-size: 14px;
+}
+
+.infoBannerText span {
+  color: #1e40af;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Read-Only Participant Card */
+.participantCardReadOnly {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: white;
+  border: 2px solid #f1f5f9;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.participantCardReadOnly:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Participant Status Info */
+.participantStatusInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  min-width: 220px;
+}
+
+.statusBadgeSuccess {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  border: 2px solid #6ee7b7;
+  border-radius: 8px;
+  color: #065f46;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.statusBadgePending {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 2px solid #fbbf24;
+  border-radius: 8px;
+  color: #92400e;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.statusBadgeCompleted {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  border: 2px solid #60a5fa;
+  border-radius: 8px;
+  color: #1e40af;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.statusTime {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+/* ⭐ View Image Button */
+.viewImageButtonReadOnly {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+}
+
+.viewImageButtonReadOnly:hover {
+  background: linear-gradient(135deg, #4f46e5, #4338ca);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(99, 102, 241, 0.4);
+}
+
+.bottomCTA {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px;
+  margin-top: 32px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.bottomCTA p {
+  color: #475569;
+  font-size: 15px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 28px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+}
+
+.ctaButton:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.modalContent {
+  background: white;
+  border-radius: 16px;
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 2px solid #f1f5f9;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+}
+
+.modalHeader h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 18px;
+  color: #1e293b;
+}
+
+.modalCloseButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #ef4444;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modalCloseButton:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+.modalBody {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.participantInfoHeader {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  border: 2px solid #7dd3fc;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.participantHeaderWithType {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.participantHeaderWithType h4 {
+  margin: 0;
+  font-size: 18px;
+  color: #0c4a6e;
+}
+
+.teacherBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #c7d2fe, #a5b4fc);
+  border: 1px solid #818cf8;
+  border-radius: 6px;
+  color: #3730a3;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.participantCode {
+  color: #0369a1;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 4px 0;
+}
+
+.participantDept {
+  color: #0284c7;
+  font-size: 13px;
+  margin: 4px 0;
+}
+
+.imageGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.imageCardReadOnly {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.imageCardReadOnly:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.imageWrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 100%; /* Square aspect ratio */
+  background: #f9fafb;
+  overflow: hidden;
+}
+
+.participantImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.imageLoading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+}
+
+/* ⭐ AI Badge */
+.aiBadge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+}
+
+.aiSuccess {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  border: 2px solid #6ee7b7;
+  border-radius: 8px;
+  color: #065f46;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.aiFailed {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  border: 2px solid #fca5a5;
+  border-radius: 8px;
+  color: #991b1b;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Image Overlay (Download button) */
+.imageOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.imageCardReadOnly:hover .imageOverlay {
+  opacity: 1;
+}
+
+.imageActionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.imageActionButton:hover {
+  background: #3b82f6;
+  color: white;
+  transform: scale(1.1);
+}
+
+.imageInfo {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.imageStatus {
+  display: flex;
+  justify-content: center;
+}
+
+.statusApproved {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  border: 2px solid #6ee7b7;
+  border-radius: 8px;
+  color: #065f46;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.statusRejected {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  border: 2px solid #fca5a5;
+  border-radius: 8px;
+  color: #991b1b;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.statusPending {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 2px solid #fbbf24;
+  border-radius: 8px;
+  color: #92400e;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.aiStatusDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.aiLabel {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.aiStatusSuccess {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #059669;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.aiStatusFailed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.imageTime {
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+  margin: 0;
+}
+
+.rejectReason {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 10px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #991b1b;
+}
+
+.noImages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+}
+
+.noImages svg {
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.noImages p {
+  margin: 0;
+  font-size: 15px;
+}
+
+.modalFooter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  margin-top: 24px;
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  border: 2px dashed #7dd3fc;
+  border-radius: 12px;
+}
+
+.modalFooterText {
+  color: #0c4a6e;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.modalManagementButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.modalManagementButton:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.spinner {
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .managementButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .participantCardReadOnly {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .participantStatusInfo {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .statusBadgeSuccess,
+  .statusBadgeCompleted {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .viewImageButtonReadOnly {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .infoBanner {
+    flex-direction: column;
+  }
+
+  .bottomCTA {
+    padding: 24px 16px;
+  }
+
+  .ctaButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .modalContent {
+    max-width: 100%;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .imageGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .modalHeader {
+    padding: 16px;
+  }
+
+  .modalBody {
+    padding: 16px;
+  }
+
+  .imageGrid {
+    gap: 16px;
+  }
+}

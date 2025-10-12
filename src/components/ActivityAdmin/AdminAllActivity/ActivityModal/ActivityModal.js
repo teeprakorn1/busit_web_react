@@ -1,4 +1,4 @@
-// ActivityModal/ActivityModal.js - Updated to show teachers
+// ActivityModal/ActivityModal.js
 import React, { useEffect, useState, useCallback } from 'react';
 import { X, Calendar, MapPin, Clock, Users, FileText, AlertCircle, Loader, Building2, GraduationCap, UserCheck } from 'lucide-react';
 import styles from './ActivityModal.module.css';
@@ -59,7 +59,6 @@ function ActivityModal({ isOpen, onClose, activityId }) {
 
       if (response.data?.status) {
         setParticipants(response.data.data);
-        // ตั้งค่าสถิติจาก API response
         if (response.data.stats) {
           setParticipantStats(response.data.stats);
         }
@@ -313,8 +312,6 @@ function ActivityModal({ isOpen, onClose, activityId }) {
                   <div className={styles.summaryLabel}>เช็คอินแล้ว</div>
                 </div>
               </div>
-
-              {/* แสดงสถิติแยกนักศึกษาและอาจารย์ถ้ามี */}
               {activityDetail.Activity_AllowTeachers && (
                 <div className={styles.participantTypeStats}>
                   <div className={styles.statTypeCard}>
@@ -422,8 +419,6 @@ function ActivityModal({ isOpen, onClose, activityId }) {
                 <Users size={18} />
                 รายชื่อผู้เข้าร่วม ({participants.length} คน)
               </h3>
-              
-              {/* แสดงสถิติแยกประเภท */}
               {activityDetail.Activity_AllowTeachers && participantStats.total > 0 && (
                 <div className={styles.participantTypeSummary}>
                   <span className={styles.summaryItem}>

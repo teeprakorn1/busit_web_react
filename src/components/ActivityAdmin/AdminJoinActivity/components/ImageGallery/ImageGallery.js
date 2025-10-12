@@ -1,6 +1,6 @@
-// components/ImageGallery/ImageGallery.jsx
+// components/ImageGallery/ImageGallery.js
 import React, { useState } from 'react';
-import { 
+import {
   X, CheckCircle, XCircle, ChevronLeft, ChevronRight, Eye, AlertCircle, Clock, User, Calendar
 } from 'lucide-react';
 import styles from './ImageGallery.module.css';
@@ -133,7 +133,7 @@ const ImageGallery = ({ images, onClose, onApprove, onReject, onRefresh }) => {
         <div className={styles.content}>
           {/* Image Viewer */}
           <div className={styles.imageViewer}>
-            <button 
+            <button
               className={`${styles.navButton} ${styles.prevButton}`}
               onClick={handlePrevious}
               disabled={images.length === 1}
@@ -151,14 +151,13 @@ const ImageGallery = ({ images, onClose, onApprove, onReject, onRefresh }) => {
                   e.target.src = '/placeholder-image.png';
                 }}
               />
-              
+
               {/* AI Success Indicator */}
               {currentImage.RegistrationPicture_IsAiSuccess !== null && (
-                <div className={`${styles.aiIndicator} ${
-                  currentImage.RegistrationPicture_IsAiSuccess 
-                    ? styles.aiSuccess 
+                <div className={`${styles.aiIndicator} ${currentImage.RegistrationPicture_IsAiSuccess
+                    ? styles.aiSuccess
                     : styles.aiFailed
-                }`}>
+                  }`}>
                   {currentImage.RegistrationPicture_IsAiSuccess ? (
                     <>
                       <CheckCircle size={16} />
@@ -174,7 +173,7 @@ const ImageGallery = ({ images, onClose, onApprove, onReject, onRefresh }) => {
               )}
             </div>
 
-            <button 
+            <button
               className={`${styles.navButton} ${styles.nextButton}`}
               onClick={handleNext}
               disabled={images.length === 1}
@@ -263,9 +262,8 @@ const ImageGallery = ({ images, onClose, onApprove, onReject, onRefresh }) => {
               return (
                 <div
                   key={image.RegistrationPicture_ID}
-                  className={`${styles.thumbnail} ${
-                    isCurrent ? styles.currentThumbnail : ''
-                  } ${isSelected ? styles.selectedThumbnail : ''}`}
+                  className={`${styles.thumbnail} ${isCurrent ? styles.currentThumbnail : ''
+                    } ${isSelected ? styles.selectedThumbnail : ''}`}
                   onClick={() => setCurrentIndex(index)}
                 >
                   <input

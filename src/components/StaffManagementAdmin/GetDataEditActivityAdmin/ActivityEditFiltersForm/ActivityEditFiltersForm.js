@@ -46,7 +46,7 @@ const ActivityEditFiltersForm = ({
         disabled={!canExport || filteredActivityEdits.length === 0}
         aria-label="ส่งออกข้อมูลเป็น Excel"
       >
-        <Upload className={styles.icon} /> 
+        <Upload className={styles.icon} />
         Export Excel
       </button>
 

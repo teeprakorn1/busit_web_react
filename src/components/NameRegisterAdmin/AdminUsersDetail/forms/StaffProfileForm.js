@@ -13,7 +13,6 @@ const StaffProfileForm = ({ userData, onUpdate, loading = false }) => {
     isResigned: false
   });
 
-  // Update formData when userData changes
   useEffect(() => {
     if (userData?.staff) {
       setFormData({
@@ -21,8 +20,8 @@ const StaffProfileForm = ({ userData, onUpdate, loading = false }) => {
         firstName: userData.staff.firstName || '',
         lastName: userData.staff.lastName || '',
         phone: userData.staff.phone || '',
-        otherPhones: userData.staff.otherPhones && userData.staff.otherPhones.length > 0 
-          ? userData.staff.otherPhones.slice(0, 2) // จำกัดเพียง 2 เบอร์
+        otherPhones: userData.staff.otherPhones && userData.staff.otherPhones.length > 0
+          ? userData.staff.otherPhones.slice(0, 2)
           : [],
         isResigned: userData.staff.isResigned || false
       });
@@ -47,7 +46,6 @@ const StaffProfileForm = ({ userData, onUpdate, loading = false }) => {
   };
 
   const addOtherPhone = () => {
-    // จำกัดให้มีได้สูงสุด 2 เบอร์เท่านั้น
     if (formData.otherPhones.length < 2) {
       setFormData(prev => ({
         ...prev,
@@ -67,7 +65,6 @@ const StaffProfileForm = ({ userData, onUpdate, loading = false }) => {
   const handleSave = async () => {
     if (!onUpdate || loading) return;
 
-    // Filter out empty other phones
     const filteredOtherPhones = formData.otherPhones.filter(item =>
       item.name.trim() !== '' || item.phone.trim() !== ''
     );
@@ -84,20 +81,18 @@ const StaffProfileForm = ({ userData, onUpdate, loading = false }) => {
       setIsEditing(false);
     } catch (error) {
       console.error('Update error:', error);
-      // Error handling is done in parent component
     }
   };
 
   const handleCancel = () => {
-    // Reset form data to original values
     if (userData?.staff) {
       setFormData({
         code: userData.staff.code || '',
         firstName: userData.staff.firstName || '',
         lastName: userData.staff.lastName || '',
         phone: userData.staff.phone || '',
-        otherPhones: userData.staff.otherPhones && userData.staff.otherPhones.length > 0 
-          ? userData.staff.otherPhones.slice(0, 2) // จำกัดเพียง 2 เบอร์
+        otherPhones: userData.staff.otherPhones && userData.staff.otherPhones.length > 0
+          ? userData.staff.otherPhones.slice(0, 2)
           : [],
         isResigned: userData.staff.isResigned || false
       });
@@ -126,8 +121,8 @@ const StaffProfileForm = ({ userData, onUpdate, loading = false }) => {
         <div className={styles.actionButtons}>
           {isEditing ? (
             <>
-              <button 
-                className={styles.saveButton} 
+              <button
+                className={styles.saveButton}
                 onClick={handleSave}
                 disabled={loading}
               >
@@ -138,8 +133,8 @@ const StaffProfileForm = ({ userData, onUpdate, loading = false }) => {
                 )}
                 {loading ? 'กำลังบันทึก...' : 'บันทึก'}
               </button>
-              <button 
-                className={styles.cancelButton} 
+              <button
+                className={styles.cancelButton}
                 onClick={handleCancel}
                 disabled={loading}
               >
@@ -147,8 +142,8 @@ const StaffProfileForm = ({ userData, onUpdate, loading = false }) => {
               </button>
             </>
           ) : (
-            <button 
-              className={styles.editButton} 
+            <button
+              className={styles.editButton}
               onClick={() => setIsEditing(true)}
               disabled={loading}
             >
@@ -302,7 +297,6 @@ const StaffProfileForm = ({ userData, onUpdate, loading = false }) => {
               <span className={styles.label}>เบอร์โทรศัพท์อื่นๆ (สูงสุด 2 เบอร์):</span>
               {isEditing ? (
                 <div className={styles.phoneList}>
-                  {/* แสดงช่องกรอกข้อมูลเมื่อมี otherPhones */}
                   {formData.otherPhones.length > 0 && formData.otherPhones.map((item, index) => (
                     <div key={index} className={styles.phoneItemContainer}>
                       <div className={styles.phoneInputGroup}>
@@ -334,8 +328,7 @@ const StaffProfileForm = ({ userData, onUpdate, loading = false }) => {
                       </button>
                     </div>
                   ))}
-                  
-                  {/* แสดงปุ่มเพิ่มเฉพาะเมื่อมีน้อยกว่า 2 เบอร์ */}
+
                   {formData.otherPhones.length < 2 && (
                     <button
                       type="button"
@@ -347,8 +340,7 @@ const StaffProfileForm = ({ userData, onUpdate, loading = false }) => {
                       <Plus size={14} /> เพิ่มหมายเลข ({formData.otherPhones.length}/2)
                     </button>
                   )}
-                  
-                  {/* แสดงข้อความเมื่อครบ 2 เบอร์แล้ว */}
+
                   {formData.otherPhones.length >= 2 && (
                     <div className={styles.maxPhonesNote}>
                       <span>ครบจำนวนเบอร์โทรศัพท์แล้ว (2/2)</span>

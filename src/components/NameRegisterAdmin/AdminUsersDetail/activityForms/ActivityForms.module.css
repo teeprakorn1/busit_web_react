@@ -604,3 +604,289 @@
     font-size: 16px;
   }
 }
+
+/* View Detail Button */
+.viewDetailButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 12px;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.viewDetailButton:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.4);
+}
+
+.viewDetailButton:active {
+  transform: translateY(0);
+}
+
+/* Activity Item Hover Effect */
+.activityItem {
+  position: relative;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow);
+}
+
+.activityItem:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Info Row with Icons */
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.infoRow:last-child {
+  border-bottom: none;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  color: var(--text-dark);
+  min-width: 120px;
+  font-size: 14px;
+}
+
+.label svg {
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.value {
+  color: var(--text-muted);
+  text-align: right;
+  font-size: 14px;
+}
+
+/* Status Badge Updates */
+.statusBadge.checkedIn {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .viewDetailButton {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .activityItem {
+    cursor: default;
+  }
+  
+  .label {
+    min-width: auto;
+    gap: 4px;
+  }
+  
+  .label svg {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+/* Completed Activity Item */
+.completedActivityItem {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+  border: 1px solid #86efac;
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1);
+}
+
+.completedActivityItem:hover {
+  border-color: #22c55e;
+  box-shadow: 0 8px 16px rgba(34, 197, 94, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Activity Title Section */
+.activityTitleSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.activityTitleSection h4 {
+  margin: 0;
+  color: var(--text-dark);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.successIcon {
+  color: #22c55e;
+  flex-shrink: 0;
+}
+
+/* Activity Description */
+.activityDescription {
+  margin: 12px 0 16px 0;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+  border-left: 3px solid #86efac;
+}
+
+/* Completed Status Badge */
+.statusBadge.completed {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
+}
+
+/* Activity Info Rows for Completed */
+.completedActivityItem .activityInfo {
+  margin-bottom: 16px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.completedActivityItem .infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(134, 239, 172, 0.3);
+}
+
+.completedActivityItem .infoRow:last-child {
+  border-bottom: none;
+}
+
+/* Timeline for Completed Activities */
+.completedActivityItem .activityTimeline {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(134, 239, 172, 0.1));
+  border-radius: 8px;
+  padding: 12px 16px;
+  border-left: 3px solid #22c55e;
+  margin-bottom: 16px;
+}
+
+/* View Detail Button - Enhanced */
+.viewDetailButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(34, 197, 94, 0.3);
+}
+
+.viewDetailButton:hover {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(34, 197, 94, 0.4);
+}
+
+.viewDetailButton:active {
+  transform: translateY(0);
+}
+
+/* Summary Value - Enhanced */
+.summaryValue {
+  color: #065f46;
+  font-weight: 700;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
+}
+
+/* Empty State for Completed Activities */
+.incompleteActivitiesContent .emptyState {
+  background: linear-gradient(135deg, #f0fdf4, #ffffff);
+  border: 2px dashed #86efac;
+}
+
+.incompleteActivitiesContent .emptyState svg {
+  color: #22c55e;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .completedActivityItem {
+    padding: 20px;
+  }
+
+  .activityTitleSection {
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .activityTitleSection h4 {
+    font-size: 16px;
+  }
+
+  .activityDescription {
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  .viewDetailButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .completedActivityItem .activityInfo {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .completedActivityItem {
+    padding: 16px;
+  }
+
+  .activityTitleSection h4 {
+    font-size: 15px;
+  }
+
+  .statusBadge.completed {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+}

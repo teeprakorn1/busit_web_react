@@ -103,7 +103,6 @@ function AdminAllStaff() {
     return handleExportToExcel(sortedStaff, filterInfo);
   }, [getFilterInfo, handleExportToExcel, sortedStaff]);
 
-  // เพิ่มฟังก์ชันสำหรับ log search และ filter actions
   const handleSearchWithLogging = useCallback(async (query) => {
     setSearchQuery(query);
     if (query && query.length > 0) {
@@ -135,7 +134,6 @@ function AdminAllStaff() {
     fetchStaff({ includeResigned: true });
   }, [fetchStaff]);
 
-  // เพิ่ม useEffect สำหรับ log filter actions
   useEffect(() => {
     if (statusFilter) {
       handleFilterWithLogging('status', statusFilter);
@@ -223,7 +221,7 @@ function AdminAllStaff() {
             <span>{securityAlert}</span>
           </div>
         )}
-        
+
         <div className={styles.headerBar}>
           <div className={styles.headerLeft}>
             <div>

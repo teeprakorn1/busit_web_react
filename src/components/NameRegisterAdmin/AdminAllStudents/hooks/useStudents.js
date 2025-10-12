@@ -2,11 +2,11 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { academicYearUtils } from '../utils/academicYearUtils';
-import { 
-  logStudentStatusChange, 
+import {
+  logStudentStatusChange,
   logSystemAction,
-  logBulkOperation 
-} from './../../../..//utils/systemLog';
+  logBulkOperation
+} from './../../../../utils/systemLog';
 
 const sanitizeInput = (input) => {
   if (typeof input !== 'string') return input;
@@ -160,7 +160,6 @@ export const useStudents = () => {
 
         setStudents(transformedStudents);
 
-        // Log system action for data retrieval (only for filtered searches)
         if (Object.keys(params).length > 1 || params.searchQuery) {
           const searchDescription = `ค้นหาข้อมูลนักศึกษา: ${JSON.stringify(params)}`;
           await logSystemAction(0, searchDescription);
@@ -269,7 +268,6 @@ export const useStudents = () => {
         const newStatus = !student.isActive;
         const studentFullName = `${student.firstName} ${student.lastName}`;
 
-        // Update local state
         setStudents(prevStudents =>
           prevStudents.map(s =>
             s.id === student.id
@@ -278,7 +276,6 @@ export const useStudents = () => {
           )
         );
 
-        // Log the status change to data edit
         const logResult = await logStudentStatusChange(
           student.id,
           studentFullName,
@@ -359,7 +356,6 @@ export const useStudents = () => {
           )
         );
 
-        // Log the refresh action
         await logSystemAction(
           studentId,
           `รีเฟรชข้อมูลนักศึกษา ID: ${studentId}`
@@ -370,7 +366,6 @@ export const useStudents = () => {
     }
   }, []);
 
-  // Function to log bulk operations
   const handleLogBulkOperation = useCallback(async (operationType, affectedCount, details = '') => {
     try {
       await logBulkOperation(operationType, affectedCount, details);
@@ -410,6 +405,6 @@ export const useStudents = () => {
     setSecurityAlert,
     sanitizeInput,
     validateId,
-    logBulkOperation: handleLogBulkOperation // Export the wrapped function
+    logBulkOperation: handleLogBulkOperation
   };
 };

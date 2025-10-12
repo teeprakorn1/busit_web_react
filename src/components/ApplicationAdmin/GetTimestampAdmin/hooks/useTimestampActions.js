@@ -44,7 +44,6 @@ const sanitizeUserAgent = (userAgent) => {
 };
 
 export const useTimestampActions = () => {
-  // Export to Excel function
   const exportToExcel = useCallback((filteredTimestamps, searchCriteria) => {
     try {
       if (!filteredTimestamps || filteredTimestamps.length === 0) {

@@ -48,7 +48,7 @@ function CreateActivity() {
     startTime: '',
     endTime: '',
     isRequire: false,
-    allowTeachers: false, // เพิ่มฟิลด์ใหม่
+    allowTeachers: false,
     activityTypeId: '',
     activityStatusId: '',
     templateId: '',
@@ -227,12 +227,12 @@ function CreateActivity() {
         const timestampTypeId = 50;
         await insertTimestamp(successTimestampName, timestampTypeId);
 
-        const participantInfo = formData.allowTeachers 
-          ? `รวมนักศึกษา ${response.data.data.totalStudents} คนและอาจารย์ ${response.data.data.totalTeachers} คน` 
+        const participantInfo = formData.allowTeachers
+          ? `รวมนักศึกษา ${response.data.data.totalStudents} คนและอาจารย์ ${response.data.data.totalTeachers} คน`
           : `นักศึกษา ${response.data.data.totalStudents} คน`;
 
         setAlertMessage(`สร้างกิจกรรมสำเร็จ! (${participantInfo})`);
-        
+
         setFormData({
           title: '',
           description: '',
@@ -249,7 +249,7 @@ function CreateActivity() {
           selectedDepartments: []
         });
         setErrors({});
-        
+
         setTimeout(() => {
           navigate('/activity-management/activity-name');
         }, 2500);

@@ -53,34 +53,25 @@ export const useUserPermissions = () => {
             isStudent,
             userInfo,
             isLoading,
-            
-            // ==================== Admin Features ====================
             canAccessAdminFeatures: isStaff,
             canManageUsers: isStaff,
             canViewReports: isStaff,
             canAccessSystemSettings: isStaff,
             canManagePermissions: isStaff,
             canConfigureLogging: isStaff,
-            
-            // ==================== DataEdit Permissions ====================
-            // Access permissions
             canAccessDataEditLogs: isStaff,
             canViewDataEditDetails: isStaff,
             canExportDataEditData: isStaff,
             canSearchDataEdits: isStaff,
             canFilterDataEdits: isStaff,
-            canDeleteDataEdits: false, // Usually no one can delete audit logs
+            canDeleteDataEdits: false,
             canViewStaffActivity: isStaff,
-            
-            // ==================== Activity Edit Permissions ====================
             canAccessActivityEditLogs: isStaff,
             canViewActivityEditDetails: isStaff,
             canExportActivityEditData: isStaff,
             canSearchActivityEdits: isStaff,
             canFilterActivityEdits: isStaff,
             canDeleteActivityEdits: false,
-            
-            // ==================== General Audit Permissions ====================
             canViewAuditTrail: isStaff,
             canViewSystemLogs: isStaff,
             canViewAnalytics: isStaff,
@@ -90,8 +81,6 @@ export const useUserPermissions = () => {
             canExportUserData: isStaff,
             canExportSystemLogs: isStaff,
             canExportAnalytics: isStaff,
-            
-            // ==================== Search Permissions ====================
             canSearchByEmail: isStaff,
             canSearchByIP: isStaff,
             canSearchByStaffCode: isStaff,
@@ -100,20 +89,14 @@ export const useUserPermissions = () => {
             canAdvancedSearch: isStaff,
             canSearchByActivityId: isStaff,
             canSearchByActivityTitle: isStaff,
-            
-            // ==================== Data Access Permissions ====================
             canViewSensitiveData: isStaff,
             canAccessPersonalInfo: isStaff,
             canViewIPAddresses: isStaff,
             canViewEmailAddresses: isStaff,
             canViewActivityData: isStaff,
-            
-            // ==================== Timestamp Permissions ====================
             canAccessTimestampLogs: isStaff,
             canViewTimestampDetails: isStaff,
             canExportTimestampData: isStaff,
-            
-            // ==================== Student Management ====================
             canViewStudents: isStaff || isTeacher,
             canAddStudent: isStaff,
             canEditStudent: isStaff,
@@ -124,8 +107,6 @@ export const useUserPermissions = () => {
             canViewStudentDetails: isStaff || isTeacher,
             canViewStudentEditHistory: isStaff,
             canTrackStudentActions: isStaff,
-            
-            // ==================== Teacher Management ====================
             canViewTeachers: isStaff,
             canAddTeacher: isStaff,
             canEditTeacher: isStaff,
@@ -136,8 +117,6 @@ export const useUserPermissions = () => {
             canViewTeacherDetails: isStaff,
             canViewTeacherEditHistory: isStaff,
             canTrackTeacherActions: isStaff,
-            
-            // ==================== Staff Management ====================
             canViewStaff: isStaff,
             canAddStaff: isStaff,
             canEditStaff: isStaff,
@@ -149,8 +128,6 @@ export const useUserPermissions = () => {
             canSearchStaff: isStaff,
             canViewStaffEditHistory: isStaff,
             canTrackStaffActions: isStaff,
-            
-            // ==================== Activity Management ====================
             canViewActivities: isStaff || isTeacher || isStudent,
             canCreateActivity: isStaff,
             canEditActivity: isStaff,
@@ -161,16 +138,12 @@ export const useUserPermissions = () => {
             canApproveActivityRegistration: isStaff,
             canViewActivityStats: isStaff,
             canViewActivityEditHistory: isStaff,
-            
-            // ==================== Certificate Management ====================
             canManageCertificates: isStaff,
             canGenerateCertificate: isStaff,
             canViewCertificates: isStaff || isTeacher || isStudent,
             canDeleteCertificate: isStaff,
             canManageTemplates: isStaff,
             canManageSignatures: isStaff,
-            
-            // ==================== Advanced Features ====================
             canUseAdvancedFilters: isStaff,
             canViewDetailedStats: isStaff,
             canCreateCustomReports: isStaff,
@@ -185,8 +158,6 @@ export const useUserPermissions = () => {
             canCrossReferenceUsers: isStaff,
             canCorrelateActivities: isStaff,
             canViewUserConnections: isStaff,
-            
-            // ==================== Action-based Permission Checker ====================
             canPerformDataEditAction: (action) => {
                 if (!isStaff) return false;
 
@@ -198,13 +169,12 @@ export const useUserPermissions = () => {
                         return true;
                     case 'delete':
                     case 'modify':
-                        return false; // Audit logs should not be modified
+                        return false;
                     default:
                         return false;
                 }
             },
 
-            // ==================== Feature-based Permission Checker ====================
             canAccessDataEditFeature: (feature) => {
                 if (!isStaff) return false;
 
@@ -235,7 +205,6 @@ export const useUserPermissions = () => {
                 return allowedFeatures.includes(feature);
             },
 
-            // ==================== Data Type Permission Checker ====================
             canViewDataEditData: (dataType) => {
                 if (!isStaff) return false;
 
@@ -265,7 +234,6 @@ export const useUserPermissions = () => {
                 }
             },
 
-            // ==================== Permission Level Checker ====================
             hasMinimumPermissionLevel: (requiredLevel) => {
                 const permissionLevels = {
                     'student': 1,
@@ -277,8 +245,7 @@ export const useUserPermissions = () => {
                 const required = permissionLevels[requiredLevel] || 0;
                 return userLevel >= required;
             },
-            
-            // ==================== Role Checker ====================
+
             hasRole: (role) => {
                 return userType === role;
             },
@@ -287,7 +254,6 @@ export const useUserPermissions = () => {
                 return roles.includes(userType);
             },
 
-            // ==================== Module Access Checker ====================
             canAccessModule: (module) => {
                 const modulePermissions = {
                     'dashboard': isStaff || isTeacher || isStudent,

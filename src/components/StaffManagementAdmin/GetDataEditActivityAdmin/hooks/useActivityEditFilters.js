@@ -3,7 +3,6 @@ import { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export const useActivityEditFilters = () => {
-  // Filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [editTypeFilter, setEditTypeFilter] = useState("");
   const [dateFilter, setDateFilter] = useState(null);
@@ -12,15 +11,13 @@ export const useActivityEditFilters = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Apply search query from criteria
   const setSearchFromCriteria = useCallback((criteria) => {
-    if (criteria && (criteria.type === 'activity_id' || criteria.type === 'activity_title' || 
-        criteria.type === 'staff_code' || criteria.type === 'email')) {
+    if (criteria && (criteria.type === 'activity_id' || criteria.type === 'activity_title' ||
+      criteria.type === 'staff_code' || criteria.type === 'email')) {
       setSearchQuery(criteria.value);
     }
   }, []);
 
-  // Filter activityEdits with improved logic
   const getFilteredActivityEdits = useCallback((activityEdits) => {
     if (!Array.isArray(activityEdits)) return [];
 
@@ -60,7 +57,6 @@ export const useActivityEditFilters = () => {
     });
   }, [searchQuery, editTypeFilter, dateFilter]);
 
-  // Get unique edit types for dropdown
   const getUniqueEditTypes = useCallback((activityEdits) => {
     if (!Array.isArray(activityEdits)) return [];
     return Array.from(new Set(
@@ -70,7 +66,6 @@ export const useActivityEditFilters = () => {
     )).sort();
   }, []);
 
-  // Reset all filters
   const resetFilters = useCallback((keepSearchCriteria = false) => {
     if (!keepSearchCriteria) {
       setSearchQuery("");
@@ -78,7 +73,7 @@ export const useActivityEditFilters = () => {
     setEditTypeFilter("");
     setDateFilter(null);
     setCurrentPage(1);
-    
+
     if (!keepSearchCriteria) {
       navigate({
         pathname: location.pathname,
@@ -87,12 +82,10 @@ export const useActivityEditFilters = () => {
     }
   }, [navigate, location.pathname]);
 
-  // Check if any filters are active
   const hasActiveFilters = useMemo(() => {
     return !!(searchQuery || editTypeFilter || dateFilter);
   }, [searchQuery, editTypeFilter, dateFilter]);
 
-  // Get filter summary for display
   const getFilterSummary = useMemo(() => {
     const active = [];
     if (searchQuery) active.push(`ค้นหา: "${searchQuery}"`);
@@ -102,7 +95,6 @@ export const useActivityEditFilters = () => {
   }, [searchQuery, editTypeFilter, dateFilter]);
 
   return {
-    // Filter states
     searchQuery,
     setSearchQuery,
     editTypeFilter,
@@ -111,12 +103,8 @@ export const useActivityEditFilters = () => {
     setDateFilter,
     currentPage,
     setCurrentPage,
-
-    // Computed values
     hasActiveFilters,
     getFilterSummary,
-
-    // Functions
     getFilteredActivityEdits,
     getUniqueEditTypes,
     resetFilters,

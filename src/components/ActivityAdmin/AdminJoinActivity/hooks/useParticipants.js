@@ -1,5 +1,5 @@
 // hooks/useParticipants.js
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
 
 const getApiUrl = (endpoint) => {
@@ -9,123 +9,110 @@ const getApiUrl = (endpoint) => {
 export const useParticipants = (activityId) => {
   const [participants, setParticipants] = useState([]);
   const [participantImages, setParticipantImages] = useState({});
-  const [imageBlobUrls, setImageBlobUrls] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const isMountedRef = useRef(true);
 
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-      // Cleanup blob URLs
-      Object.values(imageBlobUrls).forEach(url => {
-        URL.revokeObjectURL(url);
-      });
-    };
-  }, [imageBlobUrls]);
+  const fetchAllParticipantImages = useCallback(async (activityId) => {
+    if (!activityId) return;
+
+    try {
+      const response = await axios.get(
+        getApiUrl(`/api/admin/activities/${activityId}/pictures/all`),
+        { withCredentials: true }
+      );
+
+      if (response.data?.status) {
+        const allImages = response.data.data || [];
+        const imagesByUser = {};
+        allImages.forEach(image => {
+          if (!imagesByUser[image.Users_ID]) {
+            imagesByUser[image.Users_ID] = [];
+          }
+          imagesByUser[image.Users_ID].push(image);
+        });
+
+        setParticipantImages(imagesByUser);
+      }
+    } catch (err) {
+      console.error('❌ Error fetching all images:', err);
+    }
+  }, []);
 
   const fetchParticipants = useCallback(async () => {
     if (!activityId) {
       setParticipants([]);
-      setError(null);
+      setParticipantImages({});
       return;
     }
 
-    try {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
+    try {
       const response = await axios.get(
         getApiUrl(`/api/admin/activities/${activityId}/participants`),
         { withCredentials: true }
       );
 
       if (response.data?.status) {
-        setParticipants(response.data.data || []);
-      } else {
-        setError('ไม่สามารถโหลดข้อมูลผู้เข้าร่วมได้');
+        const participantsData = response.data.data || [];
+        setParticipants(participantsData);
+
+        if (participantsData.length > 0) {
+          await fetchAllParticipantImages(activityId);
+        } else {
+          setParticipantImages({});
+        }
       }
     } catch (err) {
-      console.error('Fetch participants error:', err);
-      setError(err.response?.data?.message || 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
+      console.error('❌ Error fetching participants:', err);
+      setError(err.response?.data?.message || 'ไม่สามารถโหลดข้อมูลผู้เข้าร่วมได้');
+      setParticipants([]);
+      setParticipantImages({});
     } finally {
       setLoading(false);
     }
-  }, [activityId]);
-
-  const fetchImageBlob = useCallback(async (imageFile) => {
-    if (imageBlobUrls[imageFile]) return;
-
-    try {
-      const response = await axios.get(
-        getApiUrl(`/api/admin/images/registration-images/${imageFile}`),
-        {
-          withCredentials: true,
-          responseType: 'blob'
-        }
-      );
-
-      const blobUrl = URL.createObjectURL(response.data);
-
-      if (isMountedRef.current) {
-        setImageBlobUrls(prev => ({
-          ...prev,
-          [imageFile]: blobUrl
-        }));
-      } else {
-        URL.revokeObjectURL(blobUrl);
-      }
-    } catch (err) {
-      console.error('Fetch image blob error:', err);
-    }
-  }, [imageBlobUrls]);
+  }, [activityId, fetchAllParticipantImages]);
 
   const fetchParticipantImages = useCallback(async (userId) => {
-    if (!activityId || !userId || participantImages[userId]) return;
+    if (!activityId || participantImages[userId]) {
+      return;
+    }
 
     try {
       const response = await axios.get(
-        getApiUrl(`/api/activities/${activityId}/pictures`),
-        {
-          withCredentials: true,
-          params: { userId }
-        }
+        getApiUrl(`/api/admin/activities/${activityId}/participants/${userId}/images`),
+        { withCredentials: true }
       );
 
-      if (response.data?.status && response.data.data) {
-        const userImages = response.data.data.filter(img => img.Users_ID === userId);
-
-        if (isMountedRef.current) {
-          setParticipantImages(prev => ({
-            ...prev,
-            [userId]: userImages
-          }));
-
-          for (const img of userImages) {
-            await fetchImageBlob(img.RegistrationPicture_ImageFile);
-          }
-        }
+      if (response.data?.status) {
+        setParticipantImages(prev => ({
+          ...prev,
+          [userId]: response.data.data || []
+        }));
       }
     } catch (err) {
-      console.error('Fetch participant images error:', err);
+      console.error('Error fetching participant images:', err);
     }
-  }, [activityId, participantImages, fetchImageBlob]);
+  }, [activityId, participantImages]);
 
   const refreshParticipants = useCallback(() => {
-    fetchParticipants();
+    return fetchParticipants();
   }, [fetchParticipants]);
 
   useEffect(() => {
     if (activityId) {
       fetchParticipants();
+    } else {
+      setParticipants([]);
+      setParticipantImages({});
+      setError(null);
     }
   }, [activityId, fetchParticipants]);
 
   return {
     participants,
     participantImages,
-    imageBlobUrls,
     loading,
     error,
     fetchParticipants,

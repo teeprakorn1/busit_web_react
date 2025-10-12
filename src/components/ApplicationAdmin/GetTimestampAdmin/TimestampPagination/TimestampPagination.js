@@ -11,7 +11,7 @@ function TimestampPagination({
   showInfo = true
 }) {
   const getVisiblePages = () => {
-    const delta = 2; // จำนวนหน้าที่แสดงรอบๆ หน้าปัจจุบัน
+    const delta = 2;
     const range = [];
     const rangeWithDots = [];
 
@@ -56,7 +56,7 @@ function TimestampPagination({
           แสดง {startItem}-{endItem} จาก {totalItems} รายการ
         </div>
       )}
-      
+
       <div className={styles.pagination}>
         {/* ปุ่มย้อนกลับ */}
         <button
@@ -82,9 +82,8 @@ function TimestampPagination({
           return (
             <button
               key={page}
-              className={`${styles.pageButton} ${
-                currentPage === page ? styles.activePage : ''
-              }`}
+              className={`${styles.pageButton} ${currentPage === page ? styles.activePage : ''
+                }`}
               onClick={() => onPageChange(page)}
               title={`หน้า ${page}`}
             >

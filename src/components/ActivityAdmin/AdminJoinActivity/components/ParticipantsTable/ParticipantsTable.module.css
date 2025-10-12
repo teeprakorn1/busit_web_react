@@ -1081,3 +1081,295 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+.pictureStatusCell {
+  min-width: 200px;
+  padding: 12px 16px;
+  text-align: left;
+}
+
+.pictureStatusText {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border: 2px solid #e5e7eb;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.pictureStatusText:empty::before,
+.pictureStatusText.empty {
+  content: 'ไม่มีรูป';
+  color: #9ca3af;
+  border-color: #d1d5db;
+  background: #f9fafb;
+  font-style: italic;
+}
+
+/* มีรูปรออนุมัติ - ขอบสีเหลือง */
+.pictureStatusText.hasPending {
+  border-left: 4px solid #f59e0b;
+  border-color: #fbbf24;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  color: #92400e;
+}
+
+/* มีรูปที่อนุมัติแล้ว - ขอบสีเขียว */
+.pictureStatusText.hasApproved {
+  border-left: 4px solid #10b981;
+  border-color: #6ee7b7;
+  background: linear-gradient(135deg, #f0fdf4 0%, #d1fae5 100%);
+  color: #065f46;
+}
+
+/* มีรูปที่ปฏิเสธ - ขอบสีแดง */
+.pictureStatusText.hasRejected {
+  border-left: 4px solid #ef4444;
+  border-color: #fca5a5;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  color: #991b1b;
+}
+
+/* มีรูปหลายสถานะ - ขอบสีผสม (Gradient) */
+.pictureStatusText.hasMixed {
+  border-left: 4px solid transparent;
+  border-image: linear-gradient(180deg, #f59e0b, #10b981, #ef4444) 1;
+  background: linear-gradient(135deg, #fefce8 0%, #f0fdf4 50%, #fef2f2 100%);
+  color: #374151;
+  font-weight: 600;
+}
+
+/* Hover effect */
+.pictureStatusText:hover:not(.empty) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  cursor: default;
+}
+
+/* Status parts inside text */
+.pictureStatusText .statusPart {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.pictureStatusText .statusPart.pending {
+  color: #d97706;
+}
+
+.pictureStatusText .statusPart.approved {
+  color: #059669;
+}
+
+.pictureStatusText .statusPart.rejected {
+  color: #dc2626;
+}
+
+/* Separator between status parts */
+.pictureStatusText .separator {
+  color: #9ca3af;
+  margin: 0 4px;
+  font-weight: 400;
+}
+
+/* ========================================
+   Detail View - Picture Status Section
+   ======================================== */
+
+.detailSection .pictureStatusDetail {
+  display: grid;
+  gap: 12px;
+}
+
+.pictureStatusDetail .statusRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 2px solid;
+  background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.6));
+  transition: all 0.2s ease;
+}
+
+.pictureStatusDetail .statusRow:hover {
+  transform: translateX(4px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Total */
+.statusRow.total {
+  border-color: #6b7280;
+  background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+}
+
+.statusRow.total .statusLabel {
+  color: #374151;
+  font-weight: 600;
+}
+
+.statusRow.total .statusValue {
+  color: #1f2937;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Pending */
+.statusRow.pending {
+  border-color: #fbbf24;
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+}
+
+.statusRow.pending .statusLabel {
+  color: #92400e;
+  font-weight: 600;
+}
+
+.statusRow.pending .statusValue {
+  color: #d97706;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Approved */
+.statusRow.approved {
+  border-color: #6ee7b7;
+  background: linear-gradient(135deg, #f0fdf4, #d1fae5);
+}
+
+.statusRow.approved .statusLabel {
+  color: #065f46;
+  font-weight: 600;
+}
+
+.statusRow.approved .statusValue {
+  color: #059669;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Rejected */
+.statusRow.rejected {
+  border-color: #fca5a5;
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+}
+
+.statusRow.rejected .statusLabel {
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.statusRow.rejected .statusValue {
+  color: #dc2626;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.statusLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.statusValue {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* ========================================
+   Loading State
+   ======================================== */
+
+.pictureStatusText.loading {
+  border-color: #d1d5db;
+  background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+  color: #9ca3af;
+}
+
+.pictureStatusText.loading::after {
+  content: '...';
+  animation: loadingDots 1.5s infinite;
+}
+
+@keyframes loadingDots {
+  0%, 20% { content: '.'; }
+  40% { content: '..'; }
+  60%, 100% { content: '...'; }
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+
+@media (max-width: 1200px) {
+  .pictureStatusCell {
+    min-width: 180px;
+  }
+  
+  .pictureStatusText {
+    font-size: 12px;
+    padding: 7px 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .pictureStatusCell {
+    display: none; /* ซ่อนในมือถือ */
+  }
+  
+  /* แสดงใน expanded view แทน */
+  .detailSection .pictureStatusDetail {
+    display: grid !important;
+  }
+}
+
+/* ========================================
+   Accessibility
+   ======================================== */
+
+.pictureStatusText[title] {
+  cursor: help;
+}
+
+.pictureStatusText:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* ========================================
+   Animation
+   ======================================== */
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.pictureStatusText.updating {
+  animation: statusPulse 1.5s ease-in-out infinite;
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+
+@media print {
+  .pictureStatusText {
+    border: 1px solid #000 !important;
+    background: none !important;
+    box-shadow: none !important;
+  }
+  
+  .pictureStatusText.hasPending {
+    border-left: 3px solid #000 !important;
+  }
+}

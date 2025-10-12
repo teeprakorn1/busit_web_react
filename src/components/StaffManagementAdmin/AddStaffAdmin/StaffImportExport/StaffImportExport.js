@@ -81,7 +81,7 @@ function StaffImportExport({ setModalOpen, onDataImport }) {
       'Staff_LastName',
       'Staff_Phone'
     ];
-    
+
     const templateData = [
       'staff001@rmutto.ac.th',
       'password12345',
@@ -90,7 +90,7 @@ function StaffImportExport({ setModalOpen, onDataImport }) {
       'ใจดี',
       '0834567890'
     ];
-    
+
     const filename = 'staff_template.csv';
 
     const csvContent = [headers.join(','), templateData.join(',')].join('\n');

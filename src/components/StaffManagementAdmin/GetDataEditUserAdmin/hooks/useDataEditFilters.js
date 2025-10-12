@@ -3,7 +3,6 @@ import { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export const useDataEditFilters = () => {
-  // Filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [editTypeFilter, setEditTypeFilter] = useState("");
   const [sourceTableFilter, setSourceTableFilter] = useState("");
@@ -13,14 +12,12 @@ export const useDataEditFilters = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Apply search query from criteria
   const setSearchFromCriteria = useCallback((criteria) => {
     if (criteria && (criteria.type === 'email' || criteria.type === 'staff_code' || criteria.type === 'ip')) {
       setSearchQuery(criteria.value);
     }
   }, []);
 
-  // Filter dataEdits with improved logic
   const getFilteredDataEdits = useCallback((dataEdits) => {
     if (!Array.isArray(dataEdits)) return [];
 
@@ -61,7 +58,6 @@ export const useDataEditFilters = () => {
     });
   }, [searchQuery, editTypeFilter, sourceTableFilter, dateFilter]);
 
-  // Get unique edit types for dropdown
   const getUniqueEditTypes = useCallback((dataEdits) => {
     if (!Array.isArray(dataEdits)) return [];
     return Array.from(new Set(
@@ -71,7 +67,6 @@ export const useDataEditFilters = () => {
     )).sort();
   }, []);
 
-  // Get unique source tables for dropdown
   const getUniqueSourceTables = useCallback((dataEdits) => {
     if (!Array.isArray(dataEdits)) return [];
     return Array.from(new Set(
@@ -81,7 +76,6 @@ export const useDataEditFilters = () => {
     )).sort();
   }, []);
 
-  // Reset all filters
   const resetFilters = useCallback((keepSearchCriteria = false) => {
     if (!keepSearchCriteria) {
       setSearchQuery("");
@@ -90,7 +84,7 @@ export const useDataEditFilters = () => {
     setSourceTableFilter("");
     setDateFilter(null);
     setCurrentPage(1);
-    
+
     if (!keepSearchCriteria) {
       navigate({
         pathname: location.pathname,
@@ -99,12 +93,10 @@ export const useDataEditFilters = () => {
     }
   }, [navigate, location.pathname]);
 
-  // Check if any filters are active
   const hasActiveFilters = useMemo(() => {
     return !!(searchQuery || editTypeFilter || sourceTableFilter || dateFilter);
   }, [searchQuery, editTypeFilter, sourceTableFilter, dateFilter]);
 
-  // Get filter summary for display
   const getFilterSummary = useMemo(() => {
     const active = [];
     if (searchQuery) active.push(`ค้นหา: "${searchQuery}"`);
@@ -115,7 +107,6 @@ export const useDataEditFilters = () => {
   }, [searchQuery, editTypeFilter, sourceTableFilter, dateFilter]);
 
   return {
-    // Filter states
     searchQuery,
     setSearchQuery,
     editTypeFilter,
@@ -126,12 +117,8 @@ export const useDataEditFilters = () => {
     setDateFilter,
     currentPage,
     setCurrentPage,
-
-    // Computed values
     hasActiveFilters,
     getFilterSummary,
-
-    // Functions
     getFilteredDataEdits,
     getUniqueEditTypes,
     getUniqueSourceTables,

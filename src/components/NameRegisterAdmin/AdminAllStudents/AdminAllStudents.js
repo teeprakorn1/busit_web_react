@@ -122,7 +122,6 @@ function AdminAllStudents() {
     return handleExportToExcel(sortedStudents, filterInfo);
   }, [getFilterInfo, handleExportToExcel, sortedStudents]);
 
-  // เพิ่มฟังก์ชันสำหรับ log search และ filter actions
   const handleSearchWithLogging = useCallback(async (query) => {
     setSearchQuery(query);
     if (query && query.length > 0) {
@@ -196,7 +195,6 @@ function AdminAllStudents() {
     }
   }, [departmentFromURL, departments.length, setFacultyFilter, setDepartmentFilter]);
 
-  // เพิ่ม useEffect สำหรับ log filter actions
   useEffect(() => {
     if (facultyFilter) {
       handleFilterWithLogging('faculty', facultyFilter);

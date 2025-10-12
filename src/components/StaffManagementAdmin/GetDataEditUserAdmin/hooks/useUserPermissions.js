@@ -53,22 +53,16 @@ export const useUserPermissions = () => {
             isStudent,
             userInfo,
             isLoading,
-            
-            // Admin Features
             canAccessAdminFeatures: isStaff,
             canManageUsers: isStaff,
             canViewReports: isStaff,
-            
-            // DataEdit specific permissions
             canAccessDataEditLogs: isStaff,
             canViewDataEditDetails: isStaff,
             canExportDataEditData: isStaff,
             canSearchDataEdits: isStaff,
             canFilterDataEdits: isStaff,
-            canDeleteDataEdits: false, // Usually no one can delete audit logs
+            canDeleteDataEdits: false,
             canViewStaffActivity: isStaff,
-            
-            // General audit permissions
             canViewAuditTrail: isStaff,
             canViewSystemLogs: isStaff,
             canViewAnalytics: isStaff,
@@ -78,32 +72,22 @@ export const useUserPermissions = () => {
             canExportUserData: isStaff,
             canExportSystemLogs: isStaff,
             canExportAnalytics: isStaff,
-            
-            // Search permissions
             canSearchByEmail: isStaff,
             canSearchByIP: isStaff,
             canSearchByStaffCode: isStaff,
             canSearchByEditType: isStaff,
             canSearchByDateRange: isStaff,
             canAdvancedSearch: isStaff,
-            
-            // Data access permissions
             canViewSensitiveData: isStaff,
             canAccessPersonalInfo: isStaff,
             canViewIPAddresses: isStaff,
             canViewEmailAddresses: isStaff,
-            
-            // System permissions
             canAccessSystemSettings: isStaff,
             canManagePermissions: isStaff,
             canConfigureLogging: isStaff,
-            
-            // Timestamp permissions (for compatibility)
             canAccessTimestampLogs: isStaff,
             canViewTimestampDetails: isStaff,
             canExportTimestampData: isStaff,
-            
-            // Action-based permission checker
             canPerformDataEditAction: (action) => {
                 if (!isStaff) return false;
 
@@ -115,13 +99,12 @@ export const useUserPermissions = () => {
                         return true;
                     case 'delete':
                     case 'modify':
-                        return false; // Audit logs should not be modified
+                        return false;
                     default:
                         return false;
                 }
             },
 
-            // Feature-based permission checker
             canAccessDataEditFeature: (feature) => {
                 if (!isStaff) return false;
 
@@ -137,7 +120,6 @@ export const useUserPermissions = () => {
                 return allowedFeatures.includes(feature);
             },
 
-            // Data type permission checker
             canViewDataEditData: (dataType) => {
                 if (!isStaff) return false;
 
@@ -153,7 +135,6 @@ export const useUserPermissions = () => {
                 }
             },
 
-            // Permission level checker
             hasMinimumPermissionLevel: (requiredLevel) => {
                 const permissionLevels = {
                     'student': 1,
@@ -165,8 +146,7 @@ export const useUserPermissions = () => {
                 const required = permissionLevels[requiredLevel] || 0;
                 return userLevel >= required;
             },
-            
-            // Advanced features
+
             canUseAdvancedFilters: isStaff,
             canViewDetailedStats: isStaff,
             canCreateCustomReports: isStaff,
@@ -181,8 +161,6 @@ export const useUserPermissions = () => {
             canCrossReferenceUsers: isStaff,
             canCorrelateActivities: isStaff,
             canViewUserConnections: isStaff,
-            
-            // Staff management specific
             canViewStaffDetails: isStaff,
             canSearchStaff: isStaff,
             canViewStaffEditHistory: isStaff,

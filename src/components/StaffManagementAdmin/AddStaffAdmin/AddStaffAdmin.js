@@ -140,7 +140,7 @@ function AddStaffAdmin() {
         try {
           const apiData = transformCSVToAPI(record);
           const endpoint = '/api/admin/users/staff/import';
-          
+
           const response = await axios.post(getApiUrl(endpoint), apiData, { withCredentials: true });
 
           if (response.data.status) {
@@ -160,9 +160,7 @@ function AddStaffAdmin() {
         }
       }
 
-      // Timestamp ID สำหรับ Staff CSV Import
-      const csvTimestampTypeId = 19; // timestamp_website_add_csv_staff
-
+      const csvTimestampTypeId = 19;
       if (successCount > 0 || errorCount > 0) {
         const completeCsvTimestampName = generateTimestampName(
           `Complete CSV import - Success: ${successCount}, Failed: ${errorCount}`,
@@ -351,7 +349,7 @@ function AddStaffAdmin() {
               </div>
             )}
             <h1 className={styles.heading}>เพิ่มบัญชีเจ้าหน้าที่</h1>
-            <div className={styles.headerRight}/>
+            <div className={styles.headerRight} />
           </div>
 
           <StaffImportExport

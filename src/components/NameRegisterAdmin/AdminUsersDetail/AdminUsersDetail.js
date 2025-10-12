@@ -12,6 +12,8 @@ import ExportExcelButton from './utils/ExportExcelButton';
 import ChangePasswordModal from './modals/ChangePasswordModal';
 
 import useAdminUserDetail from './hooks/useAdminUserDetail';
+import useUserActivities from './hooks/useUserActivities';
+import useCompletedActivities from './hooks/useCompletedActivities';
 import useUIState from './hooks/useUIState';
 import useUserUtils from './hooks/useUserUtils';
 import { useUserPermissions } from './hooks/useUserPermissions';
@@ -52,6 +54,18 @@ function AdminStaffDetail() {
     formatDateForInput,
     formatDateForSubmit
   } = useAdminUserDetail(id);
+
+  const {
+    activities,
+    loading: activitiesLoading,
+    stats: activitiesStats,
+  } = useUserActivities(userData?.Users_ID, userData?.userType);
+
+  const {
+    completedActivities,
+    loading: completedLoading,
+    totalHours: completedTotalHours,
+  } = useCompletedActivities(userData?.id, userData?.userType);
 
   const {
     isMobile,
@@ -175,9 +189,18 @@ function AdminStaffDetail() {
       case 'activities':
         return (
           <div className={styles.activitiesContainer}>
-            <RecentActivitiesForm userData={userData} />
+            <RecentActivitiesForm
+              userData={userData}
+              activities={activities}
+              loading={activitiesLoading}
+              stats={activitiesStats}
+            />
             {userData.userType === 'student' && (
-              <IncompleteActivitiesForm userData={userData} />
+              <IncompleteActivitiesForm
+                completedActivities={completedActivities}
+                loading={completedLoading}
+                totalHours={completedTotalHours}
+              />
             )}
           </div>
         );

@@ -1,18 +1,17 @@
-// components/ParticipantsTable/ParticipantsTable.jsx
+// components/ParticipantsTable/ParticipantsTable.js
 import React, { useState, useMemo } from 'react';
-import { 
-  User, Mail, Building2, GraduationCap, 
-  CheckCircle, Clock, Image as ImageIcon, 
+import {
+  User, Mail, Building2, GraduationCap,
+  CheckCircle, Clock, Image as ImageIcon,
   ChevronDown, ChevronUp, Search,
   LogIn, Eye, RefreshCw,
   CheckSquare, Square,
-  AlertCircle, Info, Calendar, Award
+  AlertCircle, Info, Calendar, Award, XCircle
 } from 'lucide-react';
 import styles from './ParticipantsTable.module.css';
 
 const ParticipantsTable = ({
   participants,
-  selectedParticipants,
   isSelected,
   toggleSelection,
   selectAll,
@@ -21,14 +20,13 @@ const ParticipantsTable = ({
   onViewImages,
   onRefresh,
   participantImages,
-  fetchParticipantImages,
   activity
 }) => {
   const [sortField, setSortField] = useState('Registration_RegisTime');
   const [sortDirection, setSortDirection] = useState('desc');
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState('');
-  const [quickFilter, setQuickFilter] = useState('all'); // all, pending, checked_in, completed
+  const [quickFilter, setQuickFilter] = useState('all');
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -45,17 +43,93 @@ const ParticipantsTable = ({
       newExpanded.delete(userId);
     } else {
       newExpanded.add(userId);
-      if (!participantImages[userId]) {
-        fetchParticipantImages(userId);
-      }
     }
     setExpandedRows(newExpanded);
+  };
+
+  const getImageStats = (userId) => {
+    const images = participantImages[userId] || [];
+    return {
+      total: images.length,
+      pending: images.filter(img => img.RegistrationPictureStatus_ID === 1).length,
+      approved: images.filter(img => img.RegistrationPictureStatus_ID === 2).length,
+      rejected: images.filter(img => img.RegistrationPictureStatus_ID === 3).length
+    };
+  };
+
+  const getStatusClassName = (stats) => {
+    if (stats.total === 0) return styles.empty;
+
+    const hasMultipleStatus = [
+      stats.pending > 0,
+      stats.approved > 0,
+      stats.rejected > 0
+    ].filter(Boolean).length > 1;
+
+    if (hasMultipleStatus) return styles.hasMixed;
+    if (stats.pending > 0) return styles.hasPending;
+    if (stats.approved > 0) return styles.hasApproved;
+    if (stats.rejected > 0) return styles.hasRejected;
+
+    return '';
+  };
+
+  const renderImageStatusText = (userId) => {
+    const stats = getImageStats(userId);
+    const className = getStatusClassName(stats);
+
+    if (stats.total === 0) {
+      return (
+        <div className={`${styles.pictureStatusText} ${className}`}>
+          ไม่มีรูป
+        </div>
+      );
+    }
+
+    const parts = [];
+    if (stats.pending > 0) {
+      parts.push(
+        <span key="pending" className={`${styles.statusPart} ${styles.pending}`}>
+          รออนุมัติ {stats.pending}
+        </span>
+      );
+    }
+    if (stats.approved > 0) {
+      parts.push(
+        <span key="approved" className={`${styles.statusPart} ${styles.approved}`}>
+          อนุมัติ {stats.approved}
+        </span>
+      );
+    }
+    if (stats.rejected > 0) {
+      parts.push(
+        <span key="rejected" className={`${styles.statusPart} ${styles.rejected}`}>
+          ปฏิเสธ {stats.rejected}
+        </span>
+      );
+    }
+
+    const withSeparators = parts.reduce((acc, part, idx) => {
+      if (idx > 0) {
+        acc.push(<span key={`sep-${idx}`} className={styles.separator}>,</span>);
+      }
+      acc.push(part);
+      return acc;
+    }, []);
+
+    return (
+      <div
+        className={`${styles.pictureStatusText} ${className}`}
+        title={`ทั้งหมด ${stats.total} รูป`}
+      >
+        {withSeparators}
+      </div>
+    );
   };
 
   const filteredAndSortedParticipants = useMemo(() => {
     let filtered = [...participants];
 
-    // Quick filter
     if (quickFilter === 'pending') {
       filtered = filtered.filter(p => !p.Registration_CheckInTime);
     } else if (quickFilter === 'checked_in') {
@@ -64,10 +138,9 @@ const ParticipantsTable = ({
       filtered = filtered.filter(p => p.Registration_CheckOutTime);
     }
 
-    // Search filter
     if (searchTerm.trim()) {
       const search = searchTerm.toLowerCase();
-      filtered = filtered.filter(p => 
+      filtered = filtered.filter(p =>
         p.FirstName?.toLowerCase().includes(search) ||
         p.LastName?.toLowerCase().includes(search) ||
         p.Code?.toLowerCase().includes(search) ||
@@ -76,7 +149,6 @@ const ParticipantsTable = ({
       );
     }
 
-    // Sort
     filtered.sort((a, b) => {
       let aVal = a[sortField];
       let bVal = b[sortField];
@@ -179,7 +251,7 @@ const ParticipantsTable = ({
 
   return (
     <div className={styles.tableContainer}>
-      {/* Enhanced Header */}
+      {/* Header */}
       <div className={styles.tableHeader}>
         <div className={styles.headerTop}>
           <div className={styles.tableTitle}>
@@ -193,9 +265,9 @@ const ParticipantsTable = ({
               )}
             </span>
           </div>
-          
+
           <div className={styles.headerActions}>
-            <button 
+            <button
               className={styles.refreshButton}
               onClick={onRefresh}
               title="รีเฟรช"
@@ -240,7 +312,7 @@ const ParticipantsTable = ({
           )}
         </div>
 
-        {/* Search and Filter Bar */}
+        {/* Search and Filter */}
         <div className={styles.filterBar}>
           <div className={styles.searchBox}>
             <Search size={18} />
@@ -251,7 +323,7 @@ const ParticipantsTable = ({
               onChange={(e) => setSearchTerm(e.target.value)}
             />
             {searchTerm && (
-              <button 
+              <button
                 className={styles.clearSearch}
                 onClick={() => setSearchTerm('')}
               >
@@ -327,6 +399,7 @@ const ParticipantsTable = ({
               </th>
               <th className={styles.statusCell}>สถานะ</th>
               <th className={styles.imageCell}>รูปภาพ</th>
+              <th className={styles.pictureStatusCell}>สถานะรูปภาพ</th>
               <th className={styles.actionsCell}></th>
             </tr>
           </thead>
@@ -335,6 +408,7 @@ const ParticipantsTable = ({
               const isExpanded = expandedRows.has(participant.Users_ID);
               const images = participantImages[participant.Users_ID] || [];
               const isRowSelected = isSelected(participant.Users_ID);
+              const imageStats = getImageStats(participant.Users_ID);
 
               return (
                 <React.Fragment key={participant.Users_ID}>
@@ -348,7 +422,7 @@ const ParticipantsTable = ({
                           className={styles.checkbox}
                           id={`checkbox-${participant.Users_ID}`}
                         />
-                        <label 
+                        <label
                           htmlFor={`checkbox-${participant.Users_ID}`}
                           className={styles.checkboxLabel}
                         >
@@ -360,7 +434,6 @@ const ParticipantsTable = ({
                       <button
                         className={`${styles.expandButton} ${isExpanded ? styles.expanded : ''}`}
                         onClick={() => toggleRowExpand(participant.Users_ID)}
-                        aria-label="ขยาย/ย่อรายละเอียด"
                       >
                         {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                       </button>
@@ -428,9 +501,12 @@ const ParticipantsTable = ({
                         </span>
                       )}
                     </td>
+                    <td className={styles.pictureStatusCell}>
+                      {renderImageStatusText(participant.Users_ID)}
+                    </td>
                     <td className={styles.actionsCell}>
                       <div className={styles.actionButtons}>
-                        <button 
+                        <button
                           className={styles.actionButton}
                           onClick={() => toggleRowExpand(participant.Users_ID)}
                           title="ดูรายละเอียด"
@@ -443,7 +519,7 @@ const ParticipantsTable = ({
 
                   {isExpanded && (
                     <tr className={styles.detailsRow}>
-                      <td colSpan="10">
+                      <td colSpan="11">
                         <div className={styles.expandedContent}>
                           <div className={styles.detailsGrid}>
                             {/* Contact Info */}
@@ -457,12 +533,6 @@ const ParticipantsTable = ({
                                   <span className={styles.detailLabel}>อีเมล:</span>
                                   <span className={styles.detailValue}>{participant.Users_Email}</span>
                                 </div>
-                                {participant.Phone && (
-                                  <div className={styles.detailItem}>
-                                    <span className={styles.detailLabel}>เบอร์โทร:</span>
-                                    <span className={styles.detailValue}>{participant.Phone}</span>
-                                  </div>
-                                )}
                               </div>
                             </div>
 
@@ -509,38 +579,54 @@ const ParticipantsTable = ({
                               </div>
                             </div>
 
-                            {/* Images Section */}
+                            {/* Picture Status Detail */}
+                            <div className={styles.detailSection}>
+                              <h4 className={styles.sectionTitle}>
+                                <ImageIcon size={16} />
+                                สถานะรูปภาพ
+                              </h4>
+                              <div className={styles.pictureStatusDetail}>
+                                <div className={`${styles.statusRow} ${styles.total}`}>
+                                  <span className={styles.statusLabel}>ทั้งหมด</span>
+                                  <span className={styles.statusValue}>{imageStats.total} รูป</span>
+                                </div>
+                                <div className={`${styles.statusRow} ${styles.pending}`}>
+                                  <span className={styles.statusLabel}>
+                                    <Clock size={14} />
+                                    รออนุมัติ
+                                  </span>
+                                  <span className={styles.statusValue}>{imageStats.pending} รูป</span>
+                                </div>
+                                <div className={`${styles.statusRow} ${styles.approved}`}>
+                                  <span className={styles.statusLabel}>
+                                    <CheckCircle size={14} />
+                                    อนุมัติแล้ว
+                                  </span>
+                                  <span className={styles.statusValue}>{imageStats.approved} รูป</span>
+                                </div>
+                                <div className={`${styles.statusRow} ${styles.rejected}`}>
+                                  <span className={styles.statusLabel}>
+                                    <XCircle size={14} />
+                                    ปฏิเสธ
+                                  </span>
+                                  <span className={styles.statusValue}>{imageStats.rejected} รูป</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Images */}
                             {images.length > 0 && (
                               <div className={`${styles.detailSection} ${styles.fullWidth}`}>
                                 <h4 className={styles.sectionTitle}>
                                   <ImageIcon size={16} />
-                                  รูปภาพกิจกรรม ({images.length})
+                                  รูปภาพกิจกรรม
                                 </h4>
-                                <div className={styles.imagePreviewGrid}>
-                                  {images.slice(0, 3).map((img) => (
-                                    <div key={img.RegistrationPicture_ID} className={styles.imagePreview}>
-                                      <div className={styles.previewStatus}>
-                                        <span className={`${styles.statusDot} ${
-                                          img.RegistrationPictureStatus_ID === 2 ? styles.approved :
-                                          img.RegistrationPictureStatus_ID === 3 ? styles.rejected :
-                                          styles.pending
-                                        }`}></span>
-                                        <span>{img.RegistrationPictureStatus_Name}</span>
-                                      </div>
-                                    </div>
-                                  ))}
-                                  {images.length > 3 && (
-                                    <div className={styles.moreImages}>
-                                      +{images.length - 3} รูป
-                                    </div>
-                                  )}
-                                </div>
                                 <button
                                   className={styles.viewAllImagesButton}
                                   onClick={() => onViewImages(participant)}
                                 >
                                   <Eye size={16} />
-                                  ดูรูปภาพทั้งหมด
+                                  ดูรูปภาพทั้งหมด ({images.length} รูป)
                                 </button>
                               </div>
                             )}
@@ -562,7 +648,7 @@ const ParticipantsTable = ({
           <AlertCircle size={48} />
           <h4>ไม่พบผลลัพธ์</h4>
           <p>ไม่พบรายชื่อที่ตรงกับคำค้นหา "{searchTerm}"</p>
-          <button 
+          <button
             className={styles.clearFilterButton}
             onClick={() => setSearchTerm('')}
           >

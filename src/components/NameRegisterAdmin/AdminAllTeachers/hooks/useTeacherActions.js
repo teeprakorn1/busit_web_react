@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { exportFilteredTeachersToExcel } from '../utils/excelExportUtils';
 import { useUserPermissions } from './useUserPermissions';
 import {
-  // Data Edit functions
   logTeacherView,
   logTeacherEdit,
   logTeacherStatusConfirm,
@@ -12,22 +11,20 @@ import {
   logTeacherFilter,
   logBulkOperation,
   logSystemAction,
-  
-  // Timestamp functions
   logTeacherViewTimestamp,
   logTeacherEditTimestamp,
   logTeacherStatusChangeTimestamp,
   logTeacherExportTimestamp,
   logTeacherSearchTimestamp,
   logTeacherFilterTimestamp
-} from './../../../..//utils/systemLog';
+} from './../../../../utils/systemLog';
 
-export const useTeacherActions = ({ 
-  validateId, 
-  sanitizeInput, 
-  setSecurityAlert, 
-  showModal, 
-  closeModal, 
+export const useTeacherActions = ({
+  validateId,
+  sanitizeInput,
+  setSecurityAlert,
+  showModal,
+  closeModal,
   openTeacherModal,
   toggleTeacherStatus,
   fetchTeachers
@@ -49,7 +46,6 @@ export const useTeacherActions = ({
 
     const teacherName = `${teacher.firstName} ${teacher.lastName}`;
 
-    // Log both data edit and timestamp
     try {
       await Promise.all([
         logTeacherView(teacher.id, teacherName, teacher.code),
@@ -76,7 +72,6 @@ export const useTeacherActions = ({
 
     const teacherName = `${teacher.firstName} ${teacher.lastName}`;
 
-    // Log both data edit and timestamp
     try {
       await Promise.all([
         logTeacherEdit(teacher.id, teacherName, teacher.code),
@@ -106,7 +101,7 @@ export const useTeacherActions = ({
     const lastName = sanitizeInput(teacher.lastName || '');
     const teacherName = `${firstName} ${lastName}`;
     const confirmMessage = `คุณต้องการ${action}การใช้งานของ ${teacherName} หรือไม่?`;
-    
+
     showModal(confirmMessage, [
       {
         label: 'ยกเลิก',
@@ -116,12 +111,11 @@ export const useTeacherActions = ({
         label: 'ยืนยัน',
         onClick: async () => {
           closeModal();
-          
+
           try {
             const result = await toggleTeacherStatus(teacher);
-            
+
             if (result.success) {
-              // Log both data edit and timestamp for status change confirmation
               await Promise.all([
                 logTeacherStatusConfirm(teacher.id, teacherName, teacher.code, action),
                 logTeacherStatusChangeTimestamp(teacherName, teacher.code, action)
@@ -148,7 +142,6 @@ export const useTeacherActions = ({
     }
 
     try {
-      // Log both data edit and timestamp
       await Promise.all([
         logTeacherExport(teachers.length, filterInfo),
         logTeacherExportTimestamp(teachers.length, filterInfo)
@@ -166,16 +159,15 @@ export const useTeacherActions = ({
       setSecurityAlert('ไม่มีสิทธิ์ในการเพิ่มอาจารย์ - ต้องเป็น Staff เท่านั้น');
       return;
     }
-    
-    // Log the add teacher action initiation
+
     try {
       await logSystemAction(0, 'เริ่มกระบวนการเพิ่มอาจารย์ใหม่', 'Teacher');
     } catch (error) {
       console.warn('Failed to log add teacher initiation:', error);
     }
-    
-    navigate('/application/add-user', { 
-      state: { from: '/name-register/teacher-name' } 
+
+    navigate('/application/add-user', {
+      state: { from: '/name-register/teacher-name' }
     });
   }, [navigate, permissions.canAddTeachers, setSecurityAlert]);
 
@@ -186,7 +178,7 @@ export const useTeacherActions = ({
   const handleSmartBack = useCallback((searchParams, currentPath) => {
     const departmentId = searchParams?.get('departmentId');
     const fromParam = searchParams?.get('from');
-    
+
     if (departmentId) {
       navigate('/name-register/department-name');
     } else if (fromParam) {
@@ -216,7 +208,6 @@ export const useTeacherActions = ({
       return;
     }
 
-    // Log the summary view action
     try {
       await logSystemAction(
         0,
@@ -269,9 +260,8 @@ ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
 
   const handleRefreshTeachers = useCallback(async () => {
     try {
-      // Log the refresh action
       await logSystemAction(0, 'รีเฟรชข้อมูลอาจารย์ทั้งหมด', 'Teacher');
-      
+
       await fetchTeachers();
     } catch (error) {
       console.warn('Failed to refresh teacher data:', error);
@@ -318,9 +308,8 @@ ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
         label: 'ส่งออกข้อมูล',
         onClick: async () => {
           closeModal();
-          
+
           try {
-            // Log both data edit and timestamp
             await Promise.all([
               logBulkOperation(
                 'ส่งออกข้อมูลอาจารย์แบบ Bulk',
@@ -342,7 +331,6 @@ ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
             }
           } catch (error) {
             console.warn('Failed to log bulk export:', error);
-            // Continue with export even if logging fails
             const success = exportFilteredTeachersToExcel(teachers, filterInfo, options);
             if (success) {
               showModal('ส่งออกข้อมูลเรียบร้อยแล้ว', [
@@ -358,7 +346,6 @@ ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
     ]);
   }, [permissions.canExportData, setSecurityAlert, showModal, closeModal]);
 
-  // New function to log search operations
   const handleSearch = useCallback(async (searchCriteria) => {
     try {
       await Promise.all([
@@ -370,7 +357,6 @@ ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
     }
   }, []);
 
-  // New function to log filter operations  
   const handleFilter = useCallback(async (filterCriteria) => {
     try {
       await Promise.all([

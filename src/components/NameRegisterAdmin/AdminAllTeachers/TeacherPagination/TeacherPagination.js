@@ -10,10 +10,9 @@ function TeacherPagination({
   totalItems,
   showInfo = true
 }) {
-  // Memoize การคำนวณ visible pages เพื่อไม่ให้คำนวณใหม่ทุกครั้ง
   const getVisiblePages = useMemo(() => {
     if (totalPages <= 1) return [];
-    
+
     const delta = 2;
     const range = [];
     const rangeWithDots = [];
@@ -45,13 +44,11 @@ function TeacherPagination({
     return rangeWithDots;
   }, [currentPage, totalPages]);
 
-  // Memoize การคำนวณ start และ end items
   const { startItem, endItem } = useMemo(() => ({
     startItem: (currentPage - 1) * itemsPerPage + 1,
     endItem: Math.min(currentPage * itemsPerPage, totalItems)
   }), [currentPage, itemsPerPage, totalItems]);
 
-  // Memoize page change handlers เพื่อป้องกัน unnecessary re-renders
   const handlePreviousPage = useCallback(() => {
     if (currentPage > 1) {
       onPageChange(currentPage - 1);
@@ -70,7 +67,6 @@ function TeacherPagination({
     }
   }, [currentPage, totalPages, onPageChange]);
 
-  // ถ้ามีแค่ 1 หน้าหรือไม่มีข้อมูล ไม่แสดง pagination
   if (totalPages <= 1 || totalItems === 0) {
     return null;
   }
@@ -82,7 +78,7 @@ function TeacherPagination({
           แสดง {startItem.toLocaleString()}-{endItem.toLocaleString()} จาก {totalItems.toLocaleString()} รายการ
         </div>
       )}
-      
+
       <div className={styles.pagination}>
         <button
           className={`${styles.pageButton} ${styles.navButton}`}
@@ -98,8 +94,8 @@ function TeacherPagination({
         {getVisiblePages.map((page, index) => {
           if (page === '...') {
             return (
-              <span 
-                key={`dots-${index}`} 
+              <span
+                key={`dots-${index}`}
                 className={styles.dots}
                 aria-hidden="true"
               >
@@ -112,9 +108,8 @@ function TeacherPagination({
           return (
             <button
               key={page}
-              className={`${styles.pageButton} ${
-                isCurrentPage ? styles.activePage : ''
-              }`}
+              className={`${styles.pageButton} ${isCurrentPage ? styles.activePage : ''
+                }`}
               onClick={() => handlePageClick(page)}
               title={`หน้า ${page}`}
               aria-label={`ไปหน้า ${page}`}
@@ -137,7 +132,7 @@ function TeacherPagination({
           <ChevronRight className={styles.icon} />
         </button>
       </div>
-      
+
       <div className={styles.mobileInfo}>
         หน้า {currentPage} จาก {totalPages}
       </div>

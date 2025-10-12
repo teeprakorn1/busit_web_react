@@ -72,14 +72,12 @@ const DateRangePicker = ({ onDateRangeChange, value }) => {
 
     switch (preset) {
       case 'today':
-        // Already set
         break;
       case 'tomorrow':
         start.setDate(today.getDate() + 1);
         end.setDate(today.getDate() + 1);
         break;
       case 'this_week':
-        // Start from Monday
         const dayOfWeek = today.getDay();
         const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
         start.setDate(today.getDate() + daysToMonday);

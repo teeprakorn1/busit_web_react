@@ -116,9 +116,9 @@ function ActivityEditTable({
               <td onClick={handleRowClick}>
                 {ae.ActivityStatus_Name ? (
                   <span className={`${styles.statusBadge} ${ae.ActivityStatus_Name === 'เปิดรับสมัคร' ? styles.statusOpen :
-                      ae.ActivityStatus_Name === 'กำลังดำเนินการ' ? styles.statusOngoing :
-                        ae.ActivityStatus_Name === 'เสร็จสิ้น' ? styles.statusCompleted :
-                          styles.statusCancelled
+                    ae.ActivityStatus_Name === 'กำลังดำเนินการ' ? styles.statusOngoing :
+                      ae.ActivityStatus_Name === 'เสร็จสิ้น' ? styles.statusCompleted :
+                        styles.statusCancelled
                     }`}>
                     {ae.ActivityStatus_Name}
                   </span>

@@ -159,8 +159,6 @@ function ActivityForms({ formData, setFormData, errors = {}, activityTypes, acti
                         เลือกหากกิจกรรมนี้เป็นกิจกรรมที่นักศึกษาต้องเข้าร่วม
                     </small>
                 </div>
-
-                {/* ส่วนใหม่: อนุญาตให้อาจารย์เข้าร่วม */}
                 <div className={styles.fieldGroup}>
                     <label className={styles.checkboxLabel}>
                         <input

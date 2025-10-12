@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { exportFilteredStaffToExcel } from '../utils/excelExportUtils';
 import { useUserPermissions } from './useUserPermissions';
 import {
-  // Data Edit functions
   logStaffView,
   logStaffEdit,
   logStaffStatusConfirm,
@@ -12,25 +11,23 @@ import {
   logStaffFilter,
   logBulkOperation,
   logSystemAction,
-  
-  // Timestamp functions
   logStaffViewTimestamp,
   logStaffEditTimestamp,
   logStaffStatusChangeTimestamp,
   logStaffExportTimestamp,
   logStaffSearchTimestamp,
   logStaffFilterTimestamp
-} from './../../../..//utils/systemLog';
+} from './../../../../utils/systemLog';
 
-export const useStaffActions = ({ 
-  validateId, 
-  sanitizeInput, 
-  setSecurityAlert, 
-  showModal, 
-  closeModal, 
+export const useStaffActions = ({
+  validateId,
+  sanitizeInput,
+  setSecurityAlert,
+  showModal,
+  closeModal,
   openStaffModal,
   toggleStaffStatus,
-  fetchStaff 
+  fetchStaff
 }) => {
   const navigate = useNavigate();
   const permissions = useUserPermissions();
@@ -48,8 +45,6 @@ export const useStaffActions = ({
     }
 
     const staffName = `${staff.firstName} ${staff.lastName}`;
-
-    // Log both data edit and timestamp
     try {
       await Promise.all([
         logStaffView(staff.id, staffName, staff.code),
@@ -75,8 +70,6 @@ export const useStaffActions = ({
     }
 
     const staffName = `${staff.firstName} ${staff.lastName}`;
-
-    // Log both data edit and timestamp
     try {
       await Promise.all([
         logStaffEdit(staff.id, staffName, staff.code),
@@ -106,7 +99,7 @@ export const useStaffActions = ({
     const lastName = sanitizeInput(staff.lastName || '');
     const staffName = `${firstName} ${lastName}`;
     const confirmMessage = `คุณต้องการ${action}การใช้งานของ ${staffName} หรือไม่?`;
-    
+
     showModal(confirmMessage, [
       {
         label: 'ยกเลิก',
@@ -116,12 +109,11 @@ export const useStaffActions = ({
         label: 'ยืนยัน',
         onClick: async () => {
           closeModal();
-          
+
           try {
             const result = await toggleStaffStatus(staff);
-            
+
             if (result.success) {
-              // Log both data edit and timestamp for status change confirmation
               await Promise.all([
                 logStaffStatusConfirm(staff.id, staffName, staff.code, action),
                 logStaffStatusChangeTimestamp(staffName, staff.code, action)
@@ -148,7 +140,6 @@ export const useStaffActions = ({
     }
 
     try {
-      // Log both data edit and timestamp
       await Promise.all([
         logStaffExport(staff.length, filterInfo),
         logStaffExportTimestamp(staff.length, filterInfo)
@@ -166,16 +157,15 @@ export const useStaffActions = ({
       setSecurityAlert('ไม่มีสิทธิ์ในการเพิ่มเจ้าหน้าที่ - ต้องเป็น Staff เท่านั้น');
       return;
     }
-    
-    // Log the add staff action initiation
+
     try {
       await logSystemAction(0, 'เริ่มกระบวนการเพิ่มเจ้าหน้าที่ใหม่', 'Staff');
     } catch (error) {
       console.warn('Failed to log add staff initiation:', error);
     }
-    
-    navigate('/staff-management/add-staff', { 
-      state: { from: '/staff-management/staff-name', userType: 'staff' } 
+
+    navigate('/staff-management/add-staff', {
+      state: { from: '/staff-management/staff-name', userType: 'staff' }
     });
   }, [navigate, permissions.canAddStaff, setSecurityAlert]);
 
@@ -185,7 +175,7 @@ export const useStaffActions = ({
 
   const handleSmartBack = useCallback((searchParams, currentPath) => {
     const fromParam = searchParams?.get('from');
-    
+
     if (fromParam) {
       navigate(fromParam);
     } else {
@@ -211,7 +201,6 @@ export const useStaffActions = ({
       return;
     }
 
-    // Log the summary view action
     try {
       await logSystemAction(
         0,
@@ -257,9 +246,8 @@ export const useStaffActions = ({
 
   const handleRefreshStaff = useCallback(async () => {
     try {
-      // Log the refresh action
       await logSystemAction(0, 'รีเฟรชข้อมูลเจ้าหน้าที่ทั้งหมด', 'Staff');
-      
+
       await fetchStaff();
     } catch (error) {
       console.warn('Failed to refresh staff data:', error);
@@ -302,9 +290,8 @@ export const useStaffActions = ({
         label: 'ส่งออกข้อมูล',
         onClick: async () => {
           closeModal();
-          
+
           try {
-            // Log both data edit and timestamp
             await Promise.all([
               logBulkOperation(
                 'ส่งออกข้อมูลเจ้าหน้าที่แบบ Bulk',
@@ -326,7 +313,6 @@ export const useStaffActions = ({
             }
           } catch (error) {
             console.warn('Failed to log bulk export:', error);
-            // Continue with export even if logging fails
             const success = exportFilteredStaffToExcel(staff, filterInfo, options);
             if (success) {
               showModal('ส่งออกข้อมูลเรียบร้อยแล้ว', [
@@ -342,7 +328,6 @@ export const useStaffActions = ({
     ]);
   }, [permissions.canExportData, setSecurityAlert, showModal, closeModal]);
 
-  // New function to log search operations
   const handleSearch = useCallback(async (searchCriteria) => {
     try {
       await Promise.all([
@@ -354,7 +339,6 @@ export const useStaffActions = ({
     }
   }, []);
 
-  // New function to log filter operations  
   const handleFilter = useCallback(async (filterCriteria) => {
     try {
       await Promise.all([

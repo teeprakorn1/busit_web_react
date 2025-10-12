@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { User } from 'lucide-react';
 
-const ImageWithFallback = ({ 
-  filename, 
-  imageUrls, 
-  loadImageWithCredentials, 
-  handleImageError, 
+const ImageWithFallback = ({
+  filename,
+  imageUrls,
+  loadImageWithCredentials,
+  handleImageError,
   shouldLoadImage,
   alt,
   className,
@@ -14,15 +14,14 @@ const ImageWithFallback = ({
   onLoadStart,
   onLoadEnd,
   onError,
-  ...props 
+  ...props
 }) => {
-  const [imageState, setImageState] = useState('loading'); // 'loading', 'loaded', 'error', 'fallback'
+  const [imageState, setImageState] = useState('loading');
   const [displayUrl, setDisplayUrl] = useState(null);
   const imgRef = useRef(null);
   const mountedRef = useRef(true);
   const loadAttemptRef = useRef(0);
 
-  // Reset state when filename changes
   useEffect(() => {
     mountedRef.current = true;
     loadAttemptRef.current = 0;
@@ -38,16 +37,14 @@ const ImageWithFallback = ({
     if (!mountedRef.current) return;
 
     console.error(`Image load error for: ${filename}`, error);
-    
+
     setImageState('error');
     setDisplayUrl(null);
-    
-    // Call external error handler
+
     if (handleImageError) {
       handleImageError(filename);
     }
-    
-    // Call component-specific error handler
+
     if (onError) {
       onError(error, filename);
     }
@@ -61,7 +58,7 @@ const ImageWithFallback = ({
     if (!mountedRef.current) return;
 
     console.log(`Image loaded successfully: ${filename}`);
-    
+
     setImageState('loaded');
     setDisplayUrl(url);
 
@@ -70,7 +67,6 @@ const ImageWithFallback = ({
     }
   }, [filename, onLoadEnd]);
 
-  // Main image loading logic
   useEffect(() => {
     const loadImage = async () => {
       if (!filename || !mountedRef.current) {
@@ -78,20 +74,17 @@ const ImageWithFallback = ({
         return;
       }
 
-      // Check if we have a cached image
       const cachedUrl = imageUrls?.get(filename);
       if (cachedUrl) {
         handleLoadSuccess(cachedUrl);
         return;
       }
 
-      // Check if we should load this image
       if (!shouldLoadImage || !shouldLoadImage(filename)) {
         setImageState('fallback');
         return;
       }
 
-      // Start loading
       if (onLoadStart) {
         onLoadStart();
       }
@@ -101,8 +94,6 @@ const ImageWithFallback = ({
         const currentAttempt = loadAttemptRef.current;
 
         const url = await loadImageWithCredentials(filename);
-        
-        // Check if this is still the current attempt and component is mounted
         if (currentAttempt !== loadAttemptRef.current || !mountedRef.current) {
           return;
         }
@@ -122,11 +113,8 @@ const ImageWithFallback = ({
     loadImage();
   }, [filename, imageUrls, shouldLoadImage, loadImageWithCredentials, handleLoadSuccess, handleLoadError, onLoadStart]);
 
-  // Handle img element load/error events
   const handleImgLoad = useCallback((event) => {
     if (!mountedRef.current) return;
-    
-    // Image element loaded successfully
     if (imageState !== 'loaded') {
       setImageState('loaded');
     }
@@ -134,12 +122,11 @@ const ImageWithFallback = ({
 
   const handleImgError = useCallback((event) => {
     if (!mountedRef.current) return;
-    
+
     console.error('IMG element error for:', filename);
     handleLoadError(new Error('IMG element failed to load'));
   }, [filename, handleLoadError]);
 
-  // Render based on current state
   const renderContent = () => {
     switch (imageState) {
       case 'loaded':
@@ -156,7 +143,6 @@ const ImageWithFallback = ({
             />
           );
         }
-        // Fallback if loaded but no URL
         return (
           <div className={`${className || ''} image-fallback`} {...props}>
             <FallbackIcon size={fallbackIconSize} />
@@ -186,7 +172,6 @@ const ImageWithFallback = ({
   return renderContent();
 };
 
-// Usage example for the AdminUsersDetail component
 const renderUserProfileCard = () => {
   if (!userInfo) return null;
 
@@ -210,7 +195,6 @@ const renderUserProfileCard = () => {
           />
         </div>
         <div className={styles.profileInfo}>
-          {/* Rest of profile info */}
         </div>
       </div>
     </div>

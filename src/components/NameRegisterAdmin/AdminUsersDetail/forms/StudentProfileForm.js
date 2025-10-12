@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { User, Edit, Save, X, Plus, Trash2, Loader, AlertCircle, RefreshCw } from 'lucide-react';
 import styles from './ProfileForms.module.css';
 
-const StudentProfileForm = ({ 
-  userData, 
-  onUpdate, 
+const StudentProfileForm = ({
+  userData,
+  onUpdate,
   loading = false,
   faculties,
   departments,
@@ -37,7 +37,6 @@ const StudentProfileForm = ({
   const [filteredDepartments, setFilteredDepartments] = useState([]);
   const [filteredTeachers, setFilteredTeachers] = useState([]);
 
-  // Update formData when userData changes
   useEffect(() => {
     if (userData?.student && userData?.department) {
       const initialData = {
@@ -45,8 +44,8 @@ const StudentProfileForm = ({
         firstName: userData.student.firstName || '',
         lastName: userData.student.lastName || '',
         phone: userData.student.phone || '',
-        otherPhones: userData.student.otherPhones && userData.student.otherPhones.length > 0 
-          ? userData.student.otherPhones.slice(0, 2) // จำกัดเพียง 2 เบอร์
+        otherPhones: userData.student.otherPhones && userData.student.otherPhones.length > 0
+          ? userData.student.otherPhones.slice(0, 2)
           : [],
         academicYear: userData.student.academicYear || '',
         birthdate: formatDateForInput(userData.student.birthdate),
@@ -58,7 +57,6 @@ const StudentProfileForm = ({
         isGraduated: userData.student.isGraduated || false
       };
 
-      // หา advisor ID หากมีข้อมูล advisor และมี departmentId
       if (userData.student.advisor && userData.department.id && teachers.length > 0) {
         const advisor = teachers.find(teacher => teacher.Teacher_Name === userData.student.advisor);
         if (advisor) {
@@ -70,19 +68,17 @@ const StudentProfileForm = ({
     }
   }, [userData, formatDateForInput, teachers]);
 
-  // Load dropdown data when editing starts
   useEffect(() => {
     if (isEditing) {
       loadDropdownData();
     }
   }, [isEditing, loadDropdownData]);
 
-  // Filter departments when faculty changes
   useEffect(() => {
     if (formData.facultyId) {
       const filtered = departments.filter(dept => dept.Faculty_ID === parseInt(formData.facultyId));
       setFilteredDepartments(filtered);
-      
+
       if (formData.departmentId && !filtered.find(dept => dept.Department_ID === parseInt(formData.departmentId))) {
         setFormData(prev => ({ ...prev, departmentId: '', advisorId: '' }));
         setFilteredTeachers([]);
@@ -93,16 +89,15 @@ const StudentProfileForm = ({
     }
   }, [formData.facultyId, formData.departmentId, departments]);
 
-  // Filter teachers when department changes
   useEffect(() => {
     if (formData.departmentId) {
       const selectedDept = departments.find(dept => dept.Department_ID === parseInt(formData.departmentId));
       if (selectedDept) {
-        const filtered = teachers.filter(teacher => 
+        const filtered = teachers.filter(teacher =>
           teacher.Department_Name === selectedDept.Department_Name
         );
         setFilteredTeachers(filtered);
-        
+
         if (formData.advisorId && !filtered.find(teacher => teacher.Teacher_ID === parseInt(formData.advisorId))) {
           setFormData(prev => ({ ...prev, advisorId: '' }));
         }
@@ -112,13 +107,11 @@ const StudentProfileForm = ({
     }
   }, [formData.departmentId, formData.advisorId, teachers, departments]);
 
-  // Set advisor ID after teachers are loaded
   useEffect(() => {
     if (teachers.length > 0 && userData?.student?.advisor && !formData.advisorId && formData.departmentId) {
       const advisorName = userData.student.advisor;
       const advisor = teachers.find(teacher => teacher.Teacher_Name === advisorName);
       if (advisor) {
-        // ตรวจสอบว่าอาจารย์อยู่ในภาควิชาที่เลือกหรือไม่
         const selectedDept = departments.find(dept => dept.Department_ID === parseInt(formData.departmentId));
         if (selectedDept && advisor.Department_Name === selectedDept.Department_Name) {
           setFormData(prev => ({ ...prev, advisorId: advisor.Teacher_ID.toString() }));
@@ -145,10 +138,7 @@ const StudentProfileForm = ({
   };
 
   const addOtherPhone = () => {
-    // ตรวจสอบจำนวนเบอร์ที่มีอยู่ในปัจจุบัน
     const currentPhoneCount = formData.otherPhones.length;
-    
-    // จำกัดให้มีได้สูงสุด 2 เบอร์เท่านั้น
     if (currentPhoneCount < 2) {
       setFormData(prev => ({
         ...prev,
@@ -158,7 +148,6 @@ const StudentProfileForm = ({
   };
 
   const removeOtherPhone = (index) => {
-    // ลบเบอร์ที่เลือก
     const newOtherPhones = formData.otherPhones.filter((_, i) => i !== index);
     setFormData(prev => ({
       ...prev,
@@ -178,7 +167,6 @@ const StudentProfileForm = ({
       const advisorChanged = currentAdvisorName !== newAdvisorName;
 
       if (departmentChanged || advisorChanged) {
-        // ตรวจสอบว่ามีข้อมูลที่จำเป็นครบถ้วน และต้องมีทั้งสองค่า
         if (!formData.departmentId || !formData.advisorId) {
           console.error('Missing department or advisor data:', {
             departmentId: formData.departmentId,
@@ -188,10 +176,9 @@ const StudentProfileForm = ({
           return;
         }
 
-        // ตรวจสอบว่าอาจารย์ที่เลือกอยู่ในภาควิชาที่เลือกหรือไม่
         const selectedDept = departments.find(dept => dept.Department_ID === parseInt(formData.departmentId));
         const selectedTeacher = teachers.find(teacher => teacher.Teacher_ID === parseInt(formData.advisorId));
-        
+
         if (selectedDept && selectedTeacher && selectedTeacher.Department_Name !== selectedDept.Department_Name) {
           alert('อาจารย์ที่เลือกไม่ได้อยู่ในภาควิชาที่เลือก กรุณาตรวจสอบอีกครั้ง');
           return;
@@ -204,7 +191,6 @@ const StudentProfileForm = ({
         item.name.trim() !== '' || item.phone.trim() !== ''
       );
 
-      // ส่งข้อมูลตามที่มีจริง
       const updatedOtherPhones = filteredOtherPhones;
 
       const updatedData = {
@@ -236,8 +222,8 @@ const StudentProfileForm = ({
         firstName: userData.student.firstName || '',
         lastName: userData.student.lastName || '',
         phone: userData.student.phone || '',
-        otherPhones: userData.student.otherPhones && userData.student.otherPhones.length > 0 
-          ? userData.student.otherPhones.slice(0, 2) // จำกัดเพียง 2 เบอร์
+        otherPhones: userData.student.otherPhones && userData.student.otherPhones.length > 0
+          ? userData.student.otherPhones.slice(0, 2)
           : [],
         academicYear: userData.student.academicYear || '',
         birthdate: formatDateForInput(userData.student.birthdate),
@@ -273,8 +259,8 @@ const StudentProfileForm = ({
         <div className={styles.actionButtons}>
           {isEditing ? (
             <>
-              <button 
-                className={styles.saveButton} 
+              <button
+                className={styles.saveButton}
                 onClick={handleSave}
                 disabled={loading || dropdownLoading}
               >
@@ -285,8 +271,8 @@ const StudentProfileForm = ({
                 )}
                 {loading ? 'กำลังบันทึก...' : 'บันทึก'}
               </button>
-              <button 
-                className={styles.cancelButton} 
+              <button
+                className={styles.cancelButton}
                 onClick={handleCancel}
                 disabled={loading || dropdownLoading}
               >
@@ -294,8 +280,8 @@ const StudentProfileForm = ({
               </button>
             </>
           ) : (
-            <button 
-              className={styles.editButton} 
+            <button
+              className={styles.editButton}
               onClick={() => setIsEditing(true)}
               disabled={loading}
             >
@@ -309,8 +295,8 @@ const StudentProfileForm = ({
         <div className={styles.errorAlert}>
           <AlertCircle size={16} />
           <span>{dropdownError}</span>
-          <button 
-            onClick={retryLoadDropdownData} 
+          <button
+            onClick={retryLoadDropdownData}
             className={styles.retryButton}
             disabled={dropdownLoading}
             style={{
@@ -442,7 +428,7 @@ const StudentProfileForm = ({
             </div>
           </div>
         </div>
-        
+
         <div className={styles.infoSection}>
           <h4>ข้อมูลการศึกษา</h4>
           <div className={styles.infoCard}>
@@ -548,7 +534,7 @@ const StudentProfileForm = ({
             </div>
           </div>
         </div>
-        
+
         <div className={styles.infoSection}>
           <h4>ข้อมูลระบบ</h4>
           <div className={styles.infoCard}>
@@ -580,7 +566,7 @@ const StudentProfileForm = ({
             </div>
           </div>
         </div>
-        
+
         <div className={styles.infoSection}>
           <h4>ข้อมูลติดต่อเพิ่มเติม</h4>
           <div className={styles.infoCard}>
@@ -588,7 +574,6 @@ const StudentProfileForm = ({
               <span className={styles.label}>เบอร์โทรศัพท์อื่นๆ (สูงสุด 2 เบอร์):</span>
               {isEditing ? (
                 <div className={styles.phoneList}>
-                  {/* แสดงช่องกรอกข้อมูลเมื่อมี otherPhones */}
                   {formData.otherPhones.length > 0 && formData.otherPhones.map((item, index) => (
                     <div key={index} className={styles.phoneItemContainer}>
                       <div className={styles.phoneInputGroup}>
@@ -620,8 +605,7 @@ const StudentProfileForm = ({
                       </button>
                     </div>
                   ))}
-                  
-                  {/* แสดงปุ่มเพิ่มเฉพาะเมื่อมีน้อยกว่า 2 เบอร์ */}
+
                   {formData.otherPhones.length < 2 && (
                     <button
                       type="button"
@@ -633,8 +617,7 @@ const StudentProfileForm = ({
                       <Plus size={14} /> เพิ่มหมายเลข ({formData.otherPhones.length}/2)
                     </button>
                   )}
-                  
-                  {/* แสดงข้อความเมื่อครบ 2 เบอร์แล้ว */}
+
                   {formData.otherPhones.length >= 2 && (
                     <div className={styles.maxPhonesNote}>
                       <span>ครบจำนวนเบอร์โทรศัพท์แล้ว (2/2)</span>
@@ -669,7 +652,7 @@ const StudentProfileForm = ({
             </div>
           </div>
         </div>
-        
+
         <div className={styles.infoSection}>
           <h4>ข้อมูลสุขภาพ</h4>
           <div className={styles.infoCard}>

@@ -1,4 +1,4 @@
-// hooks/useActivities.js - Updated to include allowTeachers
+// hooks/useActivities.js
 import { useState, useCallback } from 'react';
 import axios from 'axios';
 
@@ -23,7 +23,7 @@ export const useActivities = () => {
       setError(null);
 
       const activityParams = {};
-      
+
       if (params.statusFilter) {
         activityParams.statusId = params.statusFilter;
       }
@@ -54,7 +54,7 @@ export const useActivities = () => {
           endTime: activity.Activity_EndTime,
           imageFile: activity.Activity_ImageFile,
           isRequire: activity.Activity_IsRequire,
-          allowTeachers: activity.Activity_AllowTeachers || false, // เพิ่มฟิลด์นี้
+          allowTeachers: activity.Activity_AllowTeachers || false,
           typeName: activity.ActivityType_Name,
           statusName: activity.ActivityStatus_Name,
           templateName: activity.Template_Name,
@@ -115,9 +115,9 @@ export const useActivities = () => {
       return { success: false, error: response.data?.message };
     } catch (error) {
       console.error('Delete activity error:', error);
-      return { 
-        success: false, 
-        error: error.response?.data?.message || 'เกิดข้อผิดพลาด' 
+      return {
+        success: false,
+        error: error.response?.data?.message || 'เกิดข้อผิดพลาด'
       };
     } finally {
       setActionLoading(false);

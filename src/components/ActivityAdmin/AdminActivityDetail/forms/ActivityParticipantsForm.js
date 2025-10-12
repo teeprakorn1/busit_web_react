@@ -1,23 +1,25 @@
-// ActivityParticipantsForm.js - Updated to support teachers
+// ActivityParticipantsForm.js
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Users, Search, Check, X, Clock, Building2, Image as ImageIcon, Eye, Download, CheckCircle, XCircle, AlertCircle, GraduationCap, UserCheck } from 'lucide-react';
+import {
+  Users, Search, Building2, Eye, GraduationCap, UserCheck,
+  ExternalLink, Settings, X, Clock, CheckCircle, XCircle,
+  AlertCircle, Image as ImageIcon, Download
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import styles from './ActivityForms.module.css';
-import { logActivityParticipantsView, logActivityParticipantCheckIn, logActivityParticipantCheckOut } from '../../../../utils/systemLog';
+import { logActivityParticipantsView } from '../../../../utils/systemLog';
 
 const ActivityParticipantsForm = ({ activityData }) => {
+  const navigate = useNavigate();
+  const isMountedRef = useRef(true);
+
   const [participants, setParticipants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [filterType, setFilterType] = useState('all'); // 'all', 'student', 'teacher'
+  const [filterType, setFilterType] = useState('all');
   const [selectedDepartment, setSelectedDepartment] = useState('all');
-  const [selectedParticipant, setSelectedParticipant] = useState(null);
-  const [showImageModal, setShowImageModal] = useState(false);
-  const [participantImages, setParticipantImages] = useState({});
-  const [loadingImages, setLoadingImages] = useState({});
-  const [processingImageAction, setProcessingImageAction] = useState({});
-  const [imageBlobUrls, setImageBlobUrls] = useState({});
   const [participantStats, setParticipantStats] = useState({
     total: 0,
     students: 0,
@@ -25,7 +27,12 @@ const ActivityParticipantsForm = ({ activityData }) => {
     checkedIn: 0,
     completed: 0
   });
-  const isMountedRef = useRef(true);
+
+  const [participantImages, setParticipantImages] = useState({});
+  const [loadingImages, setLoadingImages] = useState({});
+  const [imageBlobUrls, setImageBlobUrls] = useState({});
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedParticipant, setSelectedParticipant] = useState(null);
 
   const fetchParticipants = useCallback(async () => {
     if (!activityData?.Activity_ID) return;
@@ -40,15 +47,14 @@ const ActivityParticipantsForm = ({ activityData }) => {
       if (response.data?.status) {
         setParticipants(response.data.data);
 
-        // Update stats from API response
-        if (response.data.stats) {
-          setParticipantStats(prev => ({
-            ...prev,
-            total: response.data.stats.total || 0,
-            students: response.data.stats.students || 0,
-            teachers: response.data.stats.teachers || 0
-          }));
-        }
+        const data = response.data.data;
+        setParticipantStats({
+          total: data.length,
+          students: data.filter(p => p.isStudent).length,
+          teachers: data.filter(p => p.isTeacher).length,
+          checkedIn: data.filter(p => p.Registration_CheckInTime).length,
+          completed: data.filter(p => p.Registration_CheckOutTime).length
+        });
 
         await logActivityParticipantsView(
           activityData.Activity_ID,
@@ -89,8 +95,8 @@ const ActivityParticipantsForm = ({ activityData }) => {
     }
   }, [imageBlobUrls]);
 
-  const fetchParticipantImages = useCallback(async (userId, forceRefresh = false) => {
-    if (!forceRefresh && (loadingImages[userId] || participantImages[userId])) return;
+  const fetchParticipantImages = useCallback(async (userId) => {
+    if (loadingImages[userId] || participantImages[userId]) return;
 
     setLoadingImages(prev => ({ ...prev, [userId]: true }));
 
@@ -120,165 +126,6 @@ const ActivityParticipantsForm = ({ activityData }) => {
       setLoadingImages(prev => ({ ...prev, [userId]: false }));
     }
   }, [activityData?.Activity_ID, fetchImageBlob, loadingImages, participantImages]);
-
-  useEffect(() => {
-    isMountedRef.current = true;
-    fetchParticipants();
-
-    return () => {
-      isMountedRef.current = false;
-      Object.values(imageBlobUrls).forEach(url => {
-        URL.revokeObjectURL(url);
-      });
-    };
-  }, [fetchParticipants, imageBlobUrls]);
-
-  const departmentStats = useMemo(() => {
-    const stats = {};
-
-    participants.forEach(participant => {
-      const deptName = participant.Department_Name || 'ไม่ระบุสาขา';
-
-      if (!stats[deptName]) {
-        stats[deptName] = {
-          total: 0,
-          students: 0,
-          teachers: 0,
-          checkedIn: 0,
-          completed: 0,
-          facultyName: participant.Faculty_Name || 'ไม่ระบุคณะ'
-        };
-      }
-
-      stats[deptName].total++;
-
-      if (participant.isStudent) {
-        stats[deptName].students++;
-      } else if (participant.isTeacher) {
-        stats[deptName].teachers++;
-      }
-
-      if (participant.Registration_CheckInTime) {
-        stats[deptName].checkedIn++;
-      }
-
-      if (participant.Registration_CheckOutTime) {
-        stats[deptName].completed++;
-      }
-    });
-
-    return Object.entries(stats)
-      .map(([name, data]) => ({
-        name,
-        ...data,
-        checkInRate: data.total > 0 ? ((data.checkedIn / data.total) * 100).toFixed(1) : 0,
-        completionRate: data.total > 0 ? ((data.completed / data.total) * 100).toFixed(1) : 0
-      }))
-      .sort((a, b) => b.total - a.total);
-  }, [participants]);
-
-  const handleCheckIn = async (userId, participantName) => {
-    try {
-      const response = await axios.patch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/admin/activities/${activityData.Activity_ID}/participants/${userId}/checkin`,
-        {},
-        { withCredentials: true }
-      );
-
-      if (response.data?.status) {
-        fetchParticipants();
-
-        await logActivityParticipantCheckIn(
-          activityData.Activity_ID,
-          activityData.Activity_Title,
-          participantName
-        );
-      }
-    } catch (err) {
-      console.error('Check-in error:', err);
-      alert(err.response?.data?.message || 'ไม่สามารถเช็คอินได้');
-    }
-  };
-
-  const handleCheckOut = async (userId, participantName) => {
-    try {
-      const response = await axios.patch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/admin/activities/${activityData.Activity_ID}/participants/${userId}/checkout`,
-        {},
-        { withCredentials: true }
-      );
-
-      if (response.data?.status) {
-        fetchParticipants();
-
-        await logActivityParticipantCheckOut(
-          activityData.Activity_ID,
-          activityData.Activity_Title,
-          participantName
-        );
-      }
-    } catch (err) {
-      console.error('Check-out error:', err);
-      alert(err.response?.data?.message || 'ไม่สามารถเช็คเอาต์ได้');
-    }
-  };
-
-  const handleApproveImage = async (imageId, userId) => {
-    if (processingImageAction[imageId]) return;
-
-    const confirmed = window.confirm('คุณต้องการอนุมัติรูปภาพนี้หรือไม่?');
-    if (!confirmed) return;
-
-    setProcessingImageAction(prev => ({ ...prev, [imageId]: true }));
-
-    try {
-      const response = await axios.patch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/registration-pictures/${imageId}/approve`,
-        {},
-        { withCredentials: true }
-      );
-
-      if (response.data?.status) {
-        await fetchParticipantImages(userId, true);
-        alert('อนุมัติรูปภาพสำเร็จ');
-      }
-    } catch (err) {
-      console.error('Approve image error:', err);
-      alert(err.response?.data?.message || 'ไม่สามารถอนุมัติรูปภาพได้');
-    } finally {
-      setProcessingImageAction(prev => ({ ...prev, [imageId]: false }));
-    }
-  };
-
-  const handleRejectImage = async (imageId, userId) => {
-    if (processingImageAction[imageId]) return;
-
-    const reason = window.prompt('กรุณาระบุเหตุผลในการปฏิเสธ (ถ้ามี):');
-    if (reason === null) return;
-
-    const confirmed = window.confirm('คุณต้องการปฏิเสธรูปภาพนี้หรือไม่?');
-    if (!confirmed) return;
-
-    setProcessingImageAction(prev => ({ ...prev, [imageId]: true }));
-
-    try {
-      const response = await axios.patch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/registration-pictures/${imageId}/reject`,
-        { reason: reason || 'ไม่ระบุเหตุผล' },
-        { withCredentials: true }
-      );
-
-      if (response.data?.status) {
-        await fetchParticipantImages(userId, true);
-        alert('ปฏิเสธรูปภาพสำเร็จ');
-      }
-    } catch (err) {
-      console.error('Reject image error:', err);
-      alert(err.response?.data?.message || 'ไม่สามารถปฏิเสธรูปภาพได้');
-    } finally {
-      setProcessingImageAction(prev => ({ ...prev, [imageId]: false }));
-    }
-  };
 
   const handleViewImages = useCallback((participant) => {
     setSelectedParticipant(participant);
@@ -312,6 +159,53 @@ const ActivityParticipantsForm = ({ activityData }) => {
     }
   }, []);
 
+  useEffect(() => {
+    isMountedRef.current = true;
+    fetchParticipants();
+
+    return () => {
+      isMountedRef.current = false;
+      Object.values(imageBlobUrls).forEach(url => {
+        URL.revokeObjectURL(url);
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchParticipants]);
+
+  const departmentStats = useMemo(() => {
+    const stats = {};
+
+    participants.forEach(participant => {
+      const deptName = participant.Department_Name || 'ไม่ระบุสาขา';
+
+      if (!stats[deptName]) {
+        stats[deptName] = {
+          total: 0,
+          students: 0,
+          teachers: 0,
+          checkedIn: 0,
+          completed: 0,
+          facultyName: participant.Faculty_Name || 'ไม่ระบุคณะ'
+        };
+      }
+
+      stats[deptName].total++;
+      if (participant.isStudent) stats[deptName].students++;
+      if (participant.isTeacher) stats[deptName].teachers++;
+      if (participant.Registration_CheckInTime) stats[deptName].checkedIn++;
+      if (participant.Registration_CheckOutTime) stats[deptName].completed++;
+    });
+
+    return Object.entries(stats)
+      .map(([name, data]) => ({
+        name,
+        ...data,
+        checkInRate: data.total > 0 ? ((data.checkedIn / data.total) * 100).toFixed(1) : 0,
+        completionRate: data.total > 0 ? ((data.completed / data.total) * 100).toFixed(1) : 0
+      }))
+      .sort((a, b) => b.total - a.total);
+  }, [participants]);
+
   const filteredParticipants = participants.filter(p => {
     const matchesSearch = searchQuery === '' ||
       p.FirstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -333,6 +227,14 @@ const ActivityParticipantsForm = ({ activityData }) => {
 
     return matchesSearch && matchesStatus && matchesType && matchesDepartment;
   });
+
+  const handleGoToManagement = () => {
+    navigate('/activity-management/activity-join', {
+      state: {
+        preselectedActivityId: activityData.Activity_ID
+      }
+    });
+  };
 
   const ImageModal = () => {
     if (!showImageModal || !selectedParticipant) return null;
@@ -390,16 +292,14 @@ const ActivityParticipantsForm = ({ activityData }) => {
             ) : (
               <div className={styles.imageGrid}>
                 {images.map((img, index) => {
-                  const isPending = img.RegistrationPictureStatus_Name === 'รออนุมัติ';
                   const isApproved = img.RegistrationPictureStatus_Name === 'อนุมัติแล้ว';
                   const isRejected = img.RegistrationPictureStatus_Name === 'ปฏิเสธ';
-                  const isProcessing = processingImageAction[img.RegistrationPicture_ID];
 
                   const aiSuccess = img.RegistrationPicture_IsAiSuccess;
                   const hasAiResult = aiSuccess !== null && aiSuccess !== undefined;
 
                   return (
-                    <div key={img.RegistrationPicture_ID} className={styles.imageCard}>
+                    <div key={img.RegistrationPicture_ID} className={styles.imageCardReadOnly}>
                       <div className={styles.imageWrapper}>
                         {imageBlobUrls[img.RegistrationPicture_ImageFile] ? (
                           <img
@@ -413,6 +313,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
                           </div>
                         )}
 
+                        {/* AI Badge */}
                         {hasAiResult && (
                           <div className={styles.aiBadge}>
                             {aiSuccess === 1 ? (
@@ -427,6 +328,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
                           </div>
                         )}
 
+                        {/* Download button */}
                         <div className={styles.imageOverlay}>
                           <button
                             className={styles.imageActionButton}
@@ -438,6 +340,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
                         </div>
                       </div>
 
+                      {/* Image Info */}
                       <div className={styles.imageInfo}>
                         <div className={styles.imageStatus}>
                           {isApproved ? (
@@ -455,6 +358,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
                           )}
                         </div>
 
+                        {/* AI Status Detail */}
                         {hasAiResult && (
                           <div className={styles.aiStatusDetail}>
                             <span className={styles.aiLabel}>การตรวจสอบ AI:</span>
@@ -473,42 +377,6 @@ const ActivityParticipantsForm = ({ activityData }) => {
                         <p className={styles.imageTime}>
                           {new Date(img.RegistrationPicture_RegisTime).toLocaleString('th-TH')}
                         </p>
-
-                        {isPending && (
-                          <div className={styles.imageActions}>
-                            <button
-                              className={`${styles.imageApproveButton} ${isProcessing ? styles.processing : ''}`}
-                              onClick={() => handleApproveImage(img.RegistrationPicture_ID, selectedParticipant.Users_ID)}
-                              disabled={isProcessing}
-                              title="อนุมัติรูปภาพ"
-                            >
-                              {isProcessing ? (
-                                <div className={styles.smallSpinner}></div>
-                              ) : (
-                                <>
-                                  <CheckCircle size={14} />
-                                  อนุมัติ
-                                </>
-                              )}
-                            </button>
-                            <button
-                              className={`${styles.imageRejectButton} ${isProcessing ? styles.processing : ''}`}
-                              onClick={() => handleRejectImage(img.RegistrationPicture_ID, selectedParticipant.Users_ID)}
-                              disabled={isProcessing}
-                              title="ปฏิเสธรูปภาพ"
-                            >
-                              {isProcessing ? (
-                                <div className={styles.smallSpinner}></div>
-                              ) : (
-                                <>
-                                  <XCircle size={14} />
-                                  ปฏิเสธ
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        )}
-
                         {isRejected && img.RegistrationPicture_RejectReason && (
                           <div className={styles.rejectReason}>
                             <AlertCircle size={14} />
@@ -521,6 +389,23 @@ const ActivityParticipantsForm = ({ activityData }) => {
                 })}
               </div>
             )}
+
+            <div className={styles.modalFooter}>
+              <p className={styles.modalFooterText}>
+                ต้องการอนุมัติ/ปฏิเสธรูปภาพ?
+              </p>
+              <button
+                className={styles.modalManagementButton}
+                onClick={() => {
+                  setShowImageModal(false);
+                  handleGoToManagement();
+                }}
+              >
+                <Settings size={16} />
+                ไปหน้าจัดการผู้เข้าร่วม
+                <ExternalLink size={14} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -540,40 +425,62 @@ const ActivityParticipantsForm = ({ activityData }) => {
 
   return (
     <div className={styles.profileContent}>
+      {/* Header */}
       <div className={styles.sectionHeader}>
-        <h3>
-          <Users size={20} />
-          รายชื่อผู้เข้าร่วมกิจกรรม
-        </h3>
-        <div className={styles.participantsSummary}>
-          <span className={styles.summaryItem}>
-            ทั้งหมด: {participants.length} คน
-          </span>
-          {activityData?.Activity_AllowTeachers && participantStats.total > 0 && (
-            <>
-              <span className={styles.summaryItem}>
-                <GraduationCap size={14} />
-                นักศึกษา: {participantStats.students} คน
-              </span>
-              <span className={styles.summaryItem}>
-                <UserCheck size={14} />
-                อาจารย์: {participantStats.teachers} คน
-              </span>
-            </>
-          )}
-          <span className={styles.summaryItem}>
-            เช็คอินแล้ว: {participants.filter(p => p.Registration_CheckInTime).length} คน
-          </span>
-          <span className={styles.summaryItem}>
-            เสร็จสิ้น: {participants.filter(p => p.Registration_CheckOutTime).length} คน
-          </span>
+        <div className={styles.headerLeft}>
+          <h3>
+            <Users size={20} />
+            รายชื่อผู้เข้าร่วมกิจกรรม
+          </h3>
+          <div className={styles.participantsSummary}>
+            <span className={styles.summaryItem}>
+              ทั้งหมด: {participantStats.total} คน
+            </span>
+            {activityData?.Activity_AllowTeachers && participantStats.total > 0 && (
+              <>
+                <span className={styles.summaryItem}>
+                  <GraduationCap size={14} />
+                  นักศึกษา: {participantStats.students} คน
+                </span>
+                <span className={styles.summaryItem}>
+                  <UserCheck size={14} />
+                  อาจารย์: {participantStats.teachers} คน
+                </span>
+              </>
+            )}
+            <span className={styles.summaryItem}>
+              เช็คอินแล้ว: {participantStats.checkedIn} คน
+            </span>
+            <span className={styles.summaryItem}>
+              เสร็จสิ้น: {participantStats.completed} คน
+            </span>
+          </div>
+        </div>
+
+        <button
+          className={styles.managementButton}
+          onClick={handleGoToManagement}
+          title="ไปหน้าจัดการผู้เข้าร่วมกิจกรรม"
+        >
+          <Settings size={18} />
+          จัดการผู้เข้าร่วม
+          <ExternalLink size={16} />
+        </button>
+      </div>
+
+      {/* Info Banner */}
+      <div className={styles.infoBanner}>
+        <Eye size={18} />
+        <div className={styles.infoBannerText}>
+          <strong>หน้านี้แสดงรายละเอียดเท่านั้น</strong>
+          <span>หากต้องการเช็คอิน/เช็คเอาท์ หรืออนุมัติรูปภาพ กรุณาไปที่หน้า "จัดการผู้เข้าร่วมกิจกรรม"</span>
         </div>
       </div>
 
-      {/* Department Stats Section */}
+      {/* Department Stats */}
       <div className={styles.departmentStatsSection}>
         <h4>
-          <Building2 size={18} style={{ display: 'inline', marginRight: '8px' }} />
+          <Building2 size={18} />
           สถิติการเข้าร่วมแยกตามสาขา
         </h4>
         <div className={styles.departmentStatsGrid}>
@@ -582,7 +489,6 @@ const ActivityParticipantsForm = ({ activityData }) => {
               key={index}
               className={`${styles.deptStatCard} ${selectedDepartment === dept.name ? styles.selected : ''}`}
               onClick={() => setSelectedDepartment(selectedDepartment === dept.name ? 'all' : dept.name)}
-              style={{ cursor: 'pointer' }}
             >
               <div className={styles.deptStatHeader}>
                 <div className={styles.deptStatTitle}>
@@ -628,20 +534,9 @@ const ActivityParticipantsForm = ({ activityData }) => {
             </div>
           ))}
         </div>
-        {selectedDepartment !== 'all' && (
-          <div className={styles.filterActive}>
-            กำลังกรองสาขา: <strong>{selectedDepartment}</strong>
-            <button
-              className={styles.clearFilter}
-              onClick={() => setSelectedDepartment('all')}
-            >
-              <X size={14} /> ล้างการกรอง
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* Filter Section */}
+      {/* Filters */}
       <div className={styles.filterSection}>
         <div className={styles.searchBox}>
           <Search size={16} />
@@ -715,7 +610,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
             <h4>ไม่พบผู้เข้าร่วม</h4>
             <p>
               {searchQuery || selectedDepartment !== 'all' || filterStatus !== 'all' || filterType !== 'all'
-                ? 'ไม่พบผลลัพธ์ที่ตรงกับการค้นหา ลองเปลี่ยนคำค้นหาหรือตัวกรอง'
+                ? 'ไม่พบผลลัพธ์ที่ตรงกับการค้นหา'
                 : 'ยังไม่มีผู้ลงทะเบียนเข้าร่วมกิจกรรมนี้'}
             </p>
           </div>
@@ -729,7 +624,7 @@ const ActivityParticipantsForm = ({ activityData }) => {
               const hasCheckedIn = !!participant.Registration_CheckInTime;
 
               return (
-                <div key={participant.Users_ID} className={styles.participantCard}>
+                <div key={participant.Users_ID} className={styles.participantCardReadOnly}>
                   <div className={styles.participantInfo}>
                     <div className={styles.participantNumber}>#{index + 1}</div>
                     <div className={styles.participantDetails}>
@@ -744,56 +639,44 @@ const ActivityParticipantsForm = ({ activityData }) => {
                       </div>
                       <p className={styles.participantCode}>{participant.Code}</p>
                       <p className={styles.participantDept}>
-                        <Building2 size={14} style={{ display: 'inline', marginRight: '4px' }} />
+                        <Building2 size={14} />
                         {participant.Department_Name} - {participant.Faculty_Name}
                       </p>
                     </div>
                   </div>
 
-                  <div className={styles.participantStatus}>
-                    {participant.Registration_CheckInTime && (
-                      <div className={styles.statusItem}>
-                        <Clock size={14} />
-                        <span>เช็คอิน: {new Date(participant.Registration_CheckInTime).toLocaleTimeString('th-TH')}</span>
+                  <div className={styles.participantStatusInfo}>
+                    {participant.Registration_CheckInTime ? (
+                      <div className={styles.statusBadgeSuccess}>
+                        <span>✓ เช็คอินแล้ว</span>
+                        <span className={styles.statusTime}>
+                          {new Date(participant.Registration_CheckInTime).toLocaleString('th-TH')}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className={styles.statusBadgePending}>
+                        <span>○ ยังไม่เช็คอิน</span>
                       </div>
                     )}
-                    {participant.Registration_CheckOutTime && (
-                      <div className={styles.statusItem}>
-                        <Clock size={14} />
-                        <span>เช็คเอาท์: {new Date(participant.Registration_CheckOutTime).toLocaleTimeString('th-TH')}</span>
-                      </div>
-                    )}
-                  </div>
 
-                  <div className={styles.participantActions}>
+                    {participant.Registration_CheckOutTime && (
+                      <div className={styles.statusBadgeCompleted}>
+                        <span>✓ เสร็จสิ้น</span>
+                        <span className={styles.statusTime}>
+                          {new Date(participant.Registration_CheckOutTime).toLocaleString('th-TH')}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* View Images Button */}
                     {hasCheckedIn && (
                       <button
-                        className={`${styles.actionButton} ${styles.viewImageButton}`}
+                        className={styles.viewImageButtonReadOnly}
                         onClick={() => handleViewImages(participant)}
                         title="ดูรูปภาพยืนยัน"
                       >
                         <Eye size={16} /> ดูรูป
                       </button>
-                    )}
-
-                    {!participant.Registration_CheckInTime ? (
-                      <button
-                        className={`${styles.actionButton} ${styles.checkInButton}`}
-                        onClick={() => handleCheckIn(participant.Users_ID, fullName)}
-                      >
-                        <Check size={16} /> เช็คอิน
-                      </button>
-                    ) : !participant.Registration_CheckOutTime ? (
-                      <button
-                        className={`${styles.actionButton} ${styles.checkOutButton}`}
-                        onClick={() => handleCheckOut(participant.Users_ID, fullName)}
-                      >
-                        <X size={16} /> เช็คเอาท์
-                      </button>
-                    ) : (
-                      <span className={styles.completedBadge}>
-                        <Check size={16} /> เสร็จสิ้น
-                      </span>
                     )}
                   </div>
                 </div>
@@ -802,7 +685,19 @@ const ActivityParticipantsForm = ({ activityData }) => {
           </>
         )}
       </div>
-
+      {participants.length > 0 && (
+        <div className={styles.bottomCTA}>
+          <p>ต้องการจัดการผู้เข้าร่วม (เช็คอิน/เช็คเอาท์/อนุมัติรูป)?</p>
+          <button
+            className={styles.ctaButton}
+            onClick={handleGoToManagement}
+          >
+            <Settings size={18} />
+            ไปหน้าจัดการผู้เข้าร่วมกิจกรรม
+            <ExternalLink size={16} />
+          </button>
+        </div>
+      )}
       <ImageModal />
     </div>
   );

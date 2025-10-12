@@ -1,6 +1,6 @@
-// components/ActivitySelector/ActivitySelector.jsx
+// components/ActivitySelector/ActivitySelector.js
 import React, { useState, useMemo } from 'react';
-import { 
+import {
   Calendar, Users, MapPin, Activity as ActivityIcon,
   Search, Filter, TrendingUp, Clock, CheckCircle,
   AlertCircle, XCircle, ChevronDown, Grid, List
@@ -45,14 +45,11 @@ const getStatusIcon = (statusName) => {
 const ActivitySelector = ({ activities, selectedActivity, onActivityChange, loading }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
-  const [sortBy, setSortBy] = useState('date'); // 'date', 'participants', 'status'
+  const [viewMode, setViewMode] = useState('grid');
+  const [sortBy, setSortBy] = useState('date');
 
-  // Filter and sort activities
   const filteredActivities = useMemo(() => {
     let filtered = [...activities];
-
-    // Search filter
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
       filtered = filtered.filter(activity =>
@@ -61,14 +58,12 @@ const ActivitySelector = ({ activities, selectedActivity, onActivityChange, load
       );
     }
 
-    // Status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(activity => 
+      filtered = filtered.filter(activity =>
         getStatusClass(activity.ActivityStatus_Name) === statusFilter
       );
     }
 
-    // Sort
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'date':

@@ -23,8 +23,7 @@ export const useActivities = () => {
       );
 
       if (response.data?.status && response.data.data) {
-        // เรียงตามวันที่เริ่มกิจกรรม (ล่าสุดก่อน)
-        const sortedActivities = response.data.data.sort((a, b) => 
+        const sortedActivities = response.data.data.sort((a, b) =>
           new Date(b.Activity_StartTime) - new Date(a.Activity_StartTime)
         );
         setActivities(sortedActivities);

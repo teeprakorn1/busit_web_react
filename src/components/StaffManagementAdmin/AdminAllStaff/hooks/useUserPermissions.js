@@ -39,32 +39,24 @@ export const useUserPermissions = () => {
     const isStudent = userType === 'student';
 
     return {
-      // Students permissions
       canViewStudents: isStaff || isTeacher,
       canViewStudentDetails: isStaff || isTeacher,
       canEditStudents: isStaff,
       canAddStudents: isStaff,
       canToggleStudentStatus: isStaff,
-      
-      // Teachers permissions
       canViewTeachers: isStaff || isTeacher,
       canViewTeacherDetails: isStaff || isTeacher,
       canEditTeachers: isStaff,
       canAddTeachers: isStaff,
       canToggleTeacherStatus: isStaff,
-      
-      // Staff permissions
       canViewStaff: isStaff,
-      canViewStaffDetails: isStaff, // เปิดใช้งานแล้ว
+      canViewStaffDetails: isStaff,
       canEditStaff: isStaff,
       canAddStaff: isStaff,
       canToggleStaffStatus: isStaff,
-      
-      // General permissions
       canExportData: isStaff || isTeacher,
       canManageUsers: isStaff,
       canAccessAdminFeatures: isStaff,
-      
       userType,
       isStaff,
       isTeacher,

@@ -6,7 +6,7 @@ import { FiChevronDown, FiChevronUp, FiCheck, FiUsers, FiUserCheck } from 'react
 function DepartmentSelector({ selectedDepartments, onDepartmentsChange, errors = {}, allowTeachers = false }) {
     const [faculties, setFaculties] = useState([]);
     const [departments, setDepartments] = useState([]);
-    const [departmentStats, setDepartmentStats] = useState({}); // เก็บสถิตินักศึกษาและอาจารย์
+    const [departmentStats, setDepartmentStats] = useState({});
     const [expandedFaculties, setExpandedFaculties] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -29,7 +29,6 @@ function DepartmentSelector({ selectedDepartments, onDepartmentsChange, errors =
                     { withCredentials: true }
                 );
 
-                // ดึงข้อมูลจำนวนนักศึกษาและอาจารย์ในแต่ละสาขา
                 const statsRes = await axios.get(
                     getApiUrl('/api/admin/departments/stats'),
                     { withCredentials: true }
@@ -44,7 +43,6 @@ function DepartmentSelector({ selectedDepartments, onDepartmentsChange, errors =
                 }
 
                 if (statsRes.data.status) {
-                    // แปลงข้อมูลสถิติให้อยู่ในรูป object key-value
                     const statsMap = {};
                     statsRes.data.data.forEach(stat => {
                         statsMap[stat.Department_ID] = {
@@ -128,7 +126,6 @@ function DepartmentSelector({ selectedDepartments, onDepartmentsChange, errors =
         onDepartmentsChange([]);
     };
 
-    // คำนวณจำนวนผู้เข้าร่วมรวม
     const getTotalParticipants = () => {
         let totalStudents = 0;
         let totalTeachers = 0;
@@ -255,8 +252,8 @@ function DepartmentSelector({ selectedDepartments, onDepartmentsChange, errors =
                                     {facultyDepts.length > 0 ? (
                                         facultyDepts.map(dept => {
                                             const stats = departmentStats[dept.Department_ID] || { studentCount: 0, teacherCount: 0 };
-                                            const totalCount = allowTeachers 
-                                                ? stats.studentCount + stats.teacherCount 
+                                            const totalCount = allowTeachers
+                                                ? stats.studentCount + stats.teacherCount
                                                 : stats.studentCount;
 
                                             return (

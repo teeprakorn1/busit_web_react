@@ -12,17 +12,16 @@ const ExportExcelButton = ({ userData }) => {
     }
 
     setIsExporting(true);
-    
+
     try {
-      // Simulate processing time
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       const exportData = prepareExportData(userData);
       const csvContent = generateAdvancedCSVContent(exportData);
       const filename = generateFilename(userData);
-      
+
       downloadCSV(csvContent, filename);
-      
+
     } catch (error) {
       console.error('Export failed:', error);
       alert('เกิดข้อผิดพลาดในการส่งออกข้อมูล กรุณาลองใหม่อีกครั้ง');
@@ -34,7 +33,7 @@ const ExportExcelButton = ({ userData }) => {
   const prepareExportData = (userData) => {
     const userType = userData.userType;
     const profile = userData[userType] || {};
-    
+
     return {
       userInfo: {
         id: userData.id,
@@ -87,7 +86,7 @@ const ExportExcelButton = ({ userData }) => {
 
   const formatOtherPhones = (otherPhones) => {
     if (!Array.isArray(otherPhones) || otherPhones.length === 0) return '';
-    
+
     return otherPhones
       .filter(item => item.name || item.phone)
       .map(item => {
@@ -110,18 +109,15 @@ const ExportExcelButton = ({ userData }) => {
   const generateAdvancedCSVContent = (data) => {
     const { userInfo, profileData, exportMetadata } = data;
     const userType = userInfo.userType;
-    
+
     let csvRows = [];
-    
-    // Header section
+
     csvRows.push(['='.repeat(60)]);
     csvRows.push(['รายงานข้อมูลผู้ใช้งานระบบ']);
     csvRows.push(['ประเภท: ' + getUserTypeDisplay(userType)]);
     csvRows.push(['วันที่ส่งออก: ' + formatThaiDateTime(exportMetadata.exportDate)]);
     csvRows.push(['='.repeat(60)]);
     csvRows.push(['']);
-
-    // ข้อมูลบัญชีผู้ใช้
     csvRows.push(['ข้อมูลบัญชีผู้ใช้']);
     csvRows.push(['หัวข้อ', 'ข้อมูล']);
     csvRows.push(['รหัสผู้ใช้ในระบบ', userInfo.id || '']);
@@ -133,7 +129,6 @@ const ExportExcelButton = ({ userData }) => {
     csvRows.push(['มีรูปโปรไฟล์', userInfo.imageFile ? 'มี' : 'ไม่มี']);
     csvRows.push(['']);
 
-    // ข้อมูลส่วนตัวตามประเภทผู้ใช้
     if (userType === 'student') {
       generateStudentSection(csvRows, profileData);
     } else if (userType === 'teacher') {
@@ -142,7 +137,6 @@ const ExportExcelButton = ({ userData }) => {
       generateStaffSection(csvRows, profileData);
     }
 
-    // Footer section
     csvRows.push(['']);
     csvRows.push(['-'.repeat(60)]);
     csvRows.push(['สรุปการส่งออกข้อมูล']);
@@ -153,7 +147,7 @@ const ExportExcelButton = ({ userData }) => {
     csvRows.push(['จำนวนรายการที่ส่งออก', exportMetadata.recordCount + ' รายการ']);
     csvRows.push(['-'.repeat(60)]);
 
-    return csvRows.map(row => 
+    return csvRows.map(row =>
       row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(',')
     ).join('\n');
   };
@@ -166,11 +160,11 @@ const ExportExcelButton = ({ userData }) => {
     csvRows.push(['นามสกุล', profile.lastName || '']);
     csvRows.push(['ชื่อ-นามสกุล (เต็ม)', `${profile.firstName || ''} ${profile.lastName || ''}`.trim()]);
     csvRows.push(['เบอร์โทรศัพท์หลัก', profile.phone || '']);
-    
+
     const otherPhonesFormatted = formatOtherPhones(profile.otherPhones);
     csvRows.push(['เบอร์โทรศัพท์เพิ่มเติม', otherPhonesFormatted]);
     csvRows.push(['จำนวนเบอร์ทั้งหมด', (profile.otherPhones?.length || 0) + (profile.phone ? 1 : 0)]);
-    
+
     csvRows.push(['ปีการศึกษาที่เข้า', profile.academicYear || '']);
     csvRows.push(['วันเกิด', formatThaiDate(profile.birthdate)]);
     csvRows.push(['ศาสนา', profile.religion || '']);
@@ -191,11 +185,11 @@ const ExportExcelButton = ({ userData }) => {
     csvRows.push(['นามสกุล', profile.lastName || '']);
     csvRows.push(['ชื่อ-นามสกุล (เต็ม)', `${profile.firstName || ''} ${profile.lastName || ''}`.trim()]);
     csvRows.push(['เบอร์โทรศัพท์หลัก', profile.phone || '']);
-    
+
     const otherPhonesFormatted = formatOtherPhones(profile.otherPhones);
     csvRows.push(['เบอร์โทรศัพท์เพิ่มเติม', otherPhonesFormatted]);
     csvRows.push(['จำนวนเบอร์ทั้งหมด', (profile.otherPhones?.length || 0) + (profile.phone ? 1 : 0)]);
-    
+
     csvRows.push(['วันเกิด', formatThaiDate(profile.birthdate)]);
     csvRows.push(['ศาสนา', profile.religion || '']);
     csvRows.push(['ตำแหน่ง', profile.isDean ? 'คณบดี' : 'อาจารย์']);
@@ -215,11 +209,11 @@ const ExportExcelButton = ({ userData }) => {
     csvRows.push(['นามสกุล', profile.lastName || '']);
     csvRows.push(['ชื่อ-นามสกุล (เต็ม)', `${profile.firstName || ''} ${profile.lastName || ''}`.trim()]);
     csvRows.push(['เบอร์โทรศัพท์หลัก', profile.phone || '']);
-    
+
     const otherPhonesFormatted = formatOtherPhones(profile.otherPhones);
     csvRows.push(['เบอร์โทรศัพท์เพิ่มเติม', otherPhonesFormatted]);
     csvRows.push(['จำนวนเบอร์ทั้งหมด', (profile.otherPhones?.length || 0) + (profile.phone ? 1 : 0)]);
-    
+
     csvRows.push(['สถานะการทำงาน', profile.isResigned ? 'ลาออกแล้ว' : 'ยังปฏิบัติงาน']);
     csvRows.push(['วันที่เริ่มงาน', formatThaiDateTime(profile.regisTime)]);
     csvRows.push(['']);
@@ -231,35 +225,28 @@ const ExportExcelButton = ({ userData }) => {
     const name = userData[userData.userType]?.firstName || '';
     const date = new Date().toISOString().split('T')[0];
     const time = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
-    
+
     return `${userType}_${name}_${username}_${date}_${time}.csv`;
   };
 
   const downloadCSV = (csvContent, filename) => {
     try {
-      // Add BOM for proper Thai character encoding
       const BOM = '\uFEFF';
-      const blob = new Blob([BOM + csvContent], { 
-        type: 'text/csv;charset=utf-8;' 
+      const blob = new Blob([BOM + csvContent], {
+        type: 'text/csv;charset=utf-8;'
       });
-      
-      // Create download link
+
       const link = document.createElement('a');
       if (link.download !== undefined) {
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);
         link.setAttribute('download', filename);
         link.style.visibility = 'hidden';
-        
+
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
-        // Clean up
         setTimeout(() => URL.revokeObjectURL(url), 100);
-        
-        // Show success message
-        console.log(`ส่งออกข้อมูลเรียบร้อย: ${filename}`);
       } else {
         throw new Error('Browser does not support download');
       }
@@ -274,7 +261,7 @@ const ExportExcelButton = ({ userData }) => {
   }
 
   return (
-    <button 
+    <button
       className={styles.exportButton}
       onClick={handleExport}
       disabled={isExporting}

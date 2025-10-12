@@ -91,7 +91,6 @@ function CertificateEditAdmin() {
   const handlePreview = async (item, tab) => {
     openModal('preview', item, tab);
 
-    // Log timestamp สำหรับการ preview
     try {
       if (tab === 'templates') {
         await logCertificateTemplateViewTimestamp(

@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { 
-  logTeacherStatusChange, 
+import {
+  logTeacherStatusChange,
   logSystemAction,
-  logBulkOperation 
-} from './../../../..//utils/systemLog';
+  logBulkOperation
+} from './../../../../utils/systemLog';
 
 const sanitizeInput = (input) => {
   if (typeof input !== 'string') return input;
@@ -140,7 +140,6 @@ export const useTeachers = () => {
 
         setTeachers(transformedTeachers);
 
-        // Log system action for data retrieval (only for filtered searches)
         if (Object.keys(params).length > 1 || params.searchQuery) {
           const searchDescription = `ค้นหาข้อมูลอาจารย์: ${JSON.stringify(params)}`;
           await logSystemAction(0, searchDescription, 'Teacher');
@@ -249,7 +248,6 @@ export const useTeachers = () => {
         const newStatus = !teacher.isActive;
         const teacherFullName = `${teacher.firstName} ${teacher.lastName}`;
 
-        // Update local state
         setTeachers(prevTeachers =>
           prevTeachers.map(t =>
             t.id === teacher.id
@@ -258,7 +256,6 @@ export const useTeachers = () => {
           )
         );
 
-        // Log the status change to data edit
         const logResult = await logTeacherStatusChange(
           teacher.id,
           teacherFullName,
@@ -339,7 +336,6 @@ export const useTeachers = () => {
           )
         );
 
-        // Log the refresh action
         await logSystemAction(
           teacherId,
           `รีเฟรชข้อมูลอาจารย์ ID: ${teacherId}`,
@@ -351,7 +347,6 @@ export const useTeachers = () => {
     }
   }, []);
 
-  // Function to log bulk operations
   const handleLogBulkOperation = useCallback(async (operationType, affectedCount, details = '') => {
     try {
       await logBulkOperation(operationType, affectedCount, details, 'Teacher');
@@ -389,6 +384,6 @@ export const useTeachers = () => {
     setSecurityAlert,
     sanitizeInput,
     validateId,
-    logBulkOperation: handleLogBulkOperation // Export the wrapped function
+    logBulkOperation: handleLogBulkOperation
   };
 };

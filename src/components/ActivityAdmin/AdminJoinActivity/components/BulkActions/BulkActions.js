@@ -1,14 +1,13 @@
-// components/BulkActions/BulkActions.jsx
+// components/BulkActions/BulkActions.js
 import React, { useState } from 'react';
 import { 
   CheckCircle, XCircle, LogIn, LogOut, X, 
-  AlertTriangle, ChevronDown, FileSpreadsheet
+  AlertTriangle, ChevronDown, FileSpreadsheet, Eye
 } from 'lucide-react';
 import styles from './BulkActions.module.css';
 
 const BulkActions = ({
   selectedCount,
-  selectedParticipants,
   onApprove,
   onReject,
   onCheckIn,
@@ -23,22 +22,21 @@ const BulkActions = ({
 }) => {
   const [showConfirm, setShowConfirm] = useState(null);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   const isLoading = approving || rejecting || checkingIn || checkingOut;
 
   const handleAction = (action, actionFn) => {
     setShowConfirm(action);
-    
-    // Auto confirm after showing message
     setTimeout(() => {
       setShowConfirm(null);
-      actionFn();
-    }, 100);
+    }, 2000);
+    
+    actionFn();
   };
 
   const handleExport = () => {
-    const data = getSelectedParticipantsData();
-    onExport(data);
+    onExport();
     setShowExportMenu(false);
   };
 
@@ -60,9 +58,10 @@ const BulkActions = ({
               <span className={styles.label}>รายการที่เลือก</span>
               <button 
                 className={styles.viewDetails}
-                onClick={() => console.log('View selected')}
+                onClick={() => setShowDetails(!showDetails)}
               >
-                ดูรายละเอียด
+                <Eye size={14} />
+                {showDetails ? 'ซ่อน' : 'ดูรายละเอียด'}
               </button>
             </div>
           </div>
@@ -141,7 +140,7 @@ const BulkActions = ({
             <button
               className={`${styles.actionBtn} ${styles.checkOut}`}
               onClick={() => handleAction('checkOut', onCheckOut)}
-              disabled={isLoading || checkingOut}
+              disabled={isLoading}
               title="เช็คเอาท์ที่เลือก"
             >
               {checkingOut ? (
@@ -171,7 +170,7 @@ const BulkActions = ({
               >
                 <FileSpreadsheet size={18} />
                 <span>Export</span>
-                <ChevronDown size={16} />
+                <ChevronDown size={16} className={showExportMenu ? styles.rotated : ''} />
               </button>
 
               {showExportMenu && (
@@ -222,6 +221,33 @@ const BulkActions = ({
           <span className={styles.statValue}>~{Math.ceil(selectedCount * 0.5)} วินาที</span>
         </div>
       </div>
+
+      {/* Selected Details */}
+      {showDetails && getSelectedParticipantsData && (
+        <div className={styles.selectedDetails}>
+          <div className={styles.detailsHeader}>
+            <h4>รายการที่เลือก ({selectedCount} คน)</h4>
+            <button onClick={() => setShowDetails(false)} className={styles.closeDetails}>
+              <X size={16} />
+            </button>
+          </div>
+          <div className={styles.detailsList}>
+            {getSelectedParticipantsData().map((participant, index) => (
+              <div key={participant.Users_ID} className={styles.detailItem}>
+                <span className={styles.itemNumber}>{index + 1}.</span>
+                <div className={styles.itemInfo}>
+                  <div className={styles.itemName}>
+                    {participant.FirstName} {participant.LastName}
+                  </div>
+                  <div className={styles.itemMeta}>
+                    {participant.Code} • {participant.Department_Name}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

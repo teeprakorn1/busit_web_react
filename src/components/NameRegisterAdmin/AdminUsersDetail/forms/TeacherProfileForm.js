@@ -20,7 +20,6 @@ const TeacherProfileForm = ({ userData, onUpdate, loading }) => {
     isResigned: false
   });
 
-  // Update formData when userData changes
   useEffect(() => {
     if (userData?.teacher) {
       setFormData({
@@ -28,8 +27,8 @@ const TeacherProfileForm = ({ userData, onUpdate, loading }) => {
         firstName: userData.teacher.firstName || '',
         lastName: userData.teacher.lastName || '',
         phone: userData.teacher.phone || '',
-        otherPhones: userData.teacher.otherPhones && userData.teacher.otherPhones.length > 0 
-          ? userData.teacher.otherPhones.slice(0, 2) // จำกัดเพียง 2 เบอร์
+        otherPhones: userData.teacher.otherPhones && userData.teacher.otherPhones.length > 0
+          ? userData.teacher.otherPhones.slice(0, 2)
           : [],
         birthdate: userData.teacher.birthdate || '',
         religion: userData.teacher.religion || '',
@@ -46,12 +45,11 @@ const TeacherProfileForm = ({ userData, onUpdate, loading }) => {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     let processedValue = value;
-    
-    // Convert string boolean values to actual boolean for isResigned
+
     if (name === 'isResigned') {
       processedValue = value === 'true';
     }
-    
+
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : processedValue
@@ -68,7 +66,6 @@ const TeacherProfileForm = ({ userData, onUpdate, loading }) => {
   };
 
   const addOtherPhone = () => {
-    // จำกัดให้มีได้สูงสุด 2 เบอร์เท่านั้น
     if (formData.otherPhones.length < 2) {
       setFormData(prev => ({
         ...prev,
@@ -89,7 +86,7 @@ const TeacherProfileForm = ({ userData, onUpdate, loading }) => {
     const filteredOtherPhones = formData.otherPhones.filter(item =>
       item.name.trim() !== '' || item.phone.trim() !== ''
     );
-    
+
     const updatedData = {
       ...formData,
       otherPhones: filteredOtherPhones,
@@ -109,8 +106,8 @@ const TeacherProfileForm = ({ userData, onUpdate, loading }) => {
         firstName: userData.teacher.firstName || '',
         lastName: userData.teacher.lastName || '',
         phone: userData.teacher.phone || '',
-        otherPhones: userData.teacher.otherPhones && userData.teacher.otherPhones.length > 0 
-          ? userData.teacher.otherPhones.slice(0, 2) // จำกัดเพียง 2 เบอร์
+        otherPhones: userData.teacher.otherPhones && userData.teacher.otherPhones.length > 0
+          ? userData.teacher.otherPhones.slice(0, 2)
           : [],
         birthdate: userData.teacher.birthdate || '',
         religion: userData.teacher.religion || '',
@@ -164,8 +161,8 @@ const TeacherProfileForm = ({ userData, onUpdate, loading }) => {
         <div className={styles.actionButtons}>
           {isEditing ? (
             <>
-              <button 
-                className={styles.saveButton} 
+              <button
+                className={styles.saveButton}
                 onClick={handleSave}
                 disabled={loading}
               >
@@ -176,8 +173,8 @@ const TeacherProfileForm = ({ userData, onUpdate, loading }) => {
                 )}
                 {loading ? 'กำลังบันทึก...' : 'บันทึก'}
               </button>
-              <button 
-                className={styles.cancelButton} 
+              <button
+                className={styles.cancelButton}
                 onClick={handleCancel}
                 disabled={loading}
               >
@@ -301,7 +298,7 @@ const TeacherProfileForm = ({ userData, onUpdate, loading }) => {
             </div>
           </div>
         </div>
-        
+
         <div className={`${styles.infoSection} ${styles.teacherSection}`}>
           <h4>ข้อมูลการทำงาน</h4>
           <div className={styles.infoCard}>
@@ -357,7 +354,7 @@ const TeacherProfileForm = ({ userData, onUpdate, loading }) => {
             </div>
           </div>
         </div>
-        
+
         <div className={`${styles.infoSection} ${styles.teacherSection}`}>
           <h4>ข้อมูลระบบ</h4>
           <div className={styles.infoCard}>
@@ -389,7 +386,7 @@ const TeacherProfileForm = ({ userData, onUpdate, loading }) => {
             </div>
           </div>
         </div>
-        
+
         <div className={`${styles.infoSection} ${styles.teacherSection}`}>
           <h4>ข้อมูลติดต่อเพิ่มเติม</h4>
           <div className={styles.infoCard}>
@@ -397,7 +394,6 @@ const TeacherProfileForm = ({ userData, onUpdate, loading }) => {
               <span className={styles.label}>เบอร์โทรศัพท์อื่นๆ (สูงสุด 2 เบอร์):</span>
               {isEditing ? (
                 <div className={styles.phoneList}>
-                  {/* แสดงช่องกรอกข้อมูลเมื่อมี otherPhones */}
                   {formData.otherPhones.length > 0 && formData.otherPhones.map((item, index) => (
                     <div key={index} className={styles.phoneItemContainer}>
                       <div className={styles.phoneInputGroup}>
@@ -429,8 +425,7 @@ const TeacherProfileForm = ({ userData, onUpdate, loading }) => {
                       </button>
                     </div>
                   ))}
-                  
-                  {/* แสดงปุ่มเพิ่มเฉพาะเมื่อมีน้อยกว่า 2 เบอร์ */}
+
                   {formData.otherPhones.length < 2 && (
                     <button
                       type="button"
@@ -442,8 +437,7 @@ const TeacherProfileForm = ({ userData, onUpdate, loading }) => {
                       <Plus size={14} /> เพิ่มหมายเลข ({formData.otherPhones.length}/2)
                     </button>
                   )}
-                  
-                  {/* แสดงข้อความเมื่อครบ 2 เบอร์แล้ว */}
+
                   {formData.otherPhones.length >= 2 && (
                     <div className={styles.maxPhonesNote}>
                       <span>ครบจำนวนเบอร์โทรศัพท์แล้ว (2/2)</span>
@@ -478,7 +472,7 @@ const TeacherProfileForm = ({ userData, onUpdate, loading }) => {
             </div>
           </div>
         </div>
-        
+
         <div className={`${styles.infoSection} ${styles.teacherSection}`}>
           <h4>ข้อมูลสุขภาพ</h4>
           <div className={styles.infoCard}>
