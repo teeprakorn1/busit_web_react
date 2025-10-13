@@ -1,0 +1,74 @@
+import { useState, useEffect, useMemo } from 'react';
+import { decryptValue } from './../../../../utils/crypto';
+
+export const useUserPermissions = () => {
+  const [userType, setUserType] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
+  const [isDean, setIsDean] = useState(false);
+
+  useEffect(() => {
+    try {
+      const storedUserType = sessionStorage.getItem('UsersType');
+      const storedUserInfo = sessionStorage.getItem('userInfo');
+      const storedAdmin = sessionStorage.getItem('admin');
+
+      if (storedUserType) {
+        try {
+          const decryptedUserType = decryptValue(storedUserType);
+          setUserType(decryptedUserType);
+        } catch (decryptError) {
+          console.warn('Failed to decrypt UsersType, using as plain text:', decryptError);
+          setUserType(storedUserType);
+        }
+      }
+
+      if (storedUserInfo) {
+        try {
+          const parsedUserInfo = JSON.parse(storedUserInfo);
+          setUserInfo(parsedUserInfo);
+        } catch (parseError) {
+          console.warn('Failed to parse userInfo:', parseError);
+        }
+      }
+      
+      if (storedAdmin) {
+        try {
+          const decryptedAdmin = decryptValue(storedAdmin);
+          const adminData = JSON.parse(decryptedAdmin);
+          if (adminData.isDean !== undefined) {
+            setIsDean(Boolean(adminData.isDean));
+          }
+        } catch (error) {
+          console.warn('Failed to decrypt/parse admin data:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Error reading user info from sessionStorage:', error);
+    }
+  }, []);
+
+  const permissions = useMemo(() => {
+    const isStaff = userType === 'staff';
+    const isTeacher = userType === 'teacher';
+    const isStudent = userType === 'student';
+
+    return {
+      canViewStudents: isStaff || isTeacher,
+      canViewStudentDetails: isStaff || isTeacher,
+      canEditStudents: isStaff,
+      canAddStudents: isStaff,
+      canToggleStudentStatus: isStaff,
+      canExportData: isStaff || isTeacher,
+      canManageUsers: isStaff,
+      canAccessAdminFeatures: isStaff,
+      userType,
+      isStaff,
+      isTeacher,
+      isDean,
+      isStudent,
+      userInfo
+    };
+  }, [userType, userInfo, isDean]);
+
+  return permissions;
+};

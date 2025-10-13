@@ -23,7 +23,7 @@ import AddUsersAdmin from './components/ApplicationAdmin/AddUsersAdmin/AddUsersA
 import AdminAllStudents from './components/NameRegisterAdmin/AdminAllStudents/AdminAllStudents';
 import AdminAllTeachers from './components/NameRegisterAdmin/AdminAllTeachers/AdminAllTeachers';
 import AdminAllDepartments from './components/NameRegisterAdmin/AdminAllDepartments/AdminAllDepartments';
-import IncompleteActivityStudentsAdmin from './components/NameRegisterAdmin/IncompleteActivityStudentsAdmin/IncompleteActivityStudentsAdmin';
+import AdminIncompleteStudents from './components/NameRegisterAdmin/AdminIncompleteStudents/AdminIncompleteStudents';
 import AdminUsersDetail from './components/NameRegisterAdmin/AdminUsersDetail/AdminUsersDetail';
 
 import CertificateEditAdmin from './components/StaffManagementAdmin/CertificateEditAdmin/CertificateEditAdmin';
@@ -68,7 +68,7 @@ function App() {
         <Route path='/name-register/student-name' element={<ProtectedRoute><AdminAllStudents /></ProtectedRoute>} />
         <Route path='/name-register/teacher-name' element={<ProtectedRoute><AdminAllTeachers /></ProtectedRoute>} />
         <Route path='/name-register/department-name' element={<ProtectedRoute><AdminAllDepartments /></ProtectedRoute>} />
-        <Route path='/name-register/student-incomplete-activities' element={<ProtectedRoute><IncompleteActivityStudentsAdmin /></ProtectedRoute>} />
+        <Route path='/name-register/student-incomplete-activities' element={<ProtectedRoute><AdminIncompleteStudents /></ProtectedRoute>} />
         <Route path='/name-register/users-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
         <Route path='/name-register/student-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
         <Route path='/name-register/teacher-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />

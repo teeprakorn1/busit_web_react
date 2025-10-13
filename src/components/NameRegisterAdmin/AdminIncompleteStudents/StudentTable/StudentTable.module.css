@@ -1,0 +1,386 @@
+/* StudentTable.module.css */
+:root {
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --success-color: #10b981;
+  --success-hover: #15803d;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+  --bg-light: #f9fafb;
+  --text-dark: #374151;
+  --text-muted: #6b7280;
+  --border-color: #d1d5db;
+  --card-bg: #ffffff;
+  --shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  --shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  border: 1px solid #e5e7eb;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-bg);
+}
+
+.table th,
+.table td {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 14px;
+  color: var(--text-dark);
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: var(--text-dark);
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+.table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.table th.sortable:hover {
+  background: #f1f5f9;
+  color: var(--primary-color);
+}
+
+.table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Student Name Cell */
+.studentName {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.studentName span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+  font-weight: 600;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e0f2fe;
+  flex-shrink: 0;
+  border: 2px solid #bae6fd;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.userIcon {
+  color: var(--primary-color);
+  width: 20px;
+  height: 20px;
+}
+
+/* Academic Year Cell */
+.academicYearCell {
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  gap: 4px;
+  min-width: 110px;
+}
+
+.primaryYear {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+.secondaryYear {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Activity Badge Styles */
+.activityBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+  white-space: nowrap;
+  min-width: 100px;
+  justify-content: center;
+}
+
+/* Activity Warning Levels */
+.criticalLow {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.veryLow {
+  background: #fed7aa;
+  color: #9a3412;
+  border: 1px solid #fdba74;
+}
+
+.low {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.moderate {
+  background: #fef9c3;
+  color: #713f12;
+  border: 1px solid #fef08a;
+}
+
+.complete {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+/* Activity Status Display */
+.activityStatus {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.statusCriticalLow {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.statusVeryLow {
+  background: #fed7aa;
+  color: #9a3412;
+  border: 1px solid #fdba74;
+}
+
+.statusLow {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.statusModerate {
+  background: #fef9c3;
+  color: #713f12;
+  border: 1px solid #fef08a;
+}
+
+.statusComplete {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  font-weight: 700;
+}
+
+/* Badge Types */
+.badgeType {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.graduated {
+  background: #f3e8ff;
+  color: #6b21a8;
+  border: 1px solid #e9d5ff;
+}
+
+.notGraduated {
+  background: #dbeafe;
+  color: #1e3a8a;
+  border: 1px solid #bfdbfe;
+}
+
+.active {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.inactive {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+/* Event Tag */
+.eventTag {
+  background: #f1f5f9;
+  color: var(--text-dark);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.viewBtn,
+.editBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.viewBtn {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+}
+
+.viewBtn:hover:not(:disabled) {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.editBtn {
+  background: #f0fdf4;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
+.editBtn:hover:not(:disabled) {
+  background: #dcfce7;
+  border-color: #86efac;
+}
+
+.viewBtn:disabled,
+.editBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.iconSmall {
+  width: 18px;
+  height: 18px;
+}
+
+.noPermission {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .table th,
+  .table td {
+    font-size: 13px;
+    padding: 12px 10px;
+  }
+
+  .studentName {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .activityBadge {
+    min-width: 90px;
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .activityStatus {
+    font-size: 12px;
+    padding: 5px 12px;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .viewBtn,
+  .editBtn {
+    width: 100%;
+    height: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .table {
+    min-width: 700px;
+  }
+
+  .table th,
+  .table td {
+    font-size: 12px;
+    padding: 10px 8px;
+  }
+}

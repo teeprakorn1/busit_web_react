@@ -49,7 +49,6 @@ function TimestampTable({
       <table className={styles.table}>
         <thead>
           <tr>
-            <th>รหัส</th>
             <th>อีเมล</th>
             <th>ประเภทผู้ใช้</th>
             <th>เหตุการณ์</th>
@@ -61,7 +60,6 @@ function TimestampTable({
         <tbody>
           {timestamps.map(ts => (
             <tr key={ts.Timestamp_ID}>
-              <td>{ts.Timestamp_ID}</td>
               <td title={ts.Users_Email}>{ts.Users_Email}</td>
               <td>
                 <span className={`${styles.badgeType} ${styles[ts.Users_Type]}`}>

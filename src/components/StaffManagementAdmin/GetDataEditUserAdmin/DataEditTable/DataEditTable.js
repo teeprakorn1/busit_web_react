@@ -96,8 +96,6 @@ function DataEditTable({
       <table className={styles.table}>
         <thead>
           <tr>
-            <th>รหัส</th>
-            <th>รหัสข้อมูล</th>
             <th>ตารางที่มา</th>
             <th>รหัสเจ้าหน้าที่</th>
             <th>ชื่อ-นามสกุล</th>
@@ -116,16 +114,6 @@ function DataEditTable({
               onClick={handleRowClick}
               className={styles.tableRow}
             >
-              <td onClick={handleRowClick}>
-                <span className={styles.idBadge}>
-                  {de.DataEdit_ID || 'N/A'}
-                </span>
-              </td>
-              <td onClick={handleRowClick}>
-                <span className={styles.thisIdBadge}>
-                  {de.DataEdit_ThisId || 'N/A'}
-                </span>
-              </td>
               <td onClick={handleRowClick}>
                 <span
                   className={styles.sourceTableTag}

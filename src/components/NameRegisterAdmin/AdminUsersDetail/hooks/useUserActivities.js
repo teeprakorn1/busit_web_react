@@ -19,6 +19,31 @@ export const useUserActivities = (userId, userType) => {
     completedHours: 0
   });
 
+  const calculateDetailedDuration = useCallback((startTime, endTime) => {
+    if (!startTime || !endTime) return { hours: 0, minutes: 0, totalHours: 0, displayText: '0 ชม.' };
+    
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const diffMs = end - start;
+    const totalMinutes = Math.floor(diffMs / (1000 * 60));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    const totalHours = Math.round((totalMinutes / 60) * 10) / 10;
+    
+    let displayText = '';
+    if (hours > 0 && minutes > 0) {
+      displayText = `${hours} ชม. ${minutes} นาที`;
+    } else if (hours > 0) {
+      displayText = `${hours} ชม.`;
+    } else if (minutes > 0) {
+      displayText = `${minutes} นาที`;
+    } else {
+      displayText = '0 ชม.';
+    }
+    
+    return { hours, minutes, totalHours, displayText };
+  }, []);
+
   const fetchActivities = useCallback(async () => {
     if (!userId) {
       setActivities([]);
@@ -49,23 +74,41 @@ export const useUserActivities = (userId, userType) => {
 
       if (response.data?.status) {
         const activitiesData = response.data.data || [];
-        setActivities(activitiesData);
-        const totalActivities = activitiesData.length;
-        const completedActivities = activitiesData.filter(
+        
+        // Calculate duration for each activity
+        const activitiesWithDuration = activitiesData.map(activity => {
+          const duration = calculateDetailedDuration(
+            activity.Activity_StartTime,
+            activity.Activity_EndTime
+          );
+          
+          return {
+            ...activity,
+            Activity_TotalHours: duration.totalHours,
+            Activity_Hours: duration.hours,
+            Activity_Minutes: duration.minutes,
+            Activity_DurationText: duration.displayText
+          };
+        });
+        
+        setActivities(activitiesWithDuration);
+        
+        const totalActivities = activitiesWithDuration.length;
+        const completedActivities = activitiesWithDuration.filter(
           a => a.Registration_CheckOutTime
         ).length;
-        const registeredActivities = activitiesData.filter(
+        const registeredActivities = activitiesWithDuration.filter(
           a => !a.Registration_CheckOutTime && a.Registration_CheckInTime
         ).length;
-        const cancelledActivities = activitiesData.filter(
+        const cancelledActivities = activitiesWithDuration.filter(
           a => a.Registration_IsCancelled
         ).length;
 
-        const totalHours = activitiesData.reduce(
+        const totalHours = activitiesWithDuration.reduce(
           (sum, a) => sum + (a.Activity_TotalHours || 0),
           0
         );
-        const completedHours = activitiesData
+        const completedHours = activitiesWithDuration
           .filter(a => a.Registration_CheckOutTime)
           .reduce((sum, a) => sum + (a.Activity_TotalHours || 0), 0);
 
@@ -74,8 +117,8 @@ export const useUserActivities = (userId, userType) => {
           completedActivities,
           registeredActivities,
           cancelledActivities,
-          totalHours,
-          completedHours
+          totalHours: Math.round(totalHours * 10) / 10,
+          completedHours: Math.round(completedHours * 10) / 10
         });
       }
     } catch (err) {
@@ -85,7 +128,7 @@ export const useUserActivities = (userId, userType) => {
     } finally {
       setLoading(false);
     }
-  }, [userId, userType]);
+  }, [userId, userType, calculateDetailedDuration]);
 
   useEffect(() => {
     if (userId) {

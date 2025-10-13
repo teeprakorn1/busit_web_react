@@ -1,6 +1,6 @@
 // ActivityEditTable/ActivityEditTable.js
 import React, { useCallback } from 'react';
-import { Eye, Calendar } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import styles from './ActivityEditTable.module.css';
 
 const formatDate = (date) => {
@@ -76,8 +76,6 @@ function ActivityEditTable({
       <table className={styles.table}>
         <thead>
           <tr>
-            <th>รหัส</th>
-            <th>รหัสกิจกรรม</th>
             <th>ชื่อกิจกรรม</th>
             <th>สถานะกิจกรรม</th>
             <th>รหัสเจ้าหน้าที่</th>
@@ -97,17 +95,6 @@ function ActivityEditTable({
               onClick={handleRowClick}
               className={styles.tableRow}
             >
-              <td onClick={handleRowClick}>
-                <span className={styles.idBadge}>
-                  {ae.DataEdit_ID || 'N/A'}
-                </span>
-              </td>
-              <td onClick={handleRowClick}>
-                <span className={styles.activityIdBadge}>
-                  <Calendar className={styles.iconTiny} />
-                  {ae.DataEdit_ThisId || 'N/A'}
-                </span>
-              </td>
               <td onClick={handleRowClick} title={ae.Activity_Title}>
                 <span className={styles.activityTitle}>
                   {truncateText(ae.Activity_Title, 35)}

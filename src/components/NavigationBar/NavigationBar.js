@@ -32,7 +32,7 @@ const NavigationBar = () => {
   const [Data_UsersType, setUsersType] = useState("");
   const [Data_Email, setEmail] = useState("");
   const [isLoadingUserType, setIsLoadingUserType] = useState(true);
-  const [Admin, setAdmin] = useState({ firstName: "", lastName: "", typeName: "" });
+  const [Admin, setAdmin] = useState({ firstName: "", lastName: "", typeName: "", isDean: false });
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
@@ -60,11 +60,13 @@ const NavigationBar = () => {
     let firstName = "";
     let lastName = "";
     let typeName = "";
+    let isDean = false;
 
     if (profile.Users_Type_Table === "teacher") {
       firstName = profile.Teacher_FirstName || "";
       lastName = profile.Teacher_LastName || "";
-      typeName = "Teacher";
+      isDean = Boolean(profile.Teacher_IsDean);
+      typeName = isDean ? "Dean" : "Teacher";
     } else if (profile.Users_Type_Table === "staff") {
       firstName = profile.Staff_FirstName || "";
       lastName = profile.Staff_LastName || "";
@@ -75,7 +77,7 @@ const NavigationBar = () => {
       typeName = profile.Users_Type_Table || "Unknown";
     }
 
-    return { firstName, lastName, typeName };
+    return { firstName, lastName, typeName, isDean };
   }, []);
 
   const verifyUserToken = useCallback(async () => {

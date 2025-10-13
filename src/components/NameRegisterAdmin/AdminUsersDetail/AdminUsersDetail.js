@@ -284,7 +284,11 @@ function AdminStaffDetail() {
 
             <div className={styles.profileActions}>
               {permissions.canExportData && (
-                <ExportExcelButton userData={userData} />
+                <ExportExcelButton
+                  userData={userData}
+                  activities={activities}
+                  completedActivities={completedActivities}
+                />
               )}
               {permissions.canEditUsers && (
                 <button

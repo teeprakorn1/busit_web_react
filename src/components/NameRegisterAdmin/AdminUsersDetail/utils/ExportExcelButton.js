@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Loader, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import styles from './ExportExcelButton.module.css';
 
-const ExportExcelButton = ({ userData }) => {
+const ExportExcelButton = ({ userData, activities = [], completedActivities = [] }) => {
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = async () => {
@@ -14,13 +15,26 @@ const ExportExcelButton = ({ userData }) => {
     setIsExporting(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      const exportData = prepareExportData(userData);
-      const csvContent = generateAdvancedCSVContent(exportData);
+      const workbook = XLSX.utils.book_new();
+      
+      // สร้าง Sheet ต่างๆ
+      addSummarySheet(workbook, userData, activities, completedActivities);
+      addProfileSheet(workbook, userData);
+      addStatisticsSheet(workbook, activities, completedActivities);
+      
+      if (completedActivities.length > 0) {
+        addCompletedActivitiesSheet(workbook, completedActivities);
+      }
+      
+      if (activities.length > 0) {
+        addAllActivitiesSheet(workbook, activities);
+      }
+
+      // ส่งออกไฟล์
       const filename = generateFilename(userData);
-
-      downloadCSV(csvContent, filename);
+      XLSX.writeFile(workbook, filename);
 
     } catch (error) {
       console.error('Export failed:', error);
@@ -30,31 +44,422 @@ const ExportExcelButton = ({ userData }) => {
     }
   };
 
-  const prepareExportData = (userData) => {
+  // ==================== SHEET 1: รายงานสรุป ====================
+  const addSummarySheet = (workbook, userData, activities, completedActivities) => {
     const userType = userData.userType;
     const profile = userData[userType] || {};
+    const data = [];
 
-    return {
-      userInfo: {
-        id: userData.id,
-        email: userData.email,
-        username: userData.username,
-        userType: userType,
-        isActive: userData.isActive,
-        regisTime: userData.regisTime,
-        lastLoginTime: userData.lastLoginTime,
-        imageFile: userData.imageFile
-      },
-      profileData: profile,
-      exportMetadata: {
-        exportDate: new Date().toISOString(),
-        exportedBy: 'Admin System',
-        systemVersion: '1.0.0',
-        recordCount: 1
-      }
-    };
+    // หัวข้อรายงาน
+    data.push(['รายงานสรุปข้อมูลผู้ใช้งานระบบ']);
+    data.push([]);
+    data.push(['ประเภท:', getUserTypeDisplay(userType)]);
+    data.push(['วันที่ส่งออก:', formatThaiDateTime(new Date().toISOString())]);
+    data.push([]);
+
+    // ข้อมูลพื้นฐาน
+    data.push(['ข้อมูลพื้นฐาน']);
+    data.push(['รหัส', profile.code || '']);
+    data.push(['ชื่อ-นามสกุล', `${profile.firstName || ''} ${profile.lastName || ''}`.trim()]);
+    data.push(['อีเมล', userData.email || '']);
+    data.push(['เบอร์โทรศัพท์', profile.phone || '']);
+    data.push(['สถานะบัญชี', userData.isActive ? 'ใช้งานได้' : 'ระงับ']);
+    data.push([]);
+
+    // ข้อมูลเฉพาะตามประเภท
+    if (userType === 'student') {
+      data.push(['ข้อมูลการศึกษา']);
+      data.push(['คณะ', profile.faculty || '']);
+      data.push(['สาขาวิชา', profile.department || '']);
+      data.push(['ปีการศึกษา', profile.academicYear || '']);
+      data.push(['อาจารย์ที่ปรึกษา', profile.advisor || '']);
+      data.push(['สถานะการศึกษา', profile.isGraduated ? 'จบการศึกษา' : 'กำลังศึกษา']);
+      data.push([]);
+    } else if (userType === 'teacher') {
+      data.push(['ข้อมูลการทำงาน']);
+      data.push(['คณะ', profile.faculty || '']);
+      data.push(['สาขาวิชา', profile.department || '']);
+      data.push(['ตำแหน่ง', profile.isDean ? 'คณบดี' : 'อาจารย์']);
+      data.push(['สถานะการทำงาน', profile.isResigned ? 'ลาออก' : 'ปฏิบัติงาน']);
+      data.push([]);
+    } else if (userType === 'staff') {
+      data.push(['ข้อมูลการทำงาน']);
+      data.push(['สถานะการทำงาน', profile.isResigned ? 'ลาออก' : 'ปฏิบัติงาน']);
+      data.push(['วันที่เริ่มงาน', formatThaiDate(profile.regisTime)]);
+      data.push([]);
+    }
+
+    // สรุปกิจกรรม (สำหรับนักศึกษาและอาจารย์)
+    if ((userType === 'student' || userType === 'teacher') && activities.length > 0) {
+      const totalHours = completedActivities.reduce((sum, act) => sum + (act.Activity_TotalHours || 0), 0);
+      const approvedCount = activities.filter(a => a.RegistrationPicture_ApprovedTime).length;
+      const pendingCount = activities.filter(a => a.RegistrationPicture_Status === 'รออนุมัติ').length;
+      const rejectedCount = activities.filter(a => a.RegistrationPicture_Status === 'ปฏิเสธ').length;
+
+      data.push(['สรุปกิจกรรม']);
+      data.push(['กิจกรรมทั้งหมด', activities.length + ' กิจกรรม']);
+      data.push(['เข้าร่วมสำเร็จ', completedActivities.length + ' กิจกรรม']);
+      data.push(['รวมชั่วโมง', totalHours.toFixed(1) + ' ชั่วโมง']);
+      data.push(['อนุมัติแล้ว', approvedCount + ' กิจกรรม']);
+      data.push(['รอตรวจสอบ', pendingCount + ' กิจกรรม']);
+      data.push(['ถูกปฏิเสธ', rejectedCount + ' กิจกรรม']);
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    
+    // กำหนดความกว้างคอลัมน์
+    ws['!cols'] = [
+      { wch: 25 },
+      { wch: 50 }
+    ];
+
+    XLSX.utils.book_append_sheet(workbook, ws, 'รายงานสรุป');
   };
 
+  // ==================== SHEET 2: ข้อมูลรายละเอียด ====================
+  const addProfileSheet = (workbook, userData) => {
+    const userType = userData.userType;
+    const profile = userData[userType] || {};
+    const data = [];
+
+    // หัวข้อ
+    data.push(['ข้อมูลรายละเอียด' + getUserTypeDisplay(userType)]);
+    data.push([]);
+
+    // ข้อมูลบัญชีผู้ใช้
+    data.push(['ข้อมูลบัญชีผู้ใช้']);
+    data.push(['หัวข้อ', 'ข้อมูล']);
+    data.push(['รหัสผู้ใช้ในระบบ', userData.id || '']);
+    data.push(['อีเมล', userData.email || '']);
+    data.push(['ชื่อผู้ใช้', userData.username || '']);
+    data.push(['ประเภทผู้ใช้', getUserTypeDisplay(userType)]);
+    data.push(['สถานะบัญชี', userData.isActive ? 'ใช้งานได้' : 'ระงับการใช้งาน']);
+    data.push(['วันที่สมัครสมาชิก', formatThaiDateTime(userData.regisTime)]);
+    data.push(['มีรูปโปรไฟล์', userData.imageFile ? 'มี' : 'ไม่มี']);
+    data.push([]);
+
+    // ข้อมูลเฉพาะตามประเภท
+    if (userType === 'student') {
+      data.push(['ข้อมูลนักศึกษา']);
+      data.push(['หัวข้อ', 'ข้อมูล']);
+      data.push(['รหัสนักศึกษา', profile.code || '']);
+      data.push(['ชื่อ', profile.firstName || '']);
+      data.push(['นามสกุล', profile.lastName || '']);
+      data.push(['ชื่อ-นามสกุล (เต็ม)', `${profile.firstName || ''} ${profile.lastName || ''}`.trim()]);
+      data.push(['เบอร์โทรศัพท์หลัก', profile.phone || '']);
+      
+      const otherPhones = formatOtherPhones(profile.otherPhones);
+      data.push(['เบอร์โทรศัพท์เพิ่มเติม', otherPhones]);
+      data.push(['จำนวนเบอร์ทั้งหมด', (profile.otherPhones?.length || 0) + (profile.phone ? 1 : 0)]);
+      
+      data.push(['ปีการศึกษาที่เข้า', profile.academicYear || '']);
+      data.push(['วันเกิด', formatThaiDate(profile.birthdate)]);
+      data.push(['ศาสนา', profile.religion || '']);
+      data.push(['คณะ', profile.faculty || '']);
+      data.push(['สาขาวิชา', profile.department || '']);
+      data.push(['อาจารย์ที่ปรึกษา', profile.advisor || '']);
+      data.push(['สถานะการศึกษา', profile.isGraduated ? 'จบการศึกษาแล้ว' : 'กำลังศึกษา']);
+      data.push(['ปัญหาสุขภาพ/โรคประจำตัว', profile.medicalProblem || 'ไม่มี']);
+      data.push(['วันที่เพิ่มข้อมูลในระบบ', formatThaiDateTime(profile.regisTime)]);
+    } else if (userType === 'teacher') {
+      data.push(['ข้อมูลอาจารย์']);
+      data.push(['หัวข้อ', 'ข้อมูล']);
+      data.push(['รหัสอาจารย์', profile.code || '']);
+      data.push(['ชื่อ', profile.firstName || '']);
+      data.push(['นามสกุล', profile.lastName || '']);
+      data.push(['ชื่อ-นามสกุล (เต็ม)', `${profile.firstName || ''} ${profile.lastName || ''}`.trim()]);
+      data.push(['เบอร์โทรศัพท์หลัก', profile.phone || '']);
+      
+      const otherPhones = formatOtherPhones(profile.otherPhones);
+      data.push(['เบอร์โทรศัพท์เพิ่มเติม', otherPhones]);
+      data.push(['จำนวนเบอร์ทั้งหมด', (profile.otherPhones?.length || 0) + (profile.phone ? 1 : 0)]);
+      
+      data.push(['วันเกิด', formatThaiDate(profile.birthdate)]);
+      data.push(['ศาสนา', profile.religion || '']);
+      data.push(['ตำแหน่ง', profile.isDean ? 'คณบดี' : 'อาจารย์']);
+      data.push(['คณะ', profile.faculty || '']);
+      data.push(['สาขาวิชา/ภาควิชา', profile.department || '']);
+      data.push(['สถานะการทำงาน', profile.isResigned ? 'ลาออกแล้ว' : 'ยังปฏิบัติงาน']);
+      data.push(['ปัญหาสุขภาพ/โรคประจำตัว', profile.medicalProblem || 'ไม่มี']);
+      data.push(['วันที่เริ่มงาน', formatThaiDateTime(profile.regisTime)]);
+    } else if (userType === 'staff') {
+      data.push(['ข้อมูลเจ้าหน้าที่']);
+      data.push(['หัวข้อ', 'ข้อมูล']);
+      data.push(['รหัสเจ้าหน้าที่', profile.code || '']);
+      data.push(['ชื่อ', profile.firstName || '']);
+      data.push(['นามสกุล', profile.lastName || '']);
+      data.push(['ชื่อ-นามสกุล (เต็ม)', `${profile.firstName || ''} ${profile.lastName || ''}`.trim()]);
+      data.push(['เบอร์โทรศัพท์หลัก', profile.phone || '']);
+      
+      const otherPhones = formatOtherPhones(profile.otherPhones);
+      data.push(['เบอร์โทรศัพท์เพิ่มเติม', otherPhones]);
+      data.push(['จำนวนเบอร์ทั้งหมด', (profile.otherPhones?.length || 0) + (profile.phone ? 1 : 0)]);
+      
+      data.push(['สถานะการทำงาน', profile.isResigned ? 'ลาออกแล้ว' : 'ยังปฏิบัติงาน']);
+      data.push(['วันที่เริ่มงาน', formatThaiDateTime(profile.regisTime)]);
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    ws['!cols'] = [{ wch: 30 }, { wch: 50 }];
+    XLSX.utils.book_append_sheet(workbook, ws, 'ข้อมูลรายละเอียด');
+  };
+
+  // ==================== SHEET 3: สถิติและวิเคราะห์ ====================
+  const addStatisticsSheet = (workbook, activities, completedActivities) => {
+    if (activities.length === 0 && completedActivities.length === 0) {
+      return;
+    }
+
+    const data = [];
+    
+    // หัวข้อ
+    data.push(['สถิติและวิเคราะห์กิจกรรม']);
+    data.push([]);
+
+    // สรุปภาพรวม
+    const totalHours = completedActivities.reduce((sum, act) => sum + (act.Activity_TotalHours || 0), 0);
+    const approvedCount = activities.filter(a => a.RegistrationPicture_ApprovedTime).length;
+    const pendingCount = activities.filter(a => a.RegistrationPicture_Status === 'รออนุมัติ').length;
+    const rejectedCount = activities.filter(a => a.RegistrationPicture_Status === 'ปฏิเสธ').length;
+    const cancelledCount = activities.filter(a => a.Registration_IsCancelled).length;
+    const checkedInCount = activities.filter(a => a.Registration_CheckInTime && !a.Registration_CheckOutTime).length;
+    const checkedOutCount = activities.filter(a => a.Registration_CheckOutTime).length;
+    const registeredCount = activities.filter(a => a.Registration_RegisTime && !a.Registration_CheckInTime).length;
+
+    data.push(['สรุปภาพรวม']);
+    data.push(['หัวข้อ', 'จำนวน']);
+    data.push(['กิจกรรมทั้งหมด', activities.length]);
+    data.push(['เข้าร่วมสำเร็จ (เช็คเอาท์แล้ว)', checkedOutCount]);
+    data.push(['รวมชั่วโมงที่ได้รับ', totalHours.toFixed(1)]);
+    data.push(['ชั่วโมงเฉลี่ย/กิจกรรม', completedActivities.length > 0 ? (totalHours / completedActivities.length).toFixed(2) : '0']);
+    data.push([]);
+
+    // สถานะการลงทะเบียน
+    data.push(['สถานะการลงทะเบียน']);
+    data.push(['สถานะ', 'จำนวน', 'เปอร์เซ็นต์']);
+    data.push(['ลงทะเบียนแล้ว', registeredCount, `${(registeredCount / activities.length * 100).toFixed(1)}%`]);
+    data.push(['เช็คอินแล้ว', checkedInCount, `${(checkedInCount / activities.length * 100).toFixed(1)}%`]);
+    data.push(['เช็คเอาท์แล้ว', checkedOutCount, `${(checkedOutCount / activities.length * 100).toFixed(1)}%`]);
+    data.push(['ยกเลิก', cancelledCount, `${(cancelledCount / activities.length * 100).toFixed(1)}%`]);
+    data.push([]);
+
+    // สถานะการตรวจสอบรูปภาพ
+    data.push(['สถานะการตรวจสอบรูปภาพ']);
+    data.push(['สถานะ', 'จำนวน', 'เปอร์เซ็นต์']);
+    data.push(['อนุมัติแล้ว', approvedCount, `${(approvedCount / activities.length * 100).toFixed(1)}%`]);
+    data.push(['รอตรวจสอบ', pendingCount, `${(pendingCount / activities.length * 100).toFixed(1)}%`]);
+    data.push(['ถูกปฏิเสธ', rejectedCount, `${(rejectedCount / activities.length * 100).toFixed(1)}%`]);
+    data.push([]);
+
+    // สถิติตามประเภทกิจกรรม
+    const typeStats = {};
+    completedActivities.forEach(act => {
+      const type = act.ActivityType_Name || 'ไม่ระบุ';
+      if (!typeStats[type]) {
+        typeStats[type] = { count: 0, hours: 0 };
+      }
+      typeStats[type].count++;
+      typeStats[type].hours += act.Activity_TotalHours || 0;
+    });
+
+    if (Object.keys(typeStats).length > 0) {
+      data.push(['สถิติตามประเภทกิจกรรม']);
+      data.push(['ประเภท', 'จำนวนกิจกรรม', 'รวมชั่วโมง', 'เฉลี่ย (ชม./กิจกรรม)']);
+      Object.entries(typeStats).forEach(([type, stats]) => {
+        data.push([
+          type,
+          stats.count,
+          stats.hours.toFixed(1),
+          (stats.hours / stats.count).toFixed(2)
+        ]);
+      });
+      data.push([]);
+    }
+
+    // สถิติ AI Verification
+    const aiSuccessCount = activities.filter(a => a.RegistrationPicture_IsAiSuccess === true).length;
+    const aiFailCount = activities.filter(a => a.RegistrationPicture_IsAiSuccess === false).length;
+    const aiNotChecked = activities.filter(a => a.RegistrationPicture_IsAiSuccess === null || a.RegistrationPicture_IsAiSuccess === undefined).length;
+
+    data.push(['สถิติการตรวจสอบด้วย AI']);
+    data.push(['สถานะ', 'จำนวน', 'เปอร์เซ็นต์']);
+    data.push(['ตรวจสอบสำเร็จ', aiSuccessCount, `${(aiSuccessCount / activities.length * 100).toFixed(1)}%`]);
+    data.push(['ตรวจสอบไม่สำเร็จ', aiFailCount, `${(aiFailCount / activities.length * 100).toFixed(1)}%`]);
+    data.push(['ยังไม่ได้ตรวจสอบ', aiNotChecked, `${(aiNotChecked / activities.length * 100).toFixed(1)}%`]);
+
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    ws['!cols'] = [{ wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 20 }];
+    XLSX.utils.book_append_sheet(workbook, ws, 'สถิติและวิเคราะห์');
+  };
+
+  // ==================== SHEET 4: กิจกรรมที่เข้าร่วมสำเร็จ ====================
+  const addCompletedActivitiesSheet = (workbook, completedActivities) => {
+    const data = [];
+    
+    // หัวข้อ
+    data.push(['กิจกรรมที่เข้าร่วมสำเร็จ (10 ล่าสุด)']);
+    data.push([]);
+    
+    // Header
+    data.push([
+      'ลำดับ',
+      'ชื่อกิจกรรม',
+      'ประเภท',
+      'วันที่จัด',
+      'เวลาเริ่ม',
+      'เวลาสิ้นสุด',
+      'สถานที่',
+      'จำนวนชั่วโมง',
+      'วันเวลาลงทะเบียน',
+      'วันเวลาเช็คอิน',
+      'วันเวลาเช็คเอาท์',
+      'วันเวลาอนุมัติรูป',
+      'สถานะ AI'
+    ]);
+
+    // Data rows
+    completedActivities.forEach((activity, index) => {
+      const activityDate = formatThaiDate(activity.Activity_StartTime);
+      const startTime = new Date(activity.Activity_StartTime).toLocaleTimeString('th-TH', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+      const endTime = new Date(activity.Activity_EndTime).toLocaleTimeString('th-TH', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+
+      const aiStatus = activity.RegistrationPicture_IsAiSuccess !== null && 
+                       activity.RegistrationPicture_IsAiSuccess !== undefined
+        ? (activity.RegistrationPicture_IsAiSuccess ? 'ตรวจสอบสำเร็จ' : 'ตรวจสอบไม่สำเร็จ')
+        : '-';
+
+      data.push([
+        index + 1,
+        activity.Activity_Title || '',
+        activity.ActivityType_Name || 'ไม่ระบุ',
+        activityDate,
+        startTime,
+        endTime,
+        activity.Activity_LocationDetail || '-',
+        activity.Activity_DurationText || `${activity.Activity_TotalHours || 0} ชม.`,
+        formatThaiDateTime(activity.Registration_RegisTime) || '-',
+        formatThaiDateTime(activity.Registration_CheckInTime) || '-',
+        formatThaiDateTime(activity.Registration_CheckOutTime) || '-',
+        formatThaiDateTime(activity.RegistrationPicture_ApprovedTime) || '-',
+        aiStatus
+      ]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    ws['!cols'] = [
+      { wch: 8 },   // ลำดับ
+      { wch: 35 },  // ชื่อกิจกรรม
+      { wch: 25 },  // ประเภท
+      { wch: 20 },  // วันที่
+      { wch: 10 },  // เวลาเริ่ม
+      { wch: 10 },  // เวลาสิ้นสุด
+      { wch: 25 },  // สถานที่
+      { wch: 12 },  // ชั่วโมง
+      { wch: 22 },  // ลงทะเบียน
+      { wch: 22 },  // เช็คอิน
+      { wch: 22 },  // เช็คเอาท์
+      { wch: 22 },  // อนุมัติรูป
+      { wch: 18 }   // AI
+    ];
+
+    XLSX.utils.book_append_sheet(workbook, ws, 'กิจกรรมสำเร็จ');
+  };
+
+  // ==================== SHEET 5: กิจกรรมทั้งหมด ====================
+  const addAllActivitiesSheet = (workbook, activities) => {
+    const data = [];
+    
+    // หัวข้อ
+    data.push(['กิจกรรมล่าสุดทั้งหมด']);
+    data.push([]);
+    
+    // Header
+    data.push([
+      'ลำดับ',
+      'ชื่อกิจกรรม',
+      'ประเภท',
+      'วันที่จัด',
+      'เวลาเริ่ม',
+      'เวลาสิ้นสุด',
+      'สถานที่',
+      'จำนวนชั่วโมง',
+      'สถานะ',
+      'วันเวลาลงทะเบียน',
+      'วันเวลาเช็คอิน',
+      'วันเวลาเช็คเอาท์',
+      'วันเวลาอนุมัติรูป',
+      'สถานะ AI',
+      'สถานะรูปภาพ'
+    ]);
+
+    // Data rows
+    activities.forEach((activity, index) => {
+      const activityDate = formatThaiDate(activity.Activity_StartTime);
+      const startTime = new Date(activity.Activity_StartTime).toLocaleTimeString('th-TH', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+      const endTime = new Date(activity.Activity_EndTime).toLocaleTimeString('th-TH', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+
+      const status = getActivityStatus(activity);
+      
+      const aiStatus = activity.RegistrationPicture_IsAiSuccess !== null && 
+                       activity.RegistrationPicture_IsAiSuccess !== undefined
+        ? (activity.RegistrationPicture_IsAiSuccess ? 'ตรวจสอบสำเร็จ' : 'ตรวจสอบไม่สำเร็จ')
+        : '-';
+
+      data.push([
+        index + 1,
+        activity.Activity_Title || '',
+        activity.ActivityType_Name || 'ไม่ระบุ',
+        activityDate,
+        startTime,
+        endTime,
+        activity.Activity_LocationDetail || '-',
+        activity.Activity_DurationText || `${activity.Activity_TotalHours || 0} ชม.`,
+        status,
+        formatThaiDateTime(activity.Registration_RegisTime) || '-',
+        formatThaiDateTime(activity.Registration_CheckInTime) || '-',
+        formatThaiDateTime(activity.Registration_CheckOutTime) || '-',
+        formatThaiDateTime(activity.RegistrationPicture_ApprovedTime) || '-',
+        aiStatus,
+        activity.RegistrationPicture_Status || '-'
+      ]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    ws['!cols'] = [
+      { wch: 8 },   // ลำดับ
+      { wch: 35 },  // ชื่อกิจกรรม
+      { wch: 25 },  // ประเภท
+      { wch: 20 },  // วันที่
+      { wch: 10 },  // เวลาเริ่ม
+      { wch: 10 },  // เวลาสิ้นสุด
+      { wch: 25 },  // สถานที่
+      { wch: 12 },  // ชั่วโมง
+      { wch: 18 },  // สถานะ
+      { wch: 22 },  // ลงทะเบียน
+      { wch: 22 },  // เช็คอิน
+      { wch: 22 },  // เช็คเอาท์
+      { wch: 22 },  // อนุมัติรูป
+      { wch: 18 },  // AI
+      { wch: 15 }   // สถานะรูป
+    ];
+
+    XLSX.utils.book_append_sheet(workbook, ws, 'กิจกรรมทั้งหมด');
+  };
+
+  // ==================== Helper Functions ====================
+  
   const formatThaiDate = (dateString) => {
     if (!dateString) return '';
     try {
@@ -76,8 +481,7 @@ const ExportExcelButton = ({ userData }) => {
         month: 'long',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
+        minute: '2-digit'
       });
     } catch {
       return dateString;
@@ -85,7 +489,7 @@ const ExportExcelButton = ({ userData }) => {
   };
 
   const formatOtherPhones = (otherPhones) => {
-    if (!Array.isArray(otherPhones) || otherPhones.length === 0) return '';
+    if (!Array.isArray(otherPhones) || otherPhones.length === 0) return 'ไม่มี';
 
     return otherPhones
       .filter(item => item.name || item.phone)
@@ -106,154 +510,31 @@ const ExportExcelButton = ({ userData }) => {
     return typeMap[userType] || 'ไม่ระบุ';
   };
 
-  const generateAdvancedCSVContent = (data) => {
-    const { userInfo, profileData, exportMetadata } = data;
-    const userType = userInfo.userType;
-
-    let csvRows = [];
-
-    csvRows.push(['='.repeat(60)]);
-    csvRows.push(['รายงานข้อมูลผู้ใช้งานระบบ']);
-    csvRows.push(['ประเภท: ' + getUserTypeDisplay(userType)]);
-    csvRows.push(['วันที่ส่งออก: ' + formatThaiDateTime(exportMetadata.exportDate)]);
-    csvRows.push(['='.repeat(60)]);
-    csvRows.push(['']);
-    csvRows.push(['ข้อมูลบัญชีผู้ใช้']);
-    csvRows.push(['หัวข้อ', 'ข้อมูล']);
-    csvRows.push(['รหัสผู้ใช้ในระบบ', userInfo.id || '']);
-    csvRows.push(['อีเมล', userInfo.email || '']);
-    csvRows.push(['ชื่อผู้ใช้', userInfo.username || '']);
-    csvRows.push(['ประเภทผู้ใช้', getUserTypeDisplay(userInfo.userType)]);
-    csvRows.push(['สถานะบัญชี', userInfo.isActive ? 'ใช้งานได้' : 'ระงับการใช้งาน']);
-    csvRows.push(['วันที่สมัครสมาชิก', formatThaiDateTime(userInfo.regisTime)]);
-    csvRows.push(['มีรูปโปรไฟล์', userInfo.imageFile ? 'มี' : 'ไม่มี']);
-    csvRows.push(['']);
-
-    if (userType === 'student') {
-      generateStudentSection(csvRows, profileData);
-    } else if (userType === 'teacher') {
-      generateTeacherSection(csvRows, profileData);
-    } else if (userType === 'staff') {
-      generateStaffSection(csvRows, profileData);
+  const getActivityStatus = (activity) => {
+    if (activity.RegistrationPicture_Status === 'ปฏิเสธ' || activity.RegistrationPicture_Status === 'rejected') {
+      return 'รูปถูกปฏิเสธ';
     }
-
-    csvRows.push(['']);
-    csvRows.push(['-'.repeat(60)]);
-    csvRows.push(['สรุปการส่งออกข้อมูล']);
-    csvRows.push(['หัวข้อ', 'รายละเอียด']);
-    csvRows.push(['วันที่และเวลาที่ส่งออก', formatThaiDateTime(exportMetadata.exportDate)]);
-    csvRows.push(['ส่งออกโดยระบบ', exportMetadata.exportedBy]);
-    csvRows.push(['เวอร์ชันระบบ', exportMetadata.systemVersion]);
-    csvRows.push(['จำนวนรายการที่ส่งออก', exportMetadata.recordCount + ' รายการ']);
-    csvRows.push(['-'.repeat(60)]);
-
-    return csvRows.map(row =>
-      row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(',')
-    ).join('\n');
-  };
-
-  const generateStudentSection = (csvRows, profile) => {
-    csvRows.push(['ข้อมูลนักศึกษา']);
-    csvRows.push(['หัวข้อ', 'ข้อมูล']);
-    csvRows.push(['รหัสนักศึกษา', profile.code || '']);
-    csvRows.push(['ชื่อ', profile.firstName || '']);
-    csvRows.push(['นามสกุล', profile.lastName || '']);
-    csvRows.push(['ชื่อ-นามสกุล (เต็ม)', `${profile.firstName || ''} ${profile.lastName || ''}`.trim()]);
-    csvRows.push(['เบอร์โทรศัพท์หลัก', profile.phone || '']);
-
-    const otherPhonesFormatted = formatOtherPhones(profile.otherPhones);
-    csvRows.push(['เบอร์โทรศัพท์เพิ่มเติม', otherPhonesFormatted]);
-    csvRows.push(['จำนวนเบอร์ทั้งหมด', (profile.otherPhones?.length || 0) + (profile.phone ? 1 : 0)]);
-
-    csvRows.push(['ปีการศึกษาที่เข้า', profile.academicYear || '']);
-    csvRows.push(['วันเกิด', formatThaiDate(profile.birthdate)]);
-    csvRows.push(['ศาสนา', profile.religion || '']);
-    csvRows.push(['คณะ', profile.faculty || '']);
-    csvRows.push(['สาขาวิชา', profile.department || '']);
-    csvRows.push(['อาจารย์ที่ปรึกษา', profile.advisor || '']);
-    csvRows.push(['สถานะการศึกษา', profile.isGraduated ? 'จบการศึกษาแล้ว' : 'กำลังศึกษา']);
-    csvRows.push(['ปัญหาสุขภาพ/โรคประจำตัว', profile.medicalProblem || 'ไม่มี']);
-    csvRows.push(['วันที่เพิ่มข้อมูลในระบบ', formatThaiDateTime(profile.regisTime)]);
-    csvRows.push(['']);
-  };
-
-  const generateTeacherSection = (csvRows, profile) => {
-    csvRows.push(['ข้อมูลอาจารย์']);
-    csvRows.push(['หัวข้อ', 'ข้อมูล']);
-    csvRows.push(['รหัสอาจารย์', profile.code || '']);
-    csvRows.push(['ชื่อ', profile.firstName || '']);
-    csvRows.push(['นามสกุล', profile.lastName || '']);
-    csvRows.push(['ชื่อ-นามสกุล (เต็ม)', `${profile.firstName || ''} ${profile.lastName || ''}`.trim()]);
-    csvRows.push(['เบอร์โทรศัพท์หลัก', profile.phone || '']);
-
-    const otherPhonesFormatted = formatOtherPhones(profile.otherPhones);
-    csvRows.push(['เบอร์โทรศัพท์เพิ่มเติม', otherPhonesFormatted]);
-    csvRows.push(['จำนวนเบอร์ทั้งหมด', (profile.otherPhones?.length || 0) + (profile.phone ? 1 : 0)]);
-
-    csvRows.push(['วันเกิด', formatThaiDate(profile.birthdate)]);
-    csvRows.push(['ศาสนา', profile.religion || '']);
-    csvRows.push(['ตำแหน่ง', profile.isDean ? 'คณบดี' : 'อาจารย์']);
-    csvRows.push(['คณะ', profile.faculty || '']);
-    csvRows.push(['สาขาวิชา/ภาควิชา', profile.department || '']);
-    csvRows.push(['สถานะการทำงาน', profile.isResigned ? 'ลาออกแล้ว' : 'ยังปฏิบัติงาน']);
-    csvRows.push(['ปัญหาสุขภาพ/โรคประจำตัว', profile.medicalProblem || 'ไม่มี']);
-    csvRows.push(['วันที่เริ่มงาน', formatThaiDateTime(profile.regisTime)]);
-    csvRows.push(['']);
-  };
-
-  const generateStaffSection = (csvRows, profile) => {
-    csvRows.push(['ข้อมูลเจ้าหน้าที่']);
-    csvRows.push(['หัวข้อ', 'ข้อมูล']);
-    csvRows.push(['รหัสเจ้าหน้าที่', profile.code || '']);
-    csvRows.push(['ชื่อ', profile.firstName || '']);
-    csvRows.push(['นามสกุล', profile.lastName || '']);
-    csvRows.push(['ชื่อ-นามสกุล (เต็ม)', `${profile.firstName || ''} ${profile.lastName || ''}`.trim()]);
-    csvRows.push(['เบอร์โทรศัพท์หลัก', profile.phone || '']);
-
-    const otherPhonesFormatted = formatOtherPhones(profile.otherPhones);
-    csvRows.push(['เบอร์โทรศัพท์เพิ่มเติม', otherPhonesFormatted]);
-    csvRows.push(['จำนวนเบอร์ทั้งหมด', (profile.otherPhones?.length || 0) + (profile.phone ? 1 : 0)]);
-
-    csvRows.push(['สถานะการทำงาน', profile.isResigned ? 'ลาออกแล้ว' : 'ยังปฏิบัติงาน']);
-    csvRows.push(['วันที่เริ่มงาน', formatThaiDateTime(profile.regisTime)]);
-    csvRows.push(['']);
+    if (activity.RegistrationPicture_Status === 'รออนุมัติ' || activity.RegistrationPicture_Status === 'pending') {
+      return 'รอตรวจสอบรูป';
+    }
+    if (activity.RegistrationPicture_ApprovedTime) {
+      return 'อนุมัติแล้ว';
+    }
+    if (activity.Registration_IsCancelled) return 'ยกเลิก';
+    if (activity.Registration_CheckOutTime) return 'เข้าร่วมสำเร็จ';
+    if (activity.Registration_CheckInTime) return 'เช็คอินแล้ว';
+    return 'ลงทะเบียนแล้ว';
   };
 
   const generateFilename = (userData) => {
     const userType = getUserTypeDisplay(userData.userType);
-    const username = userData.username || 'unknown';
     const name = userData[userData.userType]?.firstName || '';
+    const lastname = userData[userData.userType]?.lastName || '';
+    const code = userData[userData.userType]?.code || '';
     const date = new Date().toISOString().split('T')[0];
     const time = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
 
-    return `${userType}_${name}_${username}_${date}_${time}.csv`;
-  };
-
-  const downloadCSV = (csvContent, filename) => {
-    try {
-      const BOM = '\uFEFF';
-      const blob = new Blob([BOM + csvContent], {
-        type: 'text/csv;charset=utf-8;'
-      });
-
-      const link = document.createElement('a');
-      if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
-
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 100);
-      } else {
-        throw new Error('Browser does not support download');
-      }
-    } catch (error) {
-      console.error('Download failed:', error);
-      throw error;
-    }
+    return `รายงาน${userType}_${name}${lastname}_${code}_${date}_${time}.xlsx`;
   };
 
   if (!userData) {
