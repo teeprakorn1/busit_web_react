@@ -32,6 +32,7 @@
     opacity: 0;
     transform: translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -261,6 +262,7 @@
     opacity: 0;
     transform: translateY(-8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -329,6 +331,7 @@
     opacity: 0;
     transform: translateX(100px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -566,4 +569,152 @@
   .exportMenu {
     min-width: 240px;
   }
+}
+
+/* Certificate Indicator */
+.certIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2d3436;
+  border: 1px solid #fdcb6e;
+  box-shadow: 0 2px 4px rgba(253, 203, 110, 0.2);
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.certIndicator svg {
+  color: #d63031;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+@keyframes pulseGlow {
+
+  0%,
+  100% {
+    box-shadow: 0 2px 4px rgba(253, 203, 110, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 4px 12px rgba(253, 203, 110, 0.4);
+  }
+}
+
+/* Certificate Icon on Approve Button */
+.certIcon {
+  margin-left: 4px;
+  color: #fdcb6e;
+  animation: bounce 1s ease-in-out infinite;
+}
+
+@keyframes bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+/* Certificate Stat */
+.certStat {
+  background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+  border: 1px solid #fdcb6e;
+  color: #2d3436;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.certStat svg {
+  color: #d63031;
+}
+
+.certStat .statLabel {
+  color: #2d3436;
+  font-weight: 600;
+}
+
+.certStat .statValue {
+  color: #2d3436;
+  font-weight: 700;
+}
+
+/* Enhanced Approve Button with Certificate */
+.approve:hover .certIcon {
+  animation: bounce 0.5s ease-in-out infinite;
+  color: #fff;
+}
+
+/* Selection Info with Certificate */
+.selectionInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .certIndicator {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .certIndicator span {
+    display: none;
+  }
+
+  .certStat {
+    padding: 6px 10px;
+  }
+
+  .certStat .statLabel {
+    display: none;
+  }
+}
+
+/* Loading state with certificate generation */
+.actionBtn.approve:disabled {
+  background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.actionBtn.approve:disabled .certIcon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Toast with certificate info */
+.confirmToast {
+  white-space: pre-line;
+  max-width: 400px;
+}
+
+/* Certificate success indicator in toast */
+.confirmToast[data-has-cert="true"] {
+  background: linear-gradient(135deg, #fdcb6e 0%, #ffeaa7 100%);
+  color: #2d3436;
+  border: 2px solid #fdcb6e;
+}
+
+.confirmToast[data-has-cert="true"]::before {
+  content: "📜";
+  margin-right: 8px;
 }

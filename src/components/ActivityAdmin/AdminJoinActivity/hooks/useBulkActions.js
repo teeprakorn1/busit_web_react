@@ -13,7 +13,7 @@ export const useBulkActions = (selectedParticipants, selectedActivity, refreshCa
   const [bulkCheckingIn, setBulkCheckingIn] = useState(false);
   const [bulkCheckingOut, setBulkCheckingOut] = useState(false);
 
-  const handleBulkApprove = useCallback(async (pictureIds = null) => {
+  const handleBulkApprove = useCallback(async (pictureIds = null, autoGenerateCertificate = true) => {
     const idsToApprove = pictureIds || Array.from(selectedParticipants);
 
     if (idsToApprove.length === 0) {
@@ -21,10 +21,18 @@ export const useBulkActions = (selectedParticipants, selectedActivity, refreshCa
       return;
     }
 
-    const confirmed = window.confirm(
-      `คุณต้องการอนุมัติรูปภาพ ${idsToApprove.length} รายการหรือไม่?`
-    );
+    // Check if activity has template for certificate generation
+    const hasTemplate = selectedActivity?.Template_ID;
+    const shouldGenerateCert = hasTemplate && autoGenerateCertificate;
 
+    let confirmMessage = `คุณต้องการอนุมัติรูปภาพ ${idsToApprove.length} รายการหรือไม่?`;
+    if (shouldGenerateCert) {
+      confirmMessage += '\n\n✅ ระบบจะสร้างเกียรติบัตรอัตโนมัติให้ผู้ที่ได้รับการอนุมัติ';
+    } else if (!hasTemplate) {
+      confirmMessage += '\n\n⚠️ กิจกรรมนี้ยังไม่มีเทมเพลตเกียรติบัตร จะไม่สร้างเกียรติบัตรอัตโนมัติ';
+    }
+
+    const confirmed = window.confirm(confirmMessage);
     if (!confirmed) return;
 
     try {
@@ -32,17 +40,33 @@ export const useBulkActions = (selectedParticipants, selectedActivity, refreshCa
 
       const response = await axios.patch(
         getApiUrl('/api/registration-pictures/bulk-approve'),
-        { pictureIds: idsToApprove },
+        { 
+          pictureIds: idsToApprove,
+          autoGenerateCertificate: shouldGenerateCert
+        },
         { withCredentials: true }
       );
 
       if (response.data?.status) {
         const approvedCount = response.data.data?.approved_count || 0;
         const skippedCount = response.data.data?.skipped_count || 0;
+        const certificates = response.data.data?.certificates;
 
-        let message = `อนุมัติสำเร็จ ${approvedCount} รายการ`;
+        let message = `✅ อนุมัติสำเร็จ ${approvedCount} รายการ`;
+        
         if (skippedCount > 0) {
-          message += ` (ข้าม ${skippedCount} รายการที่ไม่สามารถอนุมัติได้)`;
+          message += `\n⚠️ ข้าม ${skippedCount} รายการที่ไม่สามารถอนุมัติได้`;
+        }
+
+        if (certificates) {
+          message += `\n\n📜 สร้างเกียรติบัตร:`;
+          message += `\n  • สำเร็จ: ${certificates.generated} ใบ`;
+          if (certificates.skipped > 0) {
+            message += `\n  • ข้าม: ${certificates.skipped} ใบ (มีอยู่แล้วหรือไม่มีเทมเพลต)`;
+          }
+          if (certificates.errors && certificates.errors.length > 0) {
+            message += `\n  • ล้มเหลว: ${certificates.errors.length} ใบ`;
+          }
         }
 
         alert(message);
@@ -54,11 +78,11 @@ export const useBulkActions = (selectedParticipants, selectedActivity, refreshCa
     } catch (err) {
       console.error('Bulk approve error:', err);
       const errorMsg = err.response?.data?.message || 'เกิดข้อผิดพลาดในการอนุมัติ';
-      alert(errorMsg);
+      alert('❌ ' + errorMsg);
     } finally {
       setBulkApproving(false);
     }
-  }, [selectedParticipants, refreshCallback]);
+  }, [selectedParticipants, selectedActivity, refreshCallback]);
 
   const handleBulkReject = useCallback(async (pictureIds = null) => {
     const idsToReject = pictureIds || Array.from(selectedParticipants);

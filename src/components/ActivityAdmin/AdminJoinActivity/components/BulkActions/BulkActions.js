@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { 
   CheckCircle, XCircle, LogIn, LogOut, X, 
-  AlertTriangle, ChevronDown, FileSpreadsheet, Eye
+  AlertTriangle, ChevronDown, FileSpreadsheet, Eye, Award
 } from 'lucide-react';
 import styles from './BulkActions.module.css';
 
@@ -18,13 +18,15 @@ const BulkActions = ({
   rejecting,
   checkingIn,
   checkingOut,
-  getSelectedParticipantsData
+  getSelectedParticipantsData,
+  selectedActivity
 }) => {
   const [showConfirm, setShowConfirm] = useState(null);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
   const isLoading = approving || rejecting || checkingIn || checkingOut;
+  const hasTemplate = selectedActivity?.Template_ID;
 
   const handleAction = (action, actionFn) => {
     setShowConfirm(action);
@@ -41,7 +43,9 @@ const BulkActions = ({
   };
 
   const confirmMessages = {
-    approve: `ยืนยันการอนุมัติรูปภาพ ${selectedCount} รายการ?`,
+    approve: hasTemplate 
+      ? `ยืนยันการอนุมัติรูปภาพ ${selectedCount} รายการ?\n\n✅ จะสร้างเกียรติบัตรอัตโนมัติ`
+      : `ยืนยันการอนุมัติรูปภาพ ${selectedCount} รายการ?\n\n⚠️ กิจกรรมนี้ยังไม่มีเทมเพลตเกียรติบัตร`,
     reject: `ยืนยันการปฏิเสธรูปภาพ ${selectedCount} รายการ?`,
     checkIn: `ยืนยันการเช็คอิน ${selectedCount} คน?`,
     checkOut: `ยืนยันการเช็คเอาท์ ${selectedCount} คน?`
@@ -65,6 +69,14 @@ const BulkActions = ({
               </button>
             </div>
           </div>
+          
+          {/* Certificate Status Indicator */}
+          {hasTemplate && (
+            <div className={styles.certIndicator}>
+              <Award size={16} />
+              <span>จะสร้างเกียรติบัตรอัตโนมัติ</span>
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -77,7 +89,9 @@ const BulkActions = ({
               className={`${styles.actionBtn} ${styles.approve}`}
               onClick={() => handleAction('approve', onApprove)}
               disabled={isLoading}
-              title="อนุมัติรูปภาพที่เลือก"
+              title={hasTemplate 
+                ? "อนุมัติรูปภาพและสร้างเกียรติบัตรอัตโนมัติ" 
+                : "อนุมัติรูปภาพที่เลือก"}
             >
               {approving ? (
                 <>
@@ -88,6 +102,7 @@ const BulkActions = ({
                 <>
                   <CheckCircle size={18} />
                   <span>อนุมัติ ({selectedCount})</span>
+                  {hasTemplate && <Award size={14} className={styles.certIcon} />}
                 </>
               )}
             </button>
@@ -220,6 +235,13 @@ const BulkActions = ({
           <span className={styles.statLabel}>คาดว่าจะใช้เวลา:</span>
           <span className={styles.statValue}>~{Math.ceil(selectedCount * 0.5)} วินาที</span>
         </div>
+        {hasTemplate && (
+          <div className={`${styles.stat} ${styles.certStat}`}>
+            <Award size={16} />
+            <span className={styles.statLabel}>สร้างเกียรติบัตร:</span>
+            <span className={styles.statValue}>อัตโนมัติ</span>
+          </div>
+        )}
       </div>
 
       {/* Selected Details */}
@@ -250,6 +272,10 @@ const BulkActions = ({
       )}
     </div>
   );
+};
+
+BulkActions.defaultProps = {
+  selectedActivity: null
 };
 
 export default BulkActions;

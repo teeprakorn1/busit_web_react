@@ -6,7 +6,7 @@ import {
   ChevronDown, ChevronUp, Search,
   LogIn, Eye, RefreshCw,
   CheckSquare, Square,
-  AlertCircle, Info, Calendar, Award, XCircle
+  AlertCircle, Info, Calendar, Award, XCircle, Download, ExternalLink
 } from 'lucide-react';
 import styles from './ParticipantsTable.module.css';
 
@@ -20,7 +20,9 @@ const ParticipantsTable = ({
   onViewImages,
   onRefresh,
   participantImages,
-  activity
+  activity,
+  hasCertificate,
+  certificateMap
 }) => {
   const [sortField, setSortField] = useState('Registration_RegisTime');
   const [sortDirection, setSortDirection] = useState('desc');
@@ -127,6 +129,60 @@ const ParticipantsTable = ({
     );
   };
 
+  const getCertificateUrl = (filename) => {
+    return `${process.env.REACT_APP_SERVER_PROTOCOL}${process.env.REACT_APP_SERVER_BASE_URL}${process.env.REACT_APP_SERVER_PORT}/api/admin/images/certificate-real-files/${filename}`;
+  };
+
+  const handleDownloadCertificate = (certificate, participantName) => {
+    const url = getCertificateUrl(certificate.Certificate_ImageFile);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `เกียรติบัตร_${participantName}_${certificate.Certificate_ID}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleViewCertificate = (certificate) => {
+    const url = getCertificateUrl(certificate.Certificate_ImageFile);
+    window.open(url, '_blank');
+  };
+
+  const renderCertificateStatus = (userId, participantName) => {
+    const cert = certificateMap?.[userId];
+
+    if (!cert) {
+      return (
+        <div className={styles.certificateStatus}>
+          <span className={`${styles.certBadge} ${styles.noCert}`}>
+            <AlertCircle size={14} />
+          </span>
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles.certificateStatus}>
+        <div className={styles.certActions}>
+          <button
+            className={styles.certActionBtn}
+            onClick={() => handleViewCertificate(cert)}
+            title="ดูเกียรติบัตร"
+          >
+            <ExternalLink size={14} />
+          </button>
+          <button
+            className={styles.certActionBtn}
+            onClick={() => handleDownloadCertificate(cert, participantName)}
+            title="ดาวน์โหลดเกียรติบัตร"
+          >
+            <Download size={14} />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const filteredAndSortedParticipants = useMemo(() => {
     let filtered = [...participants];
 
@@ -136,6 +192,10 @@ const ParticipantsTable = ({
       filtered = filtered.filter(p => p.Registration_CheckInTime && !p.Registration_CheckOutTime);
     } else if (quickFilter === 'completed') {
       filtered = filtered.filter(p => p.Registration_CheckOutTime);
+    } else if (quickFilter === 'has_certificate') {
+      filtered = filtered.filter(p => hasCertificate && hasCertificate(p.Users_ID));
+    } else if (quickFilter === 'no_certificate') {
+      filtered = filtered.filter(p => !hasCertificate || !hasCertificate(p.Users_ID));
     }
 
     if (searchTerm.trim()) {
@@ -165,17 +225,25 @@ const ParticipantsTable = ({
     });
 
     return filtered;
-  }, [participants, quickFilter, searchTerm, sortField, sortDirection]);
+  }, [participants, quickFilter, searchTerm, sortField, sortDirection, hasCertificate]);
 
-  const stats = useMemo(() => ({
-    total: participants.length,
-    filtered: filteredAndSortedParticipants.length,
-    pending: participants.filter(p => !p.Registration_CheckInTime).length,
-    checkedIn: participants.filter(p => p.Registration_CheckInTime && !p.Registration_CheckOutTime).length,
-    completed: participants.filter(p => p.Registration_CheckOutTime).length,
-    students: participants.filter(p => p.isStudent).length,
-    teachers: participants.filter(p => p.isTeacher).length
-  }), [participants, filteredAndSortedParticipants]);
+  const stats = useMemo(() => {
+    const withCertCount = hasCertificate
+      ? participants.filter(p => hasCertificate(p.Users_ID)).length
+      : 0;
+
+    return {
+      total: participants.length,
+      filtered: filteredAndSortedParticipants.length,
+      pending: participants.filter(p => !p.Registration_CheckInTime).length,
+      checkedIn: participants.filter(p => p.Registration_CheckInTime && !p.Registration_CheckOutTime).length,
+      completed: participants.filter(p => p.Registration_CheckOutTime).length,
+      students: participants.filter(p => p.isStudent).length,
+      teachers: participants.filter(p => p.isTeacher).length,
+      withCertificate: withCertCount,
+      withoutCertificate: participants.length - withCertCount
+    };
+  }, [participants, filteredAndSortedParticipants, hasCertificate]);
 
   const getStatusBadge = (participant) => {
     if (participant.Registration_CheckOutTime) {
@@ -310,6 +378,21 @@ const ParticipantsTable = ({
               </div>
             </>
           )}
+          {activity?.Template_ID && (
+            <>
+              <div className={styles.statDivider}></div>
+              <div className={styles.statItem}>
+                <Award size={16} />
+                <span className={styles.statValue}>{stats.withCertificate}</span>
+                <span className={styles.statLabel}>มีเกียรติบัตร</span>
+              </div>
+              <div className={styles.statItem}>
+                <AlertCircle size={16} />
+                <span className={styles.statValue}>{stats.withoutCertificate}</span>
+                <span className={styles.statLabel}>ยังไม่มีเกียรติบัตร</span>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Search and Filter */}
@@ -360,6 +443,24 @@ const ParticipantsTable = ({
               <CheckCircle size={14} />
               เสร็จสิ้น
             </button>
+            {activity?.Template_ID && (
+              <>
+                <button
+                  className={`${styles.quickFilterBtn} ${quickFilter === 'has_certificate' ? styles.active : ''}`}
+                  onClick={() => setQuickFilter('has_certificate')}
+                >
+                  <Award size={14} />
+                  มีเกียรติบัตร
+                </button>
+                <button
+                  className={`${styles.quickFilterBtn} ${quickFilter === 'no_certificate' ? styles.active : ''}`}
+                  onClick={() => setQuickFilter('no_certificate')}
+                >
+                  <AlertCircle size={14} />
+                  ยังไม่มีเกียรติบัตร
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -400,6 +501,9 @@ const ParticipantsTable = ({
               <th className={styles.statusCell}>สถานะ</th>
               <th className={styles.imageCell}>รูปภาพ</th>
               <th className={styles.pictureStatusCell}>สถานะรูปภาพ</th>
+              {activity?.Template_ID && (
+                <th className={styles.certificateCell}>เกียรติบัตร</th>
+              )}
               <th className={styles.actionsCell}></th>
             </tr>
           </thead>
@@ -409,6 +513,7 @@ const ParticipantsTable = ({
               const images = participantImages[participant.Users_ID] || [];
               const isRowSelected = isSelected(participant.Users_ID);
               const imageStats = getImageStats(participant.Users_ID);
+              const participantName = `${participant.FirstName} ${participant.LastName}`;
 
               return (
                 <React.Fragment key={participant.Users_ID}>
@@ -449,7 +554,7 @@ const ParticipantsTable = ({
                           </div>
                           <div className={styles.userInfo}>
                             <div className={styles.fullName}>
-                              {participant.FirstName} {participant.LastName}
+                              {participantName}
                             </div>
                             <div className={styles.userEmail}>{participant.Users_Email}</div>
                           </div>
@@ -504,6 +609,11 @@ const ParticipantsTable = ({
                     <td className={styles.pictureStatusCell}>
                       {renderImageStatusText(participant.Users_ID)}
                     </td>
+                    {activity?.Template_ID && (
+                      <td className={styles.certificateCell}>
+                        {renderCertificateStatus(participant.Users_ID, participantName)}
+                      </td>
+                    )}
                     <td className={styles.actionsCell}>
                       <div className={styles.actionButtons}>
                         <button
@@ -519,7 +629,7 @@ const ParticipantsTable = ({
 
                   {isExpanded && (
                     <tr className={styles.detailsRow}>
-                      <td colSpan="11">
+                      <td colSpan={activity?.Template_ID ? "12" : "11"}>
                         <div className={styles.expandedContent}>
                           <div className={styles.detailsGrid}>
                             {/* Contact Info */}
@@ -613,6 +723,60 @@ const ParticipantsTable = ({
                                 </div>
                               </div>
                             </div>
+
+                            {/* Certificate Detail */}
+                            {activity?.Template_ID && (
+                              <div className={styles.detailSection}>
+                                <h4 className={styles.sectionTitle}>
+                                  <Award size={16} />
+                                  เกียรติบัตร
+                                </h4>
+                                {certificateMap?.[participant.Users_ID] ? (
+                                  <div className={styles.certificateDetail}>
+                                    <div className={styles.certDetailRow}>
+                                      <span className={styles.certDetailLabel}>สถานะ:</span>
+                                      <span className={`${styles.certDetailValue} ${styles.success}`}>
+                                        <CheckCircle size={14} />
+                                        สร้างแล้ว
+                                      </span>
+                                    </div>
+                                    <div className={styles.certDetailRow}>
+                                      <span className={styles.certDetailLabel}>วันที่สร้าง:</span>
+                                      <span className={styles.certDetailValue}>
+                                        {formatDateTime(certificateMap[participant.Users_ID].Certificate_RegisTime)}
+                                      </span>
+                                    </div>
+                                    <div className={styles.certActions}>
+                                      <button
+                                        className={`${styles.certBtn} ${styles.viewBtn}`}
+                                        onClick={() => handleViewCertificate(certificateMap[participant.Users_ID])}
+                                      >
+                                        <ExternalLink size={14} />
+                                        ดูเกียรติบัตร
+                                      </button>
+                                      <button
+                                        className={`${styles.certBtn} ${styles.downloadBtn}`}
+                                        onClick={() => handleDownloadCertificate(
+                                          certificateMap[participant.Users_ID],
+                                          participantName
+                                        )}
+                                      >
+                                        <Download size={14} />
+                                        ดาวน์โหลด
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className={styles.noCertificate}>
+                                    <AlertCircle size={20} />
+                                    <span>ยังไม่มีเกียรติบัตร</span>
+                                    <p className={styles.certHint}>
+                                      เกียรติบัตรจะถูกสร้างอัตโนมัติเมื่ออนุมัติรูปภาพ
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
 
                             {/* Images */}
                             {images.length > 0 && (

@@ -1373,3 +1373,90 @@
     border-left: 3px solid #000 !important;
   }
 }
+
+/* Certificate Actions - Enhanced */
+.certActions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.certActionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: white;
+  border: 1.5px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+
+.certActionBtn:hover {
+  background: var(--primary-light);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.certActionBtn:active {
+  transform: translateY(0);
+}
+
+/* Detail View - Larger Buttons */
+.certDetailRow .certBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  flex: 1;
+}
+
+.certBtn.viewBtn {
+  background: var(--primary-color);
+  color: white;
+}
+
+.certBtn.viewBtn:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.certBtn.downloadBtn {
+  background: var(--success-color);
+  color: white;
+}
+
+.certBtn.downloadBtn:hover {
+  background: var(--success-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .certActions {
+    gap: 4px;
+  }
+  
+  .certActionBtn {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .certActionBtn svg {
+    width: 12px;
+    height: 12px;
+  }
+}

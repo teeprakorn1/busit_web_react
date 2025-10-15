@@ -1,4 +1,4 @@
-// AdminJoinActivity.js
+// AdminJoinActivity.js - Updated with Certificate Support
 import React, { useEffect } from 'react';
 import { Users, Filter, AlertCircle } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
@@ -19,6 +19,7 @@ import { useParticipants } from './hooks/useParticipants';
 import { useFilters } from './hooks/useFilters';
 import { useSelection } from './hooks/useSelection';
 import { useBulkActions } from './hooks/useBulkActions';
+import { useCertificateStatus } from './hooks/useCertificateStatus';
 
 function AdminJoinActivity() {
   const location = useLocation();
@@ -55,6 +56,13 @@ function AdminJoinActivity() {
   } = useParticipants(selectedActivity?.Activity_ID);
 
   const {
+    certificates,
+    certificateMap,
+    hasCertificate,
+    refreshCertificates
+  } = useCertificateStatus(selectedActivity?.Activity_ID);
+
+  const {
     filters,
     filteredParticipants,
     updateFilter,
@@ -83,7 +91,10 @@ function AdminJoinActivity() {
     handleBulkCheckIn,
     handleBulkCheckOut,
     handleExportSelected
-  } = useBulkActions(selectedParticipants, selectedActivity, refreshParticipants);
+  } = useBulkActions(selectedParticipants, selectedActivity, async () => {
+    await refreshParticipants();
+    await refreshCertificates();
+  });
 
   useEffect(() => {
     fetchActivities();
@@ -218,6 +229,7 @@ function AdminJoinActivity() {
               filteredCount={filteredParticipants.length}
               selectedCount={selectedCount}
               activity={selectedActivity}
+              certificateCount={certificates.length}
             />
 
             {/* Filter Panel */}
@@ -237,10 +249,11 @@ function AdminJoinActivity() {
               <BulkActions
                 selectedCount={selectedCount}
                 selectedParticipants={selectedParticipants}
+                selectedActivity={selectedActivity}
                 onApprove={() => {
                   const pictureIds = getSelectedPictureIds();
                   if (pictureIds.length > 0) {
-                    handleBulkApprove(pictureIds);
+                    handleBulkApprove(pictureIds, true); // true = auto generate certificate
                   } else {
                     alert('ไม่มีรูปภาพที่รออนุมัติในรายการที่เลือก');
                   }
@@ -296,6 +309,8 @@ function AdminJoinActivity() {
                 participantImages={participantImages}
                 fetchParticipantImages={fetchParticipantImages}
                 activity={selectedActivity}
+                hasCertificate={hasCertificate}
+                certificateMap={certificateMap}
               />
             )}
           </>
@@ -314,9 +329,13 @@ function AdminJoinActivity() {
           <ImageGallery
             images={selectedImages}
             onClose={() => setShowImageGallery(false)}
-            onApprove={handleBulkApprove}
+            onApprove={(pictureIds) => handleBulkApprove(pictureIds, true)}
             onReject={handleBulkReject}
-            onRefresh={refreshParticipants}
+            onRefresh={async () => {
+              await refreshParticipants();
+              await refreshCertificates();
+            }}
+            selectedActivity={selectedActivity}
           />
         )}
       </main>
