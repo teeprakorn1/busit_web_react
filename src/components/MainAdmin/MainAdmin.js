@@ -1,38 +1,33 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import Navbar from '../NavigationBar/NavigationBar';
 import styles from './MainAdmin.module.css';
-import { FiBell, FiUsers, FiCalendar, FiBarChart2 } from 'react-icons/fi';
+import { FiUserCheck, FiUsers, FiCalendar, FiBarChart2, FiAlertCircle } from 'react-icons/fi';
+
+const getApiUrl = (endpoint) => {
+  const protocol = process.env.REACT_APP_SERVER_PROTOCOL;
+  const baseUrl = process.env.REACT_APP_SERVER_BASE_URL;
+  const port = process.env.REACT_APP_SERVER_PORT;
+
+  if (!protocol || !baseUrl || !port) {
+    throw new Error('Missing required environment variables');
+  }
+
+  return `${protocol}${baseUrl}${port}${endpoint}`;
+};
 
 function MainAdmin() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const systemStats = [
-    {
-      title: "จำนวนนักศึกษาทั้งหมด",
-      count: "2,847",
-      icon: <FiUsers size={32} />,
-      color: "#3B82F6"
-    },
-    {
-      title: "กิจกรรมที่กำลังดำเนินการ",
-      count: "15",
-      icon: <FiCalendar size={32} />,
-      color: "#10B981"
-    },
-    {
-      title: "อัตราการเข้าร่วมกิจกรรม",
-      count: "87%",
-      icon: <FiBarChart2 size={32} />,
-      color: "#F59E0B"
-    },
-    {
-      title: "การแจ้งเตือนรอดำเนินการ",
-      count: "12",
-      icon: <FiBell size={32} />,
-      color: "#EF4444"
-    }
-  ];
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    totalTeachers: 0,
+    activeActivities: 0,
+    participationRate: 0
+  });
 
   const systemFeatures = [
     {
@@ -67,6 +62,97 @@ function MainAdmin() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
+  const fetchDashboardStats = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await axios.get(getApiUrl('/api/admin/dashboard-stats'), {
+        withCredentials: true,
+        timeout: 15000,
+        headers: {
+          'Cache-Control': 'no-cache',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+
+      if (response.data && response.data.status) {
+        const statsData = response.data.data;
+
+        setStats({
+          totalStudents: statsData.totalStudents || 0,
+          totalTeachers: statsData.totalTeachers || 0,
+          activeActivities: statsData.activeActivities || 0,
+          participationRate: statsData.participationRate || 0
+        });
+      } else {
+        setError('ไม่สามารถโหลดข้อมูลสถิติได้');
+      }
+
+    } catch (err) {
+      console.error('Fetch dashboard stats error:', err);
+
+      let errorMessage = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
+
+      if (axios.isAxiosError(err)) {
+        if (err.code === 'ECONNABORTED') {
+          errorMessage = 'การเชื่อมต่อหมดเวลา กรุณาลองใหม่อีกครั้ง';
+        } else if (err.response) {
+          switch (err.response.status) {
+            case 401:
+              errorMessage = 'กรุณาเข้าสู่ระบบใหม่';
+              break;
+            case 403:
+              errorMessage = 'ไม่มีสิทธิ์เข้าถึงข้อมูลนี้';
+              break;
+            case 429:
+              errorMessage = 'คำขอเกินจำนวนที่กำหนด กรุณารอสักครู่';
+              break;
+            default:
+              errorMessage = err.response.data?.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ';
+          }
+        } else if (err.request) {
+          errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้';
+        }
+      }
+
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const systemStatsDisplay = [
+    {
+      title: "จำนวนนักศึกษาทั้งหมด",
+      count: loading ? "..." : stats.totalStudents.toLocaleString(),
+      icon: <FiUsers size={32} />,
+      color: "#3B82F6"
+    },
+    {
+      title: "จำนวนอาจารย์ทั้งหมด",
+      count: loading ? "..." : stats.totalTeachers.toLocaleString(),
+      icon: <FiUserCheck size={32} />,
+      color: "#10B981"
+    },
+    {
+      title: "กิจกรรมที่กำลังดำเนินการ",
+      count: loading ? "..." : stats.activeActivities.toLocaleString(),
+      icon: <FiCalendar size={32} />,
+      color: "#F59E0B"
+    },
+    {
+      title: "อัตราการเข้าร่วมกิจกรรม",
+      count: loading ? "..." : `${stats.participationRate}%`,
+      icon: <FiBarChart2 size={32} />,
+      color: "#f63b3bff"
+    },
+  ];
+
   return (
     <div className={styles.container}>
       <Navbar
@@ -81,8 +167,19 @@ function MainAdmin() {
       >
         {/* Header Bar */}
         <div className={styles.headerBar}>
-          <h1 className={styles.heading}>หน้าหลัก (ตัวอย่าง)</h1>
+          <h1 className={styles.heading}>หน้าหลัก</h1>
         </div>
+
+        {/* Error Alert */}
+        {error && (
+          <div className={styles.errorAlert}>
+            <FiAlertCircle size={20} />
+            <span>{error}</span>
+            <button onClick={fetchDashboardStats} className={styles.retryButton}>
+              ลองใหม่
+            </button>
+          </div>
+        )}
 
         {/* Welcome Section */}
         <div className={styles.welcomeSection}>
@@ -99,7 +196,7 @@ function MainAdmin() {
         <div className={styles.statsSection}>
           <h3 className={styles.sectionTitle}>สถิติระบบ</h3>
           <div className={styles.statsGrid}>
-            {systemStats.map((stat, index) => (
+            {systemStatsDisplay.map((stat, index) => (
               <div key={index} className={styles.statCard}>
                 <div
                   className={styles.statIcon}

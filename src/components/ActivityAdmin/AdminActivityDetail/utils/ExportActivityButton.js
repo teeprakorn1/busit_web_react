@@ -532,7 +532,7 @@ const ExportActivityButton = ({ activityData }) => {
       ) : (
         <>
           <Download size={16} />
-          ส่งออกรายงาน
+          Export Excel
         </>
       )}
     </button>

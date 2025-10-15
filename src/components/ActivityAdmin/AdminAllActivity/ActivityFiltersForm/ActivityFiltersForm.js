@@ -3,6 +3,7 @@ import React, { useCallback, memo } from 'react';
 import { Plus, X, Download } from 'lucide-react';
 import { useUserPermissions } from '../hooks/useUserPermissions';
 import { exportActivitiesToExcel } from './../utils/activityExportUtils';
+import CustomModal from './../../../../services/CustomModal/CustomModal';
 import styles from './ActivityFiltersForm.module.css';
 
 const ActivityFiltersForm = memo(({
@@ -26,6 +27,8 @@ const ActivityFiltersForm = memo(({
   onAddActivity
 }) => {
   const permissions = useUserPermissions();
+  const [modalOpen, setModalOpen] = React.useState(false);
+  const [modalMessage, setModalMessage] = React.useState("");
 
   const resetToFirstPage = useCallback(() => {
     if (setCurrentPage) {
@@ -65,14 +68,18 @@ const ActivityFiltersForm = memo(({
 
   const handleExport = useCallback(() => {
     if (!sortedActivities || sortedActivities.length === 0) {
-      alert("ไม่มีข้อมูลสำหรับการ export");
+      setModalMessage("ไม่มีข้อมูลสำหรับการส่งออกข้อมูล");
+      setModalOpen(true);
       return;
     }
 
     const success = exportActivitiesToExcel(sortedActivities);
     if (success) {
-      alert(`Export สำเร็จ! จำนวน ${sortedActivities.length} รายการ`);
+      setModalMessage(`ส่งออกข้อมูลสำเร็จ! จำนวน ${sortedActivities.length} รายการ`);
+    } else {
+      setModalMessage("เกิดข้อผิดพลาดระหว่างการส่งออกข้อมูล");
     }
+    setModalOpen(true);
   }, [sortedActivities]);
 
   return (
@@ -186,6 +193,11 @@ const ActivityFiltersForm = memo(({
           ล้างฟิลเตอร์
         </button>
       )}
+      <CustomModal
+        isOpen={modalOpen}
+        message={modalMessage}
+        onClose={() => setModalOpen(false)}
+      />
     </div>
   );
 });

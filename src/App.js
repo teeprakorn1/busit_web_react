@@ -24,6 +24,7 @@ import AdminAllStudents from './components/NameRegisterAdmin/AdminAllStudents/Ad
 import AdminAllTeachers from './components/NameRegisterAdmin/AdminAllTeachers/AdminAllTeachers';
 import AdminAllDepartments from './components/NameRegisterAdmin/AdminAllDepartments/AdminAllDepartments';
 import AdminIncompleteStudents from './components/NameRegisterAdmin/AdminIncompleteStudents/AdminIncompleteStudents';
+import AdminOwnTeacherActivity from './components/NameRegisterAdmin/TeacherOwnActivities/TeacherOwnActivities';
 import AdminUsersDetail from './components/NameRegisterAdmin/AdminUsersDetail/AdminUsersDetail';
 
 import CertificateEditAdmin from './components/StaffManagementAdmin/CertificateEditAdmin/CertificateEditAdmin';
@@ -69,6 +70,7 @@ function App() {
         <Route path='/name-register/teacher-name' element={<ProtectedRoute><AdminAllTeachers /></ProtectedRoute>} />
         <Route path='/name-register/department-name' element={<ProtectedRoute><AdminAllDepartments /></ProtectedRoute>} />
         <Route path='/name-register/student-incomplete-activities' element={<ProtectedRoute><AdminIncompleteStudents /></ProtectedRoute>} />
+        <Route path='/name-register/own-teacher-activities' element={<ProtectedRoute><AdminOwnTeacherActivity /></ProtectedRoute>} />
         <Route path='/name-register/users-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
         <Route path='/name-register/student-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />
         <Route path='/name-register/teacher-detail/:id' element={<ProtectedRoute><AdminUsersDetail /></ProtectedRoute>} />

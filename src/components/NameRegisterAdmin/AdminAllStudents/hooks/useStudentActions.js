@@ -145,12 +145,12 @@ export const useStudentActions = ({
         logStudentExportTimestamp(students.length, filterInfo)
       ]);
 
-      return exportFilteredStudentsToExcel(students, filterInfo);
+      return exportFilteredStudentsToExcel(students, filterInfo, null, showModal);
     } catch (error) {
       console.warn('Failed to log export action:', error);
-      return exportFilteredStudentsToExcel(students, filterInfo);
+      return exportFilteredStudentsToExcel(students, filterInfo, null, showModal);
     }
-  }, [permissions.canExportData, setSecurityAlert]);
+  }, [permissions.canExportData, setSecurityAlert, showModal]);
 
   const handleAddStudent = useCallback(async () => {
     if (!permissions.canAddStudents) {
@@ -312,7 +312,7 @@ ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
               logStudentExportTimestamp(students.length, filterInfo)
             ]);
 
-            const success = exportFilteredStudentsToExcel(students, filterInfo, options);
+            const success = exportFilteredStudentsToExcel(students, filterInfo, options, showModal);
             if (success) {
               showModal('ส่งออกข้อมูลเรียบร้อยแล้ว', [
                 {
@@ -323,7 +323,7 @@ ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
             }
           } catch (error) {
             console.warn('Failed to log bulk export:', error);
-            const success = exportFilteredStudentsToExcel(students, filterInfo, options);
+            const success = exportFilteredStudentsToExcel(students, filterInfo, options, showModal);
             if (success) {
               showModal('ส่งออกข้อมูลเรียบร้อยแล้ว', [
                 {

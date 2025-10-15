@@ -39,11 +39,11 @@ const createFacultySummaryData = (departments) => {
     "จำนวนอาจารย์": stats.teachers,
     "จำนวนนักศึกษา": stats.students,
     "รวมบุคลากร": stats.total,
-    "อัตราส่วนอาจารย์/นักศึกษา": stats.students > 0 ? 
+    "อัตราส่วนอาจารย์/นักศึกษา": stats.students > 0 ?
       `1:${Math.round(stats.students / stats.teachers)}` : 'N/A',
-    "เปอร์เซ็นต์อาจารย์": stats.total > 0 ? 
+    "เปอร์เซ็นต์อาจารย์": stats.total > 0 ?
       `${((stats.teachers / stats.total) * 100).toFixed(1)}%` : '0%',
-    "เปอร์เซ็นต์นักศึกษา": stats.total > 0 ? 
+    "เปอร์เซ็นต์นักศึกษา": stats.total > 0 ?
       `${((stats.students / stats.total) * 100).toFixed(1)}%` : '0%'
   }));
 };
@@ -55,13 +55,13 @@ const createDepartmentStatsData = (departments) => {
   const totalPersonnel = totalTeachers + totalStudents;
   const faculties = [...new Set(departments.map(d => d.Faculty_Name))].length;
 
-  const maxTeachersDept = departments.reduce((max, dept) => 
+  const maxTeachersDept = departments.reduce((max, dept) =>
     (dept.teacher_count || 0) > (max.teacher_count || 0) ? dept : max, departments[0]);
-  const minTeachersDept = departments.reduce((min, dept) => 
+  const minTeachersDept = departments.reduce((min, dept) =>
     (dept.teacher_count || 0) < (min.teacher_count || 0) ? dept : min, departments[0]);
-  const maxStudentsDept = departments.reduce((max, dept) => 
+  const maxStudentsDept = departments.reduce((max, dept) =>
     (dept.student_count || 0) > (max.student_count || 0) ? dept : max, departments[0]);
-  const minStudentsDept = departments.reduce((min, dept) => 
+  const minStudentsDept = departments.reduce((min, dept) =>
     (dept.student_count || 0) < (min.student_count || 0) ? dept : min, departments[0]);
 
   return [
@@ -113,10 +113,14 @@ const getColumnWidths = (type) => {
   }
 };
 
-export const exportFilteredDepartmentsToExcel = (departments, filterInfo, options = {}) => {
+export const exportFilteredDepartmentsToExcel = (departments, filterInfo, options = {}, showModal) => {
   try {
     if (!departments || departments.length === 0) {
-      alert("ไม่มีข้อมูลสำหรับการ export");
+      if (showModal) {
+        showModal("ไม่มีข้อมูลสำหรับการ export", [
+          { label: "ตกลง", onClick: () => showModal(null) }
+        ]);
+      }
       return false;
     }
 
@@ -155,23 +159,40 @@ export const exportFilteredDepartmentsToExcel = (departments, filterInfo, option
     }
 
     const now = new Date();
-    const timestamp = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
-    
+    const timestamp = `${now.getFullYear()}-${(now.getMonth() + 1)
+      .toString()
+      .padStart(2, '0')}-${now.getDate()
+        .toString()
+        .padStart(2, '0')}_${now.getHours()
+          .toString()
+          .padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
+
     let finalFilename = filename;
     if (!finalFilename) {
       const filterText = Object.entries(filterInfo || {})
         .filter(([key, value]) => value && value !== "")
         .map(([key, value]) => `${key}-${value}`)
         .join("_");
-      
+
       finalFilename = `รายชื่อสาขา${filterText ? '_' + filterText : ''}_${timestamp}.xlsx`;
     }
 
     writeFileXLSX(wb, finalFilename);
+
+    if (showModal) {
+      showModal("ส่งออกข้อมูลเรียบร้อยแล้ว", [
+        { label: "ตกลง", onClick: () => showModal(null) }
+      ]);
+    }
+
     return true;
   } catch (error) {
     console.error('Export error:', error);
-    alert('เกิดข้อผิดพลาดในการ export ไฟล์: ' + error.message);
+    if (showModal) {
+      showModal(`เกิดข้อผิดพลาดในการ export ไฟล์: ${error.message}`, [
+        { label: "ตกลง", onClick: () => showModal(null) }
+      ]);
+    }
     return false;
   }
 };

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../NavigationBar/NavigationBar';
 import styles from './ApplicationAdmin.module.css';
 import { useNavigate } from "react-router-dom";
-import { FiAirplay, FiUserCheck, FiClipboard, FiUserPlus } from "react-icons/fi";
+import { FiUserCheck, FiClipboard, FiUserPlus } from "react-icons/fi";
 
 function ApplicationAdmin() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -38,20 +38,16 @@ function ApplicationAdmin() {
 
         {/* Menu Section */}
         <div className={styles.dashboardSection}>
-          <div className={`${styles.card} ${styles.card01}`} onClick={() => navigate("/create-activity")}>
-            <FiAirplay size={36} />
-            <span>จัดการประชาสัมพันธ์</span>
-          </div>
-          <div className={`${styles.card} ${styles.card02}`} onClick={() => navigate("/application/get-person-timestamp")}>
-            <FiUserCheck  size={36} />
+          <div className={`${styles.card} ${styles.card01}`} onClick={() => navigate("/application/get-person-timestamp")}>
+            <FiUserCheck size={36} />
             <span>ประวัติการใช้งานรายบุคคล</span>
           </div>
-          <div className={`${styles.card} ${styles.card03}`} onClick={() => navigate("/application/get-timestamp")}>
-            <FiClipboard  size={36} />
+          <div className={`${styles.card} ${styles.card02}`} onClick={() => navigate("/application/get-timestamp")}>
+            <FiClipboard size={36} />
             <span>ประวัติการใช้งาน</span>
           </div>
-          <div className={`${styles.card} ${styles.card04}`} onClick={() => navigate("/application/add-user")}>
-            <FiUserPlus  size={36} />
+          <div className={`${styles.card} ${styles.card03}`} onClick={() => navigate("/application/add-user")}>
+            <FiUserPlus size={36} />
             <span>เพิ่มบัญชีนักศึกษา/อาจารย์</span>
           </div>
         </div>

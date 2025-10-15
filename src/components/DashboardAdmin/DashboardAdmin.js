@@ -1,43 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../NavigationBar/NavigationBar';
 import styles from './DashboardAdmin.module.css';
-import { Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { FiActivity, FiUsers, FiClipboard, FiBarChart2, FiClock, FiEdit } from 'react-icons/fi';
+import CustomModal from './../../services/CustomModal/CustomModal';
+import { Bar, Line, Doughnut } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+import {
+  FiActivity,
+  FiUsers,
+  FiUserCheck,
+  FiBarChart2,
+  FiDownload,
+  FiAlertCircle,
+  FiRefreshCw,
+  FiCalendar,
+  FiTrendingUp,
+  FiCheckCircle,
+  FiClock
+} from 'react-icons/fi';
+import { useDashboard } from './hooks/useDashboard';
+import { useExportDashboard } from './hooks/useExportDashboard';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 function DashboardAdmin() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
 
-  const summaryCards = [
-    { title: "กิจกรรมทั้งหมด", value: 120, icon: <FiActivity size={36} /> },
-    { title: "นักศึกษาทั้งหมด", value: 450, icon: <FiUsers size={36} /> },
-    { title: "การลงทะเบียน", value: 320, icon: <FiClipboard size={36} /> },
-    { title: "อัตราเข้าร่วม", value: "72%", icon: <FiBarChart2 size={36} /> },
-    { title: "นักศึกษาที่กิจกรรมไม่ครบ", value: "52%", icon: <FiClock size={36} /> },
-    { title: "กิจกรรมที่สำเร็จ", value: 100, icon: <FiEdit size={36} /> },
-  ];
+  const { loading, error, dashboardData, refetch } = useDashboard();
+  const { exporting, exportToExcel } = useExportDashboard(dashboardData);
 
-  const latestActivities = [
-    { name: "กิจกรรมเฟรชชี่ 2025", begin_datetime: "10:00 - 15/08/2025", end_datetime: "16:00 - 15/08/2025", participants: 32, type: "บังคับ", status: "รอดำเนินการ" },
-    { name: "กิจกรรมบุซิทเดร์ย 2025", begin_datetime: "10:00 - 12/08/2025", end_datetime: "14:00 - 12/08/2025", participants: 143, type: "บังคับ", status: "อยู่ในระหว่างกิจกรรม" },
-    { name: "กิจกรรมบริจาคโลหิต 2025", begin_datetime: "13:00 - 10/08/2025", end_datetime: "15:30 - 10/08/2025", participants: 300, type: "ไม่บังคับ", status: "เสร็จสิ้น" },
-  ];
-
-  const chartData = {
-    labels: latestActivities.map(a => a.name),
-    datasets: [
-      {
-        label: 'จำนวนผู้เข้าร่วม',
-        data: latestActivities.map(a => a.participants),
-        backgroundColor: 'rgba(37, 99, 235, 0.6)',
-      },
-    ],
-  };
-
-  const chartOptions = { responsive: true, plugins: { legend: { display: false } } };
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
 
   useEffect(() => {
     const handleResize = () => {
@@ -49,6 +63,229 @@ function DashboardAdmin() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const handleExport = async () => {
+    const result = await exportToExcel();
+    setModalMessage(result.message);
+    setModalOpen(true);
+  };
+
+  const summaryCards = [
+    {
+      title: "กิจกรรมทั้งหมด",
+      value: loading ? "..." : dashboardData.totalActivities,
+      icon: <FiActivity size={28} />,
+      color: "#2563eb",
+      bgColor: "#dbeafe"
+    },
+    {
+      title: "นักศึกษาทั้งหมด",
+      value: loading ? "..." : dashboardData.totalStudents.toLocaleString(),
+      icon: <FiUsers size={28} />,
+      color: "#7c3aed",
+      bgColor: "#ede9fe"
+    },
+    {
+      title: "อาจารย์ทั้งหมด",
+      value: loading ? "..." : dashboardData.totalTeachers.toLocaleString(),
+      icon: <FiUserCheck size={28} />,
+      color: "#0891b2",
+      bgColor: "#cffafe"
+    },
+    {
+      title: "อัตราเข้าร่วม",
+      value: loading ? "..." : `${dashboardData.participationRate}%`,
+      icon: <FiBarChart2 size={28} />,
+      color: "#10b981",
+      bgColor: "#d1fae5"
+    },
+    {
+      title: "กิจกรรมที่เปิดรับสมัคร",
+      value: loading ? "..." : dashboardData.activeActivities,
+      icon: <FiCalendar size={28} />,
+      color: "#f59e0b",
+      bgColor: "#fef3c7"
+    },
+    {
+      title: "กิจกรรมที่สำเร็จ",
+      value: loading ? "..." : dashboardData.completedActivities,
+      icon: <FiTrendingUp size={28} />,
+      color: "#14b8a6",
+      bgColor: "#ccfbf1"
+    },
+  ];
+
+  const activityTypeChartData = {
+    labels: dashboardData.activityTypeStats.map(stat => stat.ActivityType_Name || 'ไม่ระบุ'),
+    datasets: [
+      {
+        label: 'จำนวนกิจกรรม',
+        data: dashboardData.activityTypeStats.map(stat => stat.activity_count),
+        backgroundColor: [
+          'rgba(37, 99, 235, 0.8)',
+          'rgba(124, 58, 237, 0.8)',
+          'rgba(8, 145, 178, 0.8)',
+          'rgba(16, 185, 129, 0.8)',
+          'rgba(245, 158, 11, 0.8)',
+        ],
+        borderColor: [
+          'rgb(37, 99, 235)',
+          'rgb(124, 58, 237)',
+          'rgb(8, 145, 178)',
+          'rgb(16, 185, 129)',
+          'rgb(245, 158, 11)',
+        ],
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  const recentActivitiesChartData = {
+    labels: dashboardData.recentActivities.slice(0, 10).map(a => a.Activity_Title?.substring(0, 20) + '...'),
+    datasets: [
+      {
+        label: 'จำนวนผู้เข้าร่วม',
+        data: dashboardData.recentActivities.slice(0, 10).map(a => a.participant_count || 0),
+        backgroundColor: 'rgba(37, 99, 235, 0.7)',
+        borderColor: 'rgb(37, 99, 235)',
+        borderWidth: 2,
+        borderRadius: 8,
+      },
+    ],
+  };
+
+  const monthlyChartData = {
+    labels: dashboardData.monthlyStats.map(stat => stat.month_name),
+    datasets: [
+      {
+        label: 'จำนวนกิจกรรม',
+        data: dashboardData.monthlyStats.map(stat => stat.activity_count),
+        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+        borderColor: 'rgb(37, 99, 235)',
+        borderWidth: 3,
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: 'rgb(37, 99, 235)',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+      },
+      {
+        label: 'ผู้เข้าร่วม',
+        data: dashboardData.monthlyStats.map(stat => stat.participant_count),
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        borderColor: 'rgb(16, 185, 129)',
+        borderWidth: 3,
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: 'rgb(16, 185, 129)',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top',
+        labels: {
+          font: {
+            family: "'Noto Sans', sans-serif",
+            size: 12,
+            weight: 600
+          },
+          padding: 12,
+          usePointStyle: true,
+          color: '#374151'
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(55, 65, 81, 0.95)',
+        padding: 12,
+        titleFont: {
+          family: "'Noto Sans', sans-serif",
+          size: 14,
+          weight: 600
+        },
+        bodyFont: {
+          family: "'Noto Sans', sans-serif",
+          size: 13
+        },
+        cornerRadius: 8,
+        borderColor: '#e5e7eb',
+        borderWidth: 1
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          font: {
+            family: "'Noto Sans', sans-serif",
+            size: 12
+          },
+          color: '#6b7280'
+        },
+        grid: {
+          color: '#f3f4f6',
+          drawBorder: false
+        }
+      },
+      x: {
+        ticks: {
+          font: {
+            family: "'Noto Sans', sans-serif",
+            size: 12
+          },
+          color: '#6b7280'
+        },
+        grid: {
+          display: false
+        }
+      }
+    }
+  };
+
+  const doughnutOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: {
+          font: {
+            family: "'Noto Sans', sans-serif",
+            size: 12,
+            weight: 600
+          },
+          padding: 15,
+          usePointStyle: true,
+          color: '#374151'
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(55, 65, 81, 0.95)',
+        padding: 12,
+        titleFont: {
+          family: "'Noto Sans', sans-serif",
+          weight: 600
+        },
+        bodyFont: {
+          family: "'Noto Sans', sans-serif"
+        },
+        cornerRadius: 8,
+        borderColor: '#e5e7eb',
+        borderWidth: 1
+      }
+    }
+  };
+
   return (
     <div className={styles.container}>
       <Navbar
@@ -58,55 +295,270 @@ function DashboardAdmin() {
       />
       <main className={`${styles.mainContent} ${isMobile ? styles.mobileContent : ""} ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}>
         <div className={styles.headerBar}>
-          <h1 className={styles.heading}>แดชบอร์ด (ตัวอย่าง)</h1>
+          <h1 className={styles.heading}>แดชบอร์ด</h1>
+          <div className={styles.headerRight}>
+            <button
+              className={styles.refreshButton}
+              onClick={refetch}
+              disabled={loading}
+              title="รีเฟรชข้อมูล"
+            >
+              <FiRefreshCw size={18} className={loading ? styles.spinning : ''} />
+            </button>
+            <button
+              className={styles.exportButton}
+              onClick={handleExport}
+              disabled={exporting || loading}
+            >
+              <FiDownload size={18} />
+              {exporting ? 'กำลังส่งออก...' : 'Export Excel'}
+            </button>
+          </div>
         </div>
 
-        {/* Summary Cards */}
+        {error && (
+          <div className={styles.errorAlert}>
+            <FiAlertCircle size={20} />
+            <span>{error}</span>
+            <button onClick={refetch} className={styles.retryButton}>
+              ลองใหม่
+            </button>
+          </div>
+        )}
+
         <section className={styles.dashboardSection}>
           {summaryCards.map((card, i) => (
             <div key={i} className={styles.card}>
-              <div>{card.icon}</div>
-              <div>{card.title}</div>
-              <div className={styles.cardNumber}>{card.value}</div>
+              <div className={styles.cardIcon} style={{ backgroundColor: card.bgColor, color: card.color }}>
+                {card.icon}
+              </div>
+              <div className={styles.cardTitle}>{card.title}</div>
+              <div className={styles.cardNumber} >{card.value}</div>
             </div>
           ))}
         </section>
 
-        {/*Activities Table */}
-        <section className={styles.tableSection}>
-          <h2>กิจกรรมล่าสุด</h2>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>ชื่อกิจกรรม</th>
-                <th>วันเวลาที่เริ่มกิจกรรม</th>
-                <th>วันเวลาที่จบกิจกรรม</th>
-                <th>จำนวนผู้เข้าร่วม</th>
-                <th>ประเภทกิจกรรม</th>
-                <th>สถานะ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {latestActivities.map((act, i) => (
-                <tr key={i}>
-                  <td>{act.name}</td>
-                  <td>{act.begin_datetime}</td>
-                  <td>{act.end_datetime}</td>
-                  <td>{act.participants}</td>
-                  <td>{act.type}</td>
-                  <td>{act.status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <section className={styles.additionalStats}>
+          <div className={styles.statCard}>
+            <div className={styles.statHeader}>
+              <h3>สรุปผู้เข้าร่วมกิจกรรม</h3>
+              <FiUsers size={20} />
+            </div>
+            <div className={styles.statContent}>
+              <div className={styles.statItem}>
+                <span className={styles.statLabel}>ผู้ใช้ที่เข้าร่วม</span>
+                <span className={styles.statValue}>
+                  {loading ? "..." : (dashboardData.participationDetails?.participatedUsers || 0).toLocaleString()}
+                </span>
+              </div>
+              <div className={styles.statItem}>
+                <span className={styles.statLabel}>การลงทะเบียนทั้งหมด</span>
+                <span className={styles.statValue}>
+                  {loading ? "..." : (dashboardData.participationDetails?.totalRegistrations || 0).toLocaleString()}
+                </span>
+              </div>
+              <div className={styles.statItem}>
+                <span className={styles.statLabel}>เข้าร่วมสำเร็จ</span>
+                <span className={styles.statValue} style={{ color: '#10b981' }}>
+                  {loading ? "..." : (dashboardData.participationDetails?.completedRegistrations || 0).toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.statCard}>
+            <div className={styles.statHeader}>
+              <h3>สถิติกิจกรรม</h3>
+              <FiActivity size={20} />
+            </div>
+            <div className={styles.statContent}>
+              <div className={styles.statItem}>
+                <div className={styles.statLabelWithIcon}>
+                  <FiClock size={16} />
+                  <span className={styles.statLabel}>เปิดรับสมัคร</span>
+                </div>
+                <span className={styles.statValue} style={{ color: '#f59e0b' }}>
+                  {loading ? "..." : dashboardData.activeActivities}
+                </span>
+              </div>
+              <div className={styles.statItem}>
+                <div className={styles.statLabelWithIcon}>
+                  <FiCheckCircle size={16} />
+                  <span className={styles.statLabel}>เสร็จสิ้นแล้ว</span>
+                </div>
+                <span className={styles.statValue} style={{ color: '#14b8a6' }}>
+                  {loading ? "..." : dashboardData.completedActivities}
+                </span>
+              </div>
+              <div className={styles.statItem}>
+                <div className={styles.statLabelWithIcon}>
+                  <FiActivity size={16} />
+                  <span className={styles.statLabel}>รวมทั้งหมด</span>
+                </div>
+                <span className={styles.statValue} style={{ color: '#2563eb' }}>
+                  {loading ? "..." : dashboardData.totalActivities}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.statCard}>
+            <div className={styles.statHeader}>
+              <h3>อัตราการเข้าร่วม</h3>
+              <FiTrendingUp size={20} />
+            </div>
+            <div className={styles.statContent}>
+              <div className={styles.progressCircle}>
+                <svg width="120" height="120" viewBox="0 0 120 120">
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="50"
+                    fill="none"
+                    stroke="#e5e7eb"
+                    strokeWidth="12"
+                  />
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="50"
+                    fill="none"
+                    stroke="#10b981"
+                    strokeWidth="12"
+                    strokeDasharray={`${(dashboardData.participationRate * 314) / 100} 314`}
+                    strokeLinecap="round"
+                    transform="rotate(-90 60 60)"
+                    style={{ transition: 'stroke-dasharray 0.5s ease' }}
+                  />
+                  <text
+                    x="60"
+                    y="60"
+                    textAnchor="middle"
+                    dy="7"
+                    fontSize="24"
+                    fontWeight="bold"
+                    fill="#10b981"
+                  >
+                    {loading ? "..." : `${dashboardData.participationRate}%`}
+                  </text>
+                </svg>
+              </div>
+            </div>
+          </div>
         </section>
 
-        {/* Chart */}
-        <section className={styles.chartSection}>
-          <h2>สถิติการเข้าร่วม</h2>
-          <Bar data={chartData} options={chartOptions} />
+        <div className={styles.chartsGrid}>
+          <section className={styles.chartSection}>
+            <h2>
+              <FiActivity size={20} />
+              กิจกรรมล่าสุด (10 อันดับ)
+            </h2>
+            <div className={styles.chartContainer}>
+              {dashboardData.recentActivities.length > 0 ? (
+                <Bar data={recentActivitiesChartData} options={chartOptions} />
+              ) : (
+                <div className={styles.noData}>ไม่มีข้อมูลกิจกรรม</div>
+              )}
+            </div>
+          </section>
+
+          <section className={styles.chartSection}>
+            <h2>
+              <FiBarChart2 size={20} />
+              สถิติตามประเภทกิจกรรม
+            </h2>
+            <div className={styles.chartContainer}>
+              {dashboardData.activityTypeStats.length > 0 ? (
+                <Doughnut data={activityTypeChartData} options={doughnutOptions} />
+              ) : (
+                <div className={styles.noData}>ไม่มีข้อมูลสถิติ</div>
+              )}
+            </div>
+          </section>
+
+          <section className={styles.chartSection}>
+            <h2>
+              <FiTrendingUp size={20} />
+              สถิติรายเดือน (6 เดือนล่าสุด)
+            </h2>
+            <div className={styles.chartContainer}>
+              {dashboardData.monthlyStats.length > 0 ? (
+                <Line data={monthlyChartData} options={chartOptions} />
+              ) : (
+                <div className={styles.noData}>ไม่มีข้อมูลสถิติ</div>
+              )}
+            </div>
+          </section>
+        </div>
+
+        <section className={styles.tableSection}>
+          <h2>
+            <FiCalendar size={20} />
+            รายการกิจกรรมล่าสุด
+          </h2>
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>ชื่อกิจกรรม</th>
+                  <th>วันที่เริ่ม</th>
+                  <th>วันที่สิ้นสุด</th>
+                  <th>ผู้เข้าร่วม</th>
+                  <th>ประเภท</th>
+                  <th>สถานะ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="6" className={styles.loadingCell}>กำลังโหลดข้อมูล...</td>
+                  </tr>
+                ) : dashboardData.recentActivities.length > 0 ? (
+                  dashboardData.recentActivities.slice(0, 15).map((act, i) => (
+                    <tr key={i}>
+                      <td className={styles.activityName}>{act.Activity_Title}</td>
+                      <td>{new Date(act.Activity_StartTime).toLocaleString('th-TH', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}</td>
+                      <td>{new Date(act.Activity_EndTime).toLocaleString('th-TH', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}</td>
+                      <td className={styles.centered}>{act.participant_count || 0}</td>
+                      <td>
+                        <span className={styles.typeBadge}>
+                          {act.ActivityType_Name || 'ไม่ระบุ'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`${styles.statusBadge} ${styles[`status${act.ActivityStatus_ID}`]}`}>
+                          {act.ActivityStatus_Name || 'ไม่ระบุ'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className={styles.noDataCell}>ไม่มีข้อมูลกิจกรรม</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </section>
       </main>
+      <CustomModal
+        isOpen={modalOpen}
+        message={modalMessage}
+        onClose={() => setModalOpen(false)}
+      />
     </div>
   );
 }

@@ -51,10 +51,10 @@ const createStatisticsData = (yearStatistics) => {
 
 const createFacultySummaryData = (students) => {
   const facultyStats = {};
-  
+
   students.forEach(student => {
     const faculty = student.faculty || 'ไม่ระบุคณะ';
-    
+
     if (!facultyStats[faculty]) {
       facultyStats[faculty] = {
         total: 0,
@@ -63,7 +63,7 @@ const createFacultySummaryData = (students) => {
         departments: new Set()
       };
     }
-    
+
     facultyStats[faculty].total++;
     if (student.isActive) facultyStats[faculty].active++;
     if (student.isGraduated) facultyStats[faculty].graduated++;
@@ -85,11 +85,11 @@ const createFacultySummaryData = (students) => {
 
 const createDepartmentSummaryData = (students) => {
   const deptStats = {};
-  
+
   students.forEach(student => {
     const dept = student.department || 'ไม่ระบุสาขา';
     const faculty = student.faculty || 'ไม่ระบุคณะ';
-    
+
     if (!deptStats[dept]) {
       deptStats[dept] = {
         faculty,
@@ -99,7 +99,7 @@ const createDepartmentSummaryData = (students) => {
         years: new Set()
       };
     }
-    
+
     deptStats[dept].total++;
     if (student.isActive) deptStats[dept].active++;
     if (student.isGraduated) deptStats[dept].graduated++;
@@ -144,14 +144,14 @@ const getColumnWidths = (type) => {
       ];
     case 'statistics':
       return [
-        { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 15 }, 
+        { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 15 },
         { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 25 },
         { wch: 20 }, { wch: 25 }
       ];
     case 'faculty':
     case 'department':
       return [
-        { wch: 35 }, { wch: 35 }, { wch: 15 }, { wch: 20 }, 
+        { wch: 35 }, { wch: 35 }, { wch: 15 }, { wch: 20 },
         { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 25 },
         { wch: 20 }, { wch: 25 }
       ];
@@ -160,10 +160,14 @@ const getColumnWidths = (type) => {
   }
 };
 
-export const exportStudentsToExcel = (students, yearStatistics, options = {}) => {
+export const exportStudentsToExcel = (students, yearStatistics, options = {}, showModal) => {
   try {
     if (!students || students.length === 0) {
-      alert("ไม่มีข้อมูลสำหรับการ export");
+      if (showModal) {
+        showModal("ไม่มีข้อมูลสำหรับการ export", [
+          { label: "ตกลง", onClick: () => showModal(null) }
+        ]);
+      }
       return false;
     }
 
@@ -216,16 +220,20 @@ export const exportStudentsToExcel = (students, yearStatistics, options = {}) =>
     ${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
     const finalFilename = filename || `รายชื่อนักศึกษา_${timestamp}.xlsx`;
     writeFileXLSX(wb, finalFilename);
-    
+
     return true;
   } catch (error) {
     console.error('Export error:', error);
-    alert('เกิดข้อผิดพลาดในการ export ไฟล์: ' + error.message);
+    if (showModal) {
+      showModal(`เกิดข้อผิดพลาดในการ export ไฟล์: ${error.message}`, [
+        { label: "ตกลง", onClick: () => showModal(null) }
+      ]);
+    }
     return false;
   }
 };
 
-export const exportBasicStudentsToExcel = (students) => {
+export const exportBasicStudentsToExcel = (students, showModal) => {
   return exportStudentsToExcel(students, null, {
     includeStatistics: false,
     includeFacultySummary: false,
@@ -234,9 +242,13 @@ export const exportBasicStudentsToExcel = (students) => {
   });
 };
 
-export const exportStatisticsToExcel = (yearStatistics, students) => {
+export const exportStatisticsToExcel = (yearStatistics, students, showModal) => {
   if (!yearStatistics || Object.keys(yearStatistics).length === 0) {
-    alert("ไม่มีข้อมูลสถิติสำหรับการ export");
+    if (showModal) {
+      showModal("ไม่มีข้อมูลสถิติสำหรับการ export", [
+        { label: "ตกลง", onClick: () => showModal(null) }
+      ]);
+    }
     return false;
   }
 
@@ -268,14 +280,22 @@ export const exportStatisticsToExcel = (yearStatistics, students) => {
     return true;
   } catch (error) {
     console.error('Export statistics error:', error);
-    alert('เกิดข้อผิดพลาดในการ export สถิติ: ' + error.message);
+    if (showModal) {
+      showModal(`เกิดข้อผิดพลาดในการ export สถิติ: ${error.message}`, [
+        { label: "ตกลง", onClick: () => showModal(null) }
+      ]);
+    }
     return false;
   }
 };
 
-export const exportFilteredStudentsToExcel = (students, filterInfo, yearStatistics) => {
+export const exportFilteredStudentsToExcel = (students, filterInfo, yearStatistics, showModal) => {
   if (!students || students.length === 0) {
-    alert("ไม่มีข้อมูลตามเงื่อนไขการกรองสำหรับการ export");
+    if (showModal) {
+      showModal("ไม่มีข้อมูลตามเงื่อนไขการกรองสำหรับการ export", [
+        { label: "ตกลง", onClick: () => showModal(null) }
+      ]);
+    }
     return false;
   }
 

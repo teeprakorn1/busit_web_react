@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../NavigationBar/NavigationBar';
 import styles from './NameRegisterAdmin.module.css';
 import { useNavigate } from "react-router-dom";
-import { FiLayers, FiUsers, FiUserCheck, FiAlertTriangle } from "react-icons/fi";
+import { FiLayers, FiUsers, FiUserCheck, FiAlertTriangle, FiAirplay } from "react-icons/fi";
 
 function NameRegisterAdmin() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -52,6 +52,10 @@ function NameRegisterAdmin() {
           <div className={`${styles.card} ${styles.card04}`} onClick={() => navigate("/name-register/student-incomplete-activities")}>
             <FiAlertTriangle size={36} />
             <span>นักศึกษาที่กิจกรรมไม่ครบ</span>
+          </div>
+          <div className={`${styles.card} ${styles.card05}`} onClick={() => navigate("/name-register/own-teacher-activities")}>
+            <FiAirplay size={36} />
+            <span>กิจกรรมของตนเอง (อาจารย์)</span>
           </div>
         </div>
       </main>

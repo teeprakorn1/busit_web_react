@@ -34,8 +34,8 @@ export const useDepartmentActions = ({
       setSecurityAlert('ไม่มีสิทธิ์ในการส่งออกข้อมูล');
       return;
     }
-    return exportFilteredDepartmentsToExcel(departments, filterInfo);
-  }, [permissions.canExportData, setSecurityAlert]);
+    return exportFilteredDepartmentsToExcel(departments, filterInfo, {}, showModal);
+  }, [permissions.canExportData, setSecurityAlert, showModal]);
 
   const handleViewTeachers = useCallback((department, event) => {
     if (event) {
@@ -54,7 +54,7 @@ export const useDepartmentActions = ({
       return;
     }
 
-    navigate(`/name-register/teacher-name?departmentId=${department.Department_ID}`, { 
+    navigate(`/name-register/teacher-name?departmentId=${department.Department_ID}`, {
       replace: false
     });
   }, [navigate, permissions.canViewTeachers, validateId, setSecurityAlert]);
@@ -194,9 +194,9 @@ export const useDepartmentActions = ({
       setSecurityAlert('ไม่มีสิทธิ์ในการเพิ่มผู้ใช้งาน - ต้องเป็น Staff เท่านั้น');
       return;
     }
-    
-    navigate('/application/add-user', { 
-      state: { from: '/name-register/department-name' } 
+
+    navigate('/application/add-user', {
+      state: { from: '/name-register/department-name' }
     });
   }, [navigate, permissions.canAddStudents, permissions.canAddTeachers, setSecurityAlert]);
 
@@ -205,12 +205,12 @@ export const useDepartmentActions = ({
       setSecurityAlert('ไม่มีสิทธิ์ในการเพิ่มนักศึกษา - ต้องเป็น Staff เท่านั้น');
       return;
     }
-    
-    navigate('/application/add-user', { 
-      state: { 
+
+    navigate('/application/add-user', {
+      state: {
         from: '/name-register/department-name',
         userType: 'student'
-      } 
+      }
     });
   }, [navigate, permissions.canAddStudents, setSecurityAlert]);
 
@@ -219,12 +219,12 @@ export const useDepartmentActions = ({
       setSecurityAlert('ไม่มีสิทธิ์ในการเพิ่มอาจารย์ - ต้องเป็น Staff เท่านั้น');
       return;
     }
-    
-    navigate('/application/add-user', { 
-      state: { 
+
+    navigate('/application/add-user', {
+      state: {
         from: '/name-register/department-name',
         userType: 'teacher'
-      } 
+      }
     });
   }, [navigate, permissions.canAddTeachers, setSecurityAlert]);
 

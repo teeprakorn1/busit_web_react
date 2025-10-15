@@ -96,7 +96,7 @@
 
 /* Export Button Styles */
 .exportButton {
-    background: linear-gradient(135deg, var(--success-color), #34d399);
+    background: linear-gradient(135deg, var(--success-color), #16a34a);
 }
 
 .exportButton:hover {
