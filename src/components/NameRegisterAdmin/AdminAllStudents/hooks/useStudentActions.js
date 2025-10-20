@@ -46,16 +46,23 @@ export const useStudentActions = ({
 
     const studentName = `${student.firstName} ${student.lastName}`;
     try {
-      await Promise.all([
-        logStudentView(student.id, studentName, student.code),
-        logStudentViewTimestamp(studentName, student.code)
-      ]);
+      // ถ้าเป็น staff จะบันทึกทั้ง DataEdit และ Timestamp
+      // ถ้าเป็น teacher จะบันทึกเฉพาะ Timestamp
+      if (permissions.userType === 'staff') {
+        await Promise.all([
+          logStudentView(student.id, studentName, student.code),
+          logStudentViewTimestamp(studentName, student.code)
+        ]);
+      } else {
+        // Teacher: บันทึกเฉพาะ Timestamp
+        await logStudentViewTimestamp(studentName, student.code);
+      }
     } catch (error) {
       console.warn('Failed to log view action:', error);
     }
 
     openStudentModal(student.id);
-  }, [permissions.canViewStudentDetails, validateId, setSecurityAlert, openStudentModal]);
+  }, [permissions.canViewStudentDetails, permissions.userType, validateId, setSecurityAlert, openStudentModal]);
 
   const handleEditStudent = useCallback(async (student) => {
     if (!permissions.canEditStudents) {
@@ -71,16 +78,21 @@ export const useStudentActions = ({
 
     const studentName = `${student.firstName} ${student.lastName}`;
     try {
-      await Promise.all([
-        logStudentEdit(student.id, studentName, student.code),
-        logStudentEditTimestamp(studentName, student.code)
-      ]);
+      if (permissions.userType === 'staff') {
+        await Promise.all([
+          logStudentEdit(student.id, studentName, student.code),
+          logStudentEditTimestamp(studentName, student.code)
+        ]);
+      } else {
+        // Teacher: บันทึกเฉพาะ Timestamp
+        await logStudentEditTimestamp(studentName, student.code);
+      }
     } catch (error) {
       console.warn('Failed to log edit initiation:', error);
     }
 
     navigate(`/name-register/student-detail/${student.id}?tab=profile&edit=true`);
-  }, [navigate, permissions.canEditStudents, validateId, setSecurityAlert]);
+  }, [navigate, permissions.canEditStudents, permissions.userType, validateId, setSecurityAlert]);
 
   const handleToggleStatus = useCallback(async (student) => {
     if (!permissions.canToggleStudentStatus) {
@@ -114,6 +126,8 @@ export const useStudentActions = ({
             const result = await toggleStudentStatus(student);
 
             if (result.success) {
+              // เฉพาะ staff เท่านั้นที่จะมีสิทธิ์ toggle status
+              // ดังนั้นไม่ต้องเช็ค userType เพราะถ้ามาถึงตรงนี้ต้องเป็น staff แน่นอน
               await Promise.all([
                 logStudentStatusConfirm(student.id, studentName, student.code, action),
                 logStudentStatusChangeTimestamp(studentName, student.code, action)
@@ -140,17 +154,22 @@ export const useStudentActions = ({
     }
 
     try {
-      await Promise.all([
-        logStudentExport(students.length, filterInfo),
-        logStudentExportTimestamp(students.length, filterInfo)
-      ]);
+      if (permissions.userType === 'staff') {
+        await Promise.all([
+          logStudentExport(students.length, filterInfo),
+          logStudentExportTimestamp(students.length, filterInfo)
+        ]);
+      } else {
+        // Teacher: บันทึกเฉพาะ Timestamp
+        await logStudentExportTimestamp(students.length, filterInfo);
+      }
 
       return exportFilteredStudentsToExcel(students, filterInfo, null, showModal);
     } catch (error) {
       console.warn('Failed to log export action:', error);
       return exportFilteredStudentsToExcel(students, filterInfo, null, showModal);
     }
-  }, [permissions.canExportData, setSecurityAlert, showModal]);
+  }, [permissions.canExportData, permissions.userType, setSecurityAlert, showModal]);
 
   const handleAddStudent = useCallback(async () => {
     if (!permissions.canAddStudents) {
@@ -159,6 +178,7 @@ export const useStudentActions = ({
     }
 
     try {
+      // เฉพาะ staff เท่านั้นที่มีสิทธิ์เพิ่มนักศึกษา
       await logSystemAction(0, 'เริ่มกระบวนการเพิ่มนักศึกษาใหม่');
     } catch (error) {
       console.warn('Failed to log add student initiation:', error);
@@ -207,10 +227,13 @@ export const useStudentActions = ({
     }
 
     try {
-      await logSystemAction(
-        0,
-        `ดูสรุปข้อมูลนักศึกษา: ${students.length} คน ${filterInfo?.department ? `สาขา: ${filterInfo.department}` : ''}`
-      );
+      if (permissions.userType === 'staff') {
+        await logSystemAction(
+          0,
+          `ดูสรุปข้อมูลนักศึกษา: ${students.length} คน ${filterInfo?.department ? `สาขา: ${filterInfo.department}` : ''}`
+        );
+      }
+      // Teacher ไม่บันทึก DataEdit
     } catch (error) {
       console.warn('Failed to log summary view:', error);
     }
@@ -250,18 +273,21 @@ ${filterInfo?.academicYear ? `ปีการศึกษา: ${filterInfo.acade
         onClick: closeModal,
       }
     ]);
-  }, [showModal, closeModal, handleExportToExcel]);
+  }, [showModal, closeModal, handleExportToExcel, permissions.userType]);
 
   const handleRefreshStudents = useCallback(async () => {
     try {
-      await logSystemAction(0, 'รีเฟรชข้อมูลนักศึกษาทั้งหมด');
+      if (permissions.userType === 'staff') {
+        await logSystemAction(0, 'รีเฟรชข้อมูลนักศึกษาทั้งหมด');
+      }
+      // Teacher ไม่บันทึก DataEdit
 
       await fetchStudents();
     } catch (error) {
       console.warn('Failed to refresh student data:', error);
       setSecurityAlert('ไม่สามารถรีเฟรชข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
     }
-  }, [fetchStudents, setSecurityAlert]);
+  }, [fetchStudents, setSecurityAlert, permissions.userType]);
 
   const handleBulkExport = useCallback(async (students, filterInfo, options = {}) => {
     if (!permissions.canExportData) {
@@ -303,14 +329,19 @@ ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
           closeModal();
 
           try {
-            await Promise.all([
-              logBulkOperation(
-                'ส่งออกข้อมูลนักศึกษาแบบ Bulk',
-                students.length,
-                `ตัวกรอง: ${JSON.stringify(filterInfo || {})} | Options: ${JSON.stringify(options)}`
-              ),
-              logStudentExportTimestamp(students.length, filterInfo)
-            ]);
+            if (permissions.userType === 'staff') {
+              await Promise.all([
+                logBulkOperation(
+                  'ส่งออกข้อมูลนักศึกษาแบบ Bulk',
+                  students.length,
+                  `ตัวกรอง: ${JSON.stringify(filterInfo || {})} | Options: ${JSON.stringify(options)}`
+                ),
+                logStudentExportTimestamp(students.length, filterInfo)
+              ]);
+            } else {
+              // Teacher: บันทึกเฉพาะ Timestamp
+              await logStudentExportTimestamp(students.length, filterInfo);
+            }
 
             const success = exportFilteredStudentsToExcel(students, filterInfo, options, showModal);
             if (success) {
@@ -336,29 +367,39 @@ ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
         },
       }
     ]);
-  }, [permissions.canExportData, setSecurityAlert, showModal, closeModal]);
+  }, [permissions.canExportData, permissions.userType, setSecurityAlert, showModal, closeModal]);
 
   const handleSearch = useCallback(async (searchCriteria) => {
     try {
-      await Promise.all([
-        logStudentSearch(searchCriteria),
-        logStudentSearchTimestamp(searchCriteria)
-      ]);
+      if (permissions.userType === 'staff') {
+        await Promise.all([
+          logStudentSearch(searchCriteria),
+          logStudentSearchTimestamp(searchCriteria)
+        ]);
+      } else {
+        // Teacher: บันทึกเฉพาะ Timestamp
+        await logStudentSearchTimestamp(searchCriteria);
+      }
     } catch (error) {
       console.warn('Failed to log search action:', error);
     }
-  }, []);
+  }, [permissions.userType]);
 
   const handleFilter = useCallback(async (filterCriteria) => {
     try {
-      await Promise.all([
-        logStudentFilter(filterCriteria),
-        logStudentFilterTimestamp(filterCriteria)
-      ]);
+      if (permissions.userType === 'staff') {
+        await Promise.all([
+          logStudentFilter(filterCriteria),
+          logStudentFilterTimestamp(filterCriteria)
+        ]);
+      } else {
+        // Teacher: บันทึกเฉพาะ Timestamp
+        await logStudentFilterTimestamp(filterCriteria);
+      }
     } catch (error) {
       console.warn('Failed to log filter action:', error);
     }
-  }, []);
+  }, [permissions.userType]);
 
   return {
     handleViewStudent,

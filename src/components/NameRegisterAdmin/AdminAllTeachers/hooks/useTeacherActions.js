@@ -47,16 +47,23 @@ export const useTeacherActions = ({
     const teacherName = `${teacher.firstName} ${teacher.lastName}`;
 
     try {
-      await Promise.all([
-        logTeacherView(teacher.id, teacherName, teacher.code),
-        logTeacherViewTimestamp(teacherName, teacher.code)
-      ]);
+      // ถ้าเป็น staff จะบันทึกทั้ง DataEdit และ Timestamp
+      // ถ้าเป็น teacher จะบันทึกเฉพาะ Timestamp
+      if (permissions.userType === 'staff') {
+        await Promise.all([
+          logTeacherView(teacher.id, teacherName, teacher.code),
+          logTeacherViewTimestamp(teacherName, teacher.code)
+        ]);
+      } else {
+        // Teacher: บันทึกเฉพาะ Timestamp
+        await logTeacherViewTimestamp(teacherName, teacher.code);
+      }
     } catch (error) {
       console.warn('Failed to log view action:', error);
     }
 
     openTeacherModal(teacher.id);
-  }, [permissions.canViewTeacherDetails, validateId, setSecurityAlert, openTeacherModal]);
+  }, [permissions.canViewTeacherDetails, permissions.userType, validateId, setSecurityAlert, openTeacherModal]);
 
   const handleEditTeacher = useCallback(async (teacher) => {
     if (!permissions.canEditTeachers) {
@@ -73,16 +80,21 @@ export const useTeacherActions = ({
     const teacherName = `${teacher.firstName} ${teacher.lastName}`;
 
     try {
-      await Promise.all([
-        logTeacherEdit(teacher.id, teacherName, teacher.code),
-        logTeacherEditTimestamp(teacherName, teacher.code)
-      ]);
+      if (permissions.userType === 'staff') {
+        await Promise.all([
+          logTeacherEdit(teacher.id, teacherName, teacher.code),
+          logTeacherEditTimestamp(teacherName, teacher.code)
+        ]);
+      } else {
+        // Teacher: บันทึกเฉพาะ Timestamp
+        await logTeacherEditTimestamp(teacherName, teacher.code);
+      }
     } catch (error) {
       console.warn('Failed to log edit initiation:', error);
     }
 
     navigate(`/name-register/teacher-detail/${teacher.id}?tab=profile&edit=true`);
-  }, [navigate, permissions.canEditTeachers, validateId, setSecurityAlert]);
+  }, [navigate, permissions.canEditTeachers, permissions.userType, validateId, setSecurityAlert]);
 
   const handleToggleStatus = useCallback(async (teacher) => {
     if (!permissions.canToggleTeacherStatus) {
@@ -116,6 +128,8 @@ export const useTeacherActions = ({
             const result = await toggleTeacherStatus(teacher);
 
             if (result.success) {
+              // เฉพาะ staff เท่านั้นที่จะมีสิทธิ์ toggle status
+              // ดังนั้นไม่ต้องเช็ค userType เพราะถ้ามาถึงตรงนี้ต้องเป็น staff แน่นอน
               await Promise.all([
                 logTeacherStatusConfirm(teacher.id, teacherName, teacher.code, action),
                 logTeacherStatusChangeTimestamp(teacherName, teacher.code, action)
@@ -142,17 +156,22 @@ export const useTeacherActions = ({
     }
 
     try {
-      await Promise.all([
-        logTeacherExport(teachers.length, filterInfo),
-        logTeacherExportTimestamp(teachers.length, filterInfo)
-      ]);
+      if (permissions.userType === 'staff') {
+        await Promise.all([
+          logTeacherExport(teachers.length, filterInfo),
+          logTeacherExportTimestamp(teachers.length, filterInfo)
+        ]);
+      } else {
+        // Teacher: บันทึกเฉพาะ Timestamp
+        await logTeacherExportTimestamp(teachers.length, filterInfo);
+      }
 
       return exportFilteredTeachersToExcel(teachers, filterInfo);
     } catch (error) {
       console.warn('Failed to log export action:', error);
       return exportFilteredTeachersToExcel(teachers, filterInfo);
     }
-  }, [permissions.canExportData, setSecurityAlert]);
+  }, [permissions.canExportData, permissions.userType, setSecurityAlert]);
 
   const handleAddTeacher = useCallback(async () => {
     if (!permissions.canAddTeachers) {
@@ -161,6 +180,7 @@ export const useTeacherActions = ({
     }
 
     try {
+      // เฉพาะ staff เท่านั้นที่มีสิทธิ์เพิ่มอาจารย์
       await logSystemAction(0, 'เริ่มกระบวนการเพิ่มอาจารย์ใหม่', 'Teacher');
     } catch (error) {
       console.warn('Failed to log add teacher initiation:', error);
@@ -209,11 +229,14 @@ export const useTeacherActions = ({
     }
 
     try {
-      await logSystemAction(
-        0,
-        `ดูสรุปข้อมูลอาจารย์: ${teachers.length} คน ${filterInfo?.department ? `สาขา: ${filterInfo.department}` : ''}`,
-        'Teacher'
-      );
+      if (permissions.userType === 'staff') {
+        await logSystemAction(
+          0,
+          `ดูสรุปข้อมูลอาจารย์: ${teachers.length} คน ${filterInfo?.department ? `สาขา: ${filterInfo.department}` : ''}`,
+          'Teacher'
+        );
+      }
+      // Teacher ไม่บันทึก DataEdit
     } catch (error) {
       console.warn('Failed to log summary view:', error);
     }
@@ -256,18 +279,21 @@ ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
         onClick: closeModal,
       }
     ]);
-  }, [showModal, closeModal, handleExportToExcel]);
+  }, [showModal, closeModal, handleExportToExcel, permissions.userType]);
 
   const handleRefreshTeachers = useCallback(async () => {
     try {
-      await logSystemAction(0, 'รีเฟรชข้อมูลอาจารย์ทั้งหมด', 'Teacher');
+      if (permissions.userType === 'staff') {
+        await logSystemAction(0, 'รีเฟรชข้อมูลอาจารย์ทั้งหมด', 'Teacher');
+      }
+      // Teacher ไม่บันทึก DataEdit
 
       await fetchTeachers();
     } catch (error) {
       console.warn('Failed to refresh teacher data:', error);
       setSecurityAlert('ไม่สามารถรีเฟรชข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
     }
-  }, [fetchTeachers, setSecurityAlert]);
+  }, [fetchTeachers, setSecurityAlert, permissions.userType]);
 
   const handleBulkExport = useCallback(async (teachers, filterInfo, options = {}) => {
     if (!permissions.canExportData) {
@@ -310,15 +336,20 @@ ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
           closeModal();
 
           try {
-            await Promise.all([
-              logBulkOperation(
-                'ส่งออกข้อมูลอาจารย์แบบ Bulk',
-                teachers.length,
-                `ตัวกรอง: ${JSON.stringify(filterInfo || {})} | Options: ${JSON.stringify(options)}`,
-                'Teacher'
-              ),
-              logTeacherExportTimestamp(teachers.length, filterInfo)
-            ]);
+            if (permissions.userType === 'staff') {
+              await Promise.all([
+                logBulkOperation(
+                  'ส่งออกข้อมูลอาจารย์แบบ Bulk',
+                  teachers.length,
+                  `ตัวกรอง: ${JSON.stringify(filterInfo || {})} | Options: ${JSON.stringify(options)}`,
+                  'Teacher'
+                ),
+                logTeacherExportTimestamp(teachers.length, filterInfo)
+              ]);
+            } else {
+              // Teacher: บันทึกเฉพาะ Timestamp
+              await logTeacherExportTimestamp(teachers.length, filterInfo);
+            }
 
             const success = exportFilteredTeachersToExcel(teachers, filterInfo, options);
             if (success) {
@@ -344,29 +375,39 @@ ${filterInfo?.faculty ? `คณะ: ${filterInfo.faculty}` : ''}
         },
       }
     ]);
-  }, [permissions.canExportData, setSecurityAlert, showModal, closeModal]);
+  }, [permissions.canExportData, permissions.userType, setSecurityAlert, showModal, closeModal]);
 
   const handleSearch = useCallback(async (searchCriteria) => {
     try {
-      await Promise.all([
-        logTeacherSearch(searchCriteria),
-        logTeacherSearchTimestamp(searchCriteria)
-      ]);
+      if (permissions.userType === 'staff') {
+        await Promise.all([
+          logTeacherSearch(searchCriteria),
+          logTeacherSearchTimestamp(searchCriteria)
+        ]);
+      } else {
+        // Teacher: บันทึกเฉพาะ Timestamp
+        await logTeacherSearchTimestamp(searchCriteria);
+      }
     } catch (error) {
       console.warn('Failed to log search action:', error);
     }
-  }, []);
+  }, [permissions.userType]);
 
   const handleFilter = useCallback(async (filterCriteria) => {
     try {
-      await Promise.all([
-        logTeacherFilter(filterCriteria),
-        logTeacherFilterTimestamp(filterCriteria)
-      ]);
+      if (permissions.userType === 'staff') {
+        await Promise.all([
+          logTeacherFilter(filterCriteria),
+          logTeacherFilterTimestamp(filterCriteria)
+        ]);
+      } else {
+        // Teacher: บันทึกเฉพาะ Timestamp
+        await logTeacherFilterTimestamp(filterCriteria);
+      }
     } catch (error) {
       console.warn('Failed to log filter action:', error);
     }
-  }, []);
+  }, [permissions.userType]);
 
   return {
     handleViewTeacher,

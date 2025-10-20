@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../NavigationBar/NavigationBar';
 import styles from './DashboardAdmin.module.css';
 import CustomModal from './../../services/CustomModal/CustomModal';
@@ -45,6 +46,7 @@ ChartJS.register(
 );
 
 function DashboardAdmin() {
+  const navigate = useNavigate();
   const currentYear = new Date().getFullYear() + 543;
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
@@ -56,6 +58,7 @@ function DashboardAdmin() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
 
+  // จัดการ Resize
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
@@ -66,10 +69,41 @@ function DashboardAdmin() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // จัดการ Error - แสดงแจ้งเตือนแต่ไม่ redirect อัตโนมัติ
+  useEffect(() => {
+    if (error) {
+      console.error('Dashboard Error:', error);
+      
+      // ตรวจสอบว่าเป็น error 401 หรือไม่
+      const errorStr = String(error).toLowerCase();
+      const isUnauthorized = errorStr.includes('401') || 
+                            errorStr.includes('unauthorized') || 
+                            errorStr.includes('เซสชัน');
+
+      if (isUnauthorized) {
+        setModalMessage('เซสชันของคุณหมดอายุแล้ว กรุณาเข้าสู่ระบบใหม่');
+        setModalOpen(true);
+        
+        // Redirect หลัง 2 วินาที
+        setTimeout(() => {
+          localStorage.removeItem('token');
+          localStorage.removeItem('userData');
+          sessionStorage.clear();
+          navigate('/login', { replace: true });
+        }, 2000);
+      }
+    }
+  }, [error, navigate]);
+
   const handleExport = async () => {
-    const result = await exportToExcel();
-    setModalMessage(result.message);
-    setModalOpen(true);
+    try {
+      const result = await exportToExcel();
+      setModalMessage(result.message || 'Export สำเร็จ');
+      setModalOpen(true);
+    } catch (err) {
+      setModalMessage('เกิดข้อผิดพลาดในการ Export');
+      setModalOpen(true);
+    }
   };
 
   const handleApplyFilters = () => {
@@ -82,6 +116,10 @@ function DashboardAdmin() {
     setAcademicYear('');
     updateFilters('', '');
     setShowFilters(false);
+  };
+
+  const handleRetry = () => {
+    refetch();
   };
 
   const academicYears = Array.from({ length: 5 }, (_, i) => currentYear - i);
@@ -335,7 +373,7 @@ function DashboardAdmin() {
             </button>
             <button
               className={styles.refreshButton}
-              onClick={refetch}
+              onClick={handleRetry}
               disabled={loading}
               title="รีเฟรชข้อมูล"
             >
@@ -403,11 +441,11 @@ function DashboardAdmin() {
           </div>
         )}
 
-        {error && (
+        {error && !error.includes('401') && !error.includes('เซสชัน') && (
           <div className={styles.errorAlert}>
             <FiAlertCircle size={20} />
             <span>{error}</span>
-            <button onClick={refetch} className={styles.retryButton}>
+            <button onClick={handleRetry} className={styles.retryButton}>
               ลองใหม่
             </button>
           </div>
@@ -427,7 +465,7 @@ function DashboardAdmin() {
                 {card.icon}
               </div>
               <div className={styles.cardTitle}>{card.title}</div>
-              <div className={styles.cardNumber} >{card.value}</div>
+              <div className={styles.cardNumber}>{card.value}</div>
             </div>
           ))}
         </section>

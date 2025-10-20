@@ -7,6 +7,7 @@ import useValidation from './useValidation';
 import useDateFormatter from './useDateFormatter';
 import useApiClient from './useApiClient';
 import useSingleFetch from './useSingleFetch';
+import { useUserPermissions } from './useUserPermissions';
 
 import {
   logStudentView,
@@ -41,6 +42,7 @@ const useAdminUserDetail = (id) => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const permissions = useUserPermissions();
 
   const {
     imageLoadErrors,
@@ -88,6 +90,7 @@ const useAdminUserDetail = (id) => {
   } = useApiClient();
 
   const { singleFetch } = useSingleFetch();
+
   const logViewAction = useCallback(async (userType, userId, userInfo) => {
     try {
       const firstName = userInfo.firstName || '';
@@ -95,32 +98,54 @@ const useAdminUserDetail = (id) => {
       const userCode = userInfo.code || '';
       const fullName = `${firstName} ${lastName}`;
 
+      // ถ้าเป็น staff จะบันทึกทั้ง DataEdit และ Timestamp
+      // ถ้าเป็น teacher จะบันทึกเฉพาะ Timestamp
+      const isStaff = permissions.userType === 'staff';
+
       switch (userType) {
         case 'student':
-          await Promise.all([
-            logStudentView(userId, fullName, userCode),
-            logStudentViewTimestamp(fullName, userCode)
-          ]);
+          if (isStaff) {
+            await Promise.all([
+              logStudentView(userId, fullName, userCode),
+              logStudentViewTimestamp(fullName, userCode)
+            ]);
+          } else {
+            // Teacher: บันทึกเฉพาะ Timestamp
+            await logStudentViewTimestamp(fullName, userCode);
+          }
           break;
         case 'teacher':
-          await Promise.all([
-            logTeacherView(userId, fullName, userCode),
-            logTeacherViewTimestamp(fullName, userCode)
-          ]);
+          if (isStaff) {
+            await Promise.all([
+              logTeacherView(userId, fullName, userCode),
+              logTeacherViewTimestamp(fullName, userCode)
+            ]);
+          } else {
+            // Teacher: บันทึกเฉพาะ Timestamp
+            await logTeacherViewTimestamp(fullName, userCode);
+          }
           break;
         case 'staff':
-          await Promise.all([
-            logStaffView(userId, fullName, userCode),
-            logStaffViewTimestamp(fullName, userCode)
-          ]);
+          if (isStaff) {
+            await Promise.all([
+              logStaffView(userId, fullName, userCode),
+              logStaffViewTimestamp(fullName, userCode)
+            ]);
+          } else {
+            // Teacher: บันทึกเฉพาะ Timestamp
+            await logStaffViewTimestamp(fullName, userCode);
+          }
           break;
         default:
-          await logSystemAction(userId, `ดูข้อมูลผู้ใช้: ${fullName} (${userCode})`);
+          if (isStaff) {
+            await logSystemAction(userId, `ดูข้อมูลผู้ใช้: ${fullName} (${userCode})`);
+          }
+        // Teacher ไม่บันทึก default case
       }
     } catch (error) {
       console.warn('Failed to log view action:', error);
     }
-  }, []);
+  }, [permissions.userType]);
 
   const logEditAction = useCallback(async (userType, userId, userInfo, updateType = 'อัพเดทข้อมูล') => {
     try {
@@ -129,32 +154,54 @@ const useAdminUserDetail = (id) => {
       const userCode = userInfo.code || '';
       const fullName = `${firstName} ${lastName}`;
 
+      // ถ้าเป็น staff จะบันทึกทั้ง DataEdit และ Timestamp
+      // ถ้าเป็น teacher จะบันทึกเฉพาะ Timestamp
+      const isStaff = permissions.userType === 'staff';
+
       switch (userType) {
         case 'student':
-          await Promise.all([
-            logStudentDataUpdate(userId, fullName, updateType),
-            logStudentEditTimestamp(fullName, userCode)
-          ]);
+          if (isStaff) {
+            await Promise.all([
+              logStudentDataUpdate(userId, fullName, updateType),
+              logStudentEditTimestamp(fullName, userCode)
+            ]);
+          } else {
+            // Teacher: บันทึกเฉพาะ Timestamp
+            await logStudentEditTimestamp(fullName, userCode);
+          }
           break;
         case 'teacher':
-          await Promise.all([
-            logTeacherDataUpdate(userId, fullName, updateType),
-            logTeacherEditTimestamp(fullName, userCode)
-          ]);
+          if (isStaff) {
+            await Promise.all([
+              logTeacherDataUpdate(userId, fullName, updateType),
+              logTeacherEditTimestamp(fullName, userCode)
+            ]);
+          } else {
+            // Teacher: บันทึกเฉพาะ Timestamp
+            await logTeacherEditTimestamp(fullName, userCode);
+          }
           break;
         case 'staff':
-          await Promise.all([
-            logStaffDataUpdate(userId, fullName, updateType),
-            logStaffEditTimestamp(fullName, userCode)
-          ]);
+          if (isStaff) {
+            await Promise.all([
+              logStaffDataUpdate(userId, fullName, updateType),
+              logStaffEditTimestamp(fullName, userCode)
+            ]);
+          } else {
+            // Teacher: บันทึกเฉพาะ Timestamp
+            await logStaffEditTimestamp(fullName, userCode);
+          }
           break;
         default:
-          await logSystemAction(userId, `แก้ไขข้อมูลผู้ใช้: ${fullName} - ${updateType}`);
+          if (isStaff) {
+            await logSystemAction(userId, `แก้ไขข้อมูลผู้ใช้: ${fullName} - ${updateType}`);
+          }
+        // Teacher ไม่บันทึก default case
       }
     } catch (error) {
       console.warn('Failed to log edit action:', error);
     }
-  }, []);
+  }, [permissions.userType]);
 
   const fetchUserData = useCallback(async () => {
     const fetchKey = `user-${id}`;
@@ -339,7 +386,8 @@ const useAdminUserDetail = (id) => {
       const sanitizedPassword = sanitizeInput(newPassword);
       const userType = userData?.userType;
       const userTypeData = userData?.[userType];
-      if (userTypeData) {
+
+      if (userTypeData && permissions.userType === 'staff') {
         const firstName = userTypeData.firstName || '';
         const lastName = userTypeData.lastName || '';
         const displayName = `${firstName} ${lastName}`;
@@ -349,11 +397,12 @@ const useAdminUserDetail = (id) => {
           `เริ่มเปลี่ยนรหัสผ่าน: ${displayName} (${userType})`
         );
       }
+      // Teacher ไม่บันทึก SystemAction
 
       const response = await apiChangePassword(userData.Users_ID, sanitizedPassword);
 
       if (response && response.status) {
-        if (userTypeData) {
+        if (userTypeData && permissions.userType === 'staff') {
           const firstName = userTypeData.firstName || '';
           const lastName = userTypeData.lastName || '';
           const displayName = `${firstName} ${lastName}`;
@@ -363,6 +412,7 @@ const useAdminUserDetail = (id) => {
             `เปลี่ยนรหัสผ่านสำเร็จ: ${displayName} (${userType})`
           );
         }
+        // Teacher ไม่บันทึก SystemAction
 
         return { success: true, message: 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว' };
       } else {
@@ -378,7 +428,7 @@ const useAdminUserDetail = (id) => {
 
       const userType = userData?.userType;
       const userTypeData = userData?.[userType];
-      if (userTypeData) {
+      if (userTypeData && permissions.userType === 'staff') {
         const firstName = userTypeData.firstName || '';
         const lastName = userTypeData.lastName || '';
         const displayName = `${firstName} ${lastName}`;
@@ -388,6 +438,7 @@ const useAdminUserDetail = (id) => {
           `เปลี่ยนรหัสผ่านล้มเหลว: ${displayName} (${userType}) - ${errorMessage}`
         );
       }
+      // Teacher ไม่บันทึก SystemAction
 
       throw new Error(errorMessage);
     } finally {
@@ -398,7 +449,8 @@ const useAdminUserDetail = (id) => {
     validatePassword,
     sanitizeInput,
     apiChangePassword,
-    handleApiError
+    handleApiError,
+    permissions.userType
   ]);
 
   const handleAssignmentChange = useCallback(async (departmentId, advisorId) => {
@@ -409,7 +461,6 @@ const useAdminUserDetail = (id) => {
     const validatedId = validateAndSanitizeId(id);
     const userType = userData?.userType;
     if (userType === 'student' && userData?.student) {
-
       await logEditAction(
         'student',
         validatedId,
@@ -432,7 +483,7 @@ const useAdminUserDetail = (id) => {
   const handleGoBack = useCallback(() => {
     const logNavigation = async () => {
       try {
-        if (userData) {
+        if (userData && permissions.userType === 'staff') {
           const userType = userData.userType;
           const userTypeData = userData[userType];
           if (userTypeData) {
@@ -446,6 +497,7 @@ const useAdminUserDetail = (id) => {
             );
           }
         }
+        // Teacher ไม่บันทึก SystemAction
       } catch (error) {
         console.warn('Failed to log navigation:', error);
       }
@@ -478,14 +530,17 @@ const useAdminUserDetail = (id) => {
       default:
         navigate('/name-register');
     }
-  }, [navigate, userData, validateUserType]);
+  }, [navigate, userData, validateUserType, permissions.userType]);
 
   const retryFetch = useCallback(() => {
     setError(null);
     setSecurityAlert(null);
     const logRetry = async () => {
       try {
-        await logSystemAction(0, `ลองโหลดข้อมูลผู้ใช้ใหม่อีกครั้ง: ID ${id}`);
+        if (permissions.userType === 'staff') {
+          await logSystemAction(0, `ลองโหลดข้อมูลผู้ใช้ใหม่อีกครั้ง: ID ${id}`);
+        }
+        // Teacher ไม่บันทึก SystemAction
       } catch (error) {
         console.warn('Failed to log retry action:', error);
       }
@@ -493,7 +548,7 @@ const useAdminUserDetail = (id) => {
 
     logRetry();
     fetchUserData();
-  }, [fetchUserData, id]);
+  }, [fetchUserData, id, permissions.userType]);
 
   useEffect(() => {
     if (id) {
