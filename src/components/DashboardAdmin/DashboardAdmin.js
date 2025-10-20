@@ -26,7 +26,8 @@ import {
   FiCalendar,
   FiTrendingUp,
   FiCheckCircle,
-  FiClock
+  FiClock,
+  FiFilter
 } from 'react-icons/fi';
 import { useDashboard } from './hooks/useDashboard';
 import { useExportDashboard } from './hooks/useExportDashboard';
@@ -44,10 +45,12 @@ ChartJS.register(
 );
 
 function DashboardAdmin() {
+  const currentYear = new Date().getFullYear() + 543;
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
+  const [showFilters, setShowFilters] = useState(false);
 
-  const { loading, error, dashboardData, refetch } = useDashboard();
+  const { loading, error, dashboardData, updateFilters, semester, academicYear, setSemester, setAcademicYear, refetch } = useDashboard();
   const { exporting, exportToExcel } = useExportDashboard(dashboardData);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -68,6 +71,20 @@ function DashboardAdmin() {
     setModalMessage(result.message);
     setModalOpen(true);
   };
+
+  const handleApplyFilters = () => {
+    updateFilters(semester, academicYear);
+    setShowFilters(false);
+  };
+
+  const handleClearFilters = () => {
+    setSemester('');
+    setAcademicYear('');
+    updateFilters('', '');
+    setShowFilters(false);
+  };
+
+  const academicYears = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
   const summaryCards = [
     {
@@ -286,6 +303,17 @@ function DashboardAdmin() {
     }
   };
 
+  const getFilterLabel = () => {
+    if (!semester && !academicYear) return 'ทั้งหมด';
+    let label = '';
+    if (academicYear) label += `ปี ${academicYear}`;
+    if (semester) {
+      const semesterNames = { '1': 'เทอม 1', '2': 'เทอม 2', '3': 'อื่นๆ' };
+      label += (label ? ' / ' : '') + semesterNames[semester];
+    }
+    return label;
+  };
+
   return (
     <div className={styles.container}>
       <Navbar
@@ -297,6 +325,14 @@ function DashboardAdmin() {
         <div className={styles.headerBar}>
           <h1 className={styles.heading}>แดชบอร์ด</h1>
           <div className={styles.headerRight}>
+            <button
+              className={styles.filterButton}
+              onClick={() => setShowFilters(!showFilters)}
+              title="กรองข้อมูล"
+            >
+              <FiFilter size={18} />
+              {getFilterLabel()}
+            </button>
             <button
               className={styles.refreshButton}
               onClick={refetch}
@@ -316,6 +352,57 @@ function DashboardAdmin() {
           </div>
         </div>
 
+        {showFilters && (
+          <div className={styles.filterPanel}>
+            <div className={styles.filterContent}>
+              <div className={styles.filterGroup}>
+                <label>ปีการศึกษา</label>
+                <select
+                  value={academicYear}
+                  onChange={(e) => setAcademicYear(e.target.value)}
+                  className={styles.select}
+                >
+                  <option value="">ทั้งหมด</option>
+                  {academicYears.map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.filterGroup}>
+                <label>เทอม</label>
+                <select
+                  value={semester}
+                  onChange={(e) => setSemester(e.target.value)}
+                  className={styles.select}
+                >
+                  <option value="">ทั้งหมด</option>
+                  <option value="1">เทอม 1</option>
+                  <option value="2">เทอม 2</option>
+                  <option value="3">ภาคฤดูร้อน</option>
+                </select>
+              </div>
+
+              <div className={styles.filterActions}>
+                <button
+                  className={styles.applyButton}
+                  onClick={handleApplyFilters}
+                  disabled={loading}
+                >
+                  <FiCheckCircle size={16} />
+                  ใช้ตัวกรอง
+                </button>
+                <button
+                  className={styles.clearButton}
+                  onClick={handleClearFilters}
+                >
+                  ล้างตัวกรอง
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {error && (
           <div className={styles.errorAlert}>
             <FiAlertCircle size={20} />
@@ -323,6 +410,13 @@ function DashboardAdmin() {
             <button onClick={refetch} className={styles.retryButton}>
               ลองใหม่
             </button>
+          </div>
+        )}
+
+        {dashboardData.userInfo.departmentRestricted && (
+          <div className={styles.infoAlert}>
+            <FiUsers size={20} />
+            <span>คุณกำลังดูข้อมูลเฉพาะสาขาของคุณเท่านั้น</span>
           </div>
         )}
 
