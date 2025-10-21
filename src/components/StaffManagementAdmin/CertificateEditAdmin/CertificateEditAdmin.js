@@ -15,8 +15,6 @@ function CertificateEditAdmin() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [activeTab, setActiveTab] = useState('templates');
-  const [submitLoading, setSubmitLoading] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState('');
 
   const {
     templates,
@@ -59,64 +57,34 @@ function CertificateEditAdmin() {
 
   const handleSubmit = async (formData) => {
     try {
-      setSubmitLoading(true);
-
       if (activeTab === 'templates') {
         if (modalType === 'add') {
-          setLoadingMessage('กำลังเพิ่มแม่แบบเกียรติบัตร...');
           await addTemplate(formData);
-          setLoadingMessage('เพิ่มแม่แบบสำเร็จ!');
         } else if (modalType === 'edit') {
-          setLoadingMessage('กำลังบันทึกการแก้ไข...');
           await updateTemplate(selectedItem.Template_ID, formData);
-          setLoadingMessage('บันทึกสำเร็จ!');
         }
       } else {
         if (modalType === 'add') {
-          setLoadingMessage('กำลังเพิ่มลายเซ็น...');
           await addSignature(formData);
-          setLoadingMessage('เพิ่มลายเซ็นสำเร็จ!');
         } else if (modalType === 'edit') {
-          setLoadingMessage('กำลังบันทึกการแก้ไข...');
           await updateSignature(selectedItem.Signature_ID, formData);
-          setLoadingMessage('บันทึกสำเร็จ!');
         }
       }
-
-      await new Promise(resolve => setTimeout(resolve, 800));
       closeModal();
     } catch (error) {
       console.error('Form submission error:', error);
-      setLoadingMessage('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
-      await new Promise(resolve => setTimeout(resolve, 1500));
-    } finally {
-      setSubmitLoading(false);
-      setLoadingMessage('');
     }
   };
 
   const handleDelete = async (id) => {
     try {
-      setSubmitLoading(true);
-
       if (activeTab === 'templates') {
-        setLoadingMessage('กำลังลบแม่แบบ...');
         await deleteTemplate(id);
-        setLoadingMessage('ลบแม่แบบสำเร็จ!');
       } else {
-        setLoadingMessage('กำลังลบลายเซ็น...');
         await deleteSignature(id);
-        setLoadingMessage('ลบลายเซ็นสำเร็จ!');
       }
-
-      await new Promise(resolve => setTimeout(resolve, 800));
     } catch (error) {
       console.error('Delete error:', error);
-      setLoadingMessage('เกิดข้อผิดพลาดในการลบ');
-      await new Promise(resolve => setTimeout(resolve, 1500));
-    } finally {
-      setSubmitLoading(false);
-      setLoadingMessage('');
     }
   };
 
@@ -145,8 +113,6 @@ function CertificateEditAdmin() {
   };
 
   const handleModalClose = () => {
-    if (submitLoading) return;
-
     if (hasUnsavedChanges(selectedItem, activeTab)) {
       if (window.confirm('คุณมีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก ต้องการปิดหน้าต่างนี้หรือไม่?')) {
         closeModal();
@@ -157,12 +123,7 @@ function CertificateEditAdmin() {
   };
 
   const handleRefresh = async () => {
-    setSubmitLoading(true);
-    setLoadingMessage('กำลังรีเฟรชข้อมูล...');
     await refreshData();
-    await new Promise(resolve => setTimeout(resolve, 500));
-    setSubmitLoading(false);
-    setLoadingMessage('');
   };
 
   const handleClearError = () => {
@@ -206,15 +167,15 @@ function CertificateEditAdmin() {
             <button
               className={styles.refreshButton}
               onClick={handleRefresh}
-              disabled={loading || submitLoading}
+              disabled={loading}
               title="รีเฟรชข้อมูล"
             >
-              <FiRefreshCw className={`${styles.buttonIcon} ${(loading || submitLoading) ? styles.spinning : ''}`} />
+              <FiRefreshCw className={`${styles.buttonIcon} ${loading ? styles.spinning : ''}`} />
             </button>
             <button
               className={styles.addButton}
               onClick={() => openModal('add', null, activeTab)}
-              disabled={loading || submitLoading}
+              disabled={loading}
             >
               <FiPlus className={styles.buttonIcon} />
               เพิ่ม{activeTab === 'templates' ? 'แม่แบบ' : 'ลายเซ็น'}
@@ -242,7 +203,7 @@ function CertificateEditAdmin() {
           <button
             className={`${styles.tabButton} ${activeTab === 'templates' ? styles.active : ''}`}
             onClick={() => setActiveTab('templates')}
-            disabled={loading || submitLoading}
+            disabled={loading}
           >
             แม่แบบเกียรติบัตร
             {templates.length > 0 && (
@@ -252,7 +213,7 @@ function CertificateEditAdmin() {
           <button
             className={`${styles.tabButton} ${activeTab === 'signatures' ? styles.active : ''}`}
             onClick={() => setActiveTab('signatures')}
-            disabled={loading || submitLoading}
+            disabled={loading}
           >
             ลายเซ็น
             {signatures.length > 0 && (
@@ -274,7 +235,7 @@ function CertificateEditAdmin() {
               <button
                 className={styles.emptyStateButton}
                 onClick={() => openModal('add', null, activeTab)}
-                disabled={loading || submitLoading}
+                disabled={loading}
               >
                 <FiPlus className={styles.buttonIcon} />
                 เพิ่ม{activeTab === 'templates' ? 'แม่แบบ' : 'ลายเซ็น'}ใหม่
@@ -292,7 +253,7 @@ function CertificateEditAdmin() {
                           className={styles.actionButton}
                           onClick={() => handlePreview(template, activeTab)}
                           title="ดูตัวอย่าง"
-                          disabled={loading || submitLoading}
+                          disabled={loading}
                         >
                           <FiEye />
                         </button>
@@ -300,7 +261,7 @@ function CertificateEditAdmin() {
                           className={styles.actionButton}
                           onClick={() => openModal('edit', template, activeTab)}
                           title="แก้ไข"
-                          disabled={loading || submitLoading}
+                          disabled={loading}
                         >
                           <FiEdit2 />
                         </button>
@@ -308,7 +269,7 @@ function CertificateEditAdmin() {
                           className={`${styles.actionButton} ${styles.deleteButton}`}
                           onClick={() => handleDelete(template.Template_ID)}
                           title="ลบ"
-                          disabled={loading || submitLoading}
+                          disabled={loading}
                         >
                           <FiTrash2 />
                         </button>
@@ -336,7 +297,7 @@ function CertificateEditAdmin() {
                           className={styles.actionButton}
                           onClick={() => handlePreview(sig, activeTab)}
                           title="ดูตัวอย่าง"
-                          disabled={loading || submitLoading}
+                          disabled={loading}
                         >
                           <FiEye />
                         </button>
@@ -344,7 +305,7 @@ function CertificateEditAdmin() {
                           className={styles.actionButton}
                           onClick={() => openModal('edit', sig, activeTab)}
                           title="แก้ไข"
-                          disabled={loading || submitLoading}
+                          disabled={loading}
                         >
                           <FiEdit2 />
                         </button>
@@ -352,7 +313,7 @@ function CertificateEditAdmin() {
                           className={`${styles.actionButton} ${styles.deleteButton}`}
                           onClick={() => handleDelete(sig.Signature_ID)}
                           title="ลบ"
-                          disabled={loading || submitLoading}
+                          disabled={loading}
                         >
                           <FiTrash2 />
                         </button>
@@ -381,7 +342,7 @@ function CertificateEditAdmin() {
                 <button
                   className={styles.closeButton}
                   onClick={handleModalClose}
-                  disabled={loading || submitLoading}
+                  disabled={loading}
                 >
                   <FiX />
                 </button>
@@ -405,7 +366,7 @@ function CertificateEditAdmin() {
                     onCancel={handleModalClose}
                     onFormDataChange={updateFormData}
                     onFileChange={handleFormFileChange}
-                    loading={submitLoading}
+                    loading={loading}
                     error={error}
                   />
                 )}
@@ -413,20 +374,12 @@ function CertificateEditAdmin() {
             </div>
           </div>
         )}
-        {submitLoading && (
-          <div className={styles.modernLoadingOverlay}>
-            <div className={styles.modernLoadingContent}>
-              <div className={styles.modernLoadingSpinner}>
-                <div className={styles.spinnerRing}></div>
-                <div className={styles.spinnerRing}></div>
-                <div className={styles.spinnerRing}></div>
-              </div>
-              <p className={styles.modernLoadingText}>{loadingMessage}</p>
-              <div className={styles.loadingDots}>
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
+
+        {loading && getCurrentData().length > 0 && (
+          <div className={styles.loadingOverlay}>
+            <div className={styles.loadingContent}>
+              <div className={styles.loadingSpinner}></div>
+              <p>กำลังดำเนินการ...</p>
             </div>
           </div>
         )}

@@ -1,4 +1,4 @@
-/* CertificateForm.module.css - Complete Version with Enhanced Validation */
+/* CertificateForm.module.css - Updated Version */
 .form {
   display: flex;
   flex-direction: column;
@@ -63,16 +63,8 @@
 .inputError {
   border-color: #ef4444 !important;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
-  animation: shake 0.3s ease-in-out;
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
-}
-
-/* Error and Warning Messages */
 .errorText {
   color: #ef4444;
   font-size: 12px;
@@ -80,43 +72,6 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  animation: slideInError 0.3s ease;
-}
-
-@keyframes slideInError {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.errorTextIcon {
-  font-size: 14px;
-  flex-shrink: 0;
-}
-
-.warningText {
-  color: #f59e0b;
-  font-size: 12px;
-  margin-top: 4px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-weight: 500;
-}
-
-.warningIcon {
-  font-size: 14px;
-  flex-shrink: 0;
-}
-
-.successIcon {
-  color: #10b981;
-  font-size: 14px;
 }
 
 .errorAlert {
@@ -130,18 +85,6 @@
   color: #dc2626;
   font-size: 14px;
   margin-bottom: 8px;
-  animation: slideDown 0.3s ease;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .errorIcon {
@@ -149,7 +92,6 @@
   flex-shrink: 0;
 }
 
-/* File Input Styles */
 .fileInput {
   padding: 12px 16px;
   border: 2px dashed #e5e7eb;
@@ -178,7 +120,6 @@
   background-color: #f3f4f6;
 }
 
-/* Current File Display (Edit Mode) */
 .currentFile {
   margin-top: 8px;
   padding: 8px 12px;
@@ -200,74 +141,26 @@
   font-family: monospace;
 }
 
-/* Selected File Display */
 .selectedFile {
   margin-top: 8px;
-  padding: 12px;
+  padding: 8px 12px;
   background: #f0fdf4;
-  border-radius: 8px;
-  border: 2px solid #10b981;
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.fileHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
+  border-radius: 6px;
+  border-left: 3px solid #10b981;
 }
 
 .selectedFileLabel {
   font-size: 12px;
   color: #059669;
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.removeFileButton {
-  background: #fee2e2;
-  color: #ef4444;
-  border: none;
-  border-radius: 4px;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 20px;
-  font-weight: bold;
-  transition: all 0.2s ease;
-  line-height: 1;
-}
-
-.removeFileButton:hover:not(:disabled) {
-  background: #ef4444;
-  color: white;
-  transform: scale(1.1);
-}
-
-.removeFileButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  margin-bottom: 4px;
+  display: block;
 }
 
 .fileInfo {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
 }
 
 .fileName {
@@ -276,30 +169,12 @@
   font-family: monospace;
   flex: 1;
   word-break: break-all;
-  min-width: 0;
 }
 
 .fileSize {
   font-size: 12px;
   color: #059669;
   white-space: nowrap;
-  font-weight: 600;
-}
-
-/* File Preview */
-.filePreviewContainer {
-  margin-top: 12px;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 2px solid #e5e7eb;
-  background: #f9fafb;
-}
-
-.filePreview {
-  width: 100%;
-  max-height: 200px;
-  object-fit: contain;
-  display: block;
 }
 
 .fileHelp {
@@ -319,7 +194,6 @@
   margin-top: 4px;
 }
 
-/* Modal Actions */
 .modalActions {
   display: flex;
   gap: 16px;
@@ -415,22 +289,21 @@
   outline-offset: 2px;
 }
 
-/* Success state for input */
-.input:valid:not(:placeholder-shown):not(:focus) {
-  border-color: #10b981;
+/* Error animations */
+.inputError {
+  animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
 }
 
 /* File drag and drop states */
 .fileInput.dragOver {
   border-color: #10b981;
   background: rgba(16, 185, 129, 0.05);
-}
-
-/* Number input - hide arrows */
-.input[type="number"]::-webkit-inner-spin-button,
-.input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
 }
 
 /* Responsive */
@@ -467,51 +340,6 @@
   .fileName {
     word-break: break-all;
   }
-
-  .filePreview {
-    max-height: 150px;
-  }
-
-  .errorText,
-  .warningText {
-    font-size: 11px;
-  }
-
-  .fieldHelp,
-  .fileHelp small {
-    font-size: 11px;
-  }
-}
-
-@media (max-width: 480px) {
-  .form {
-    gap: 16px;
-  }
-
-  .label {
-    font-size: 13px;
-  }
-
-  .input,
-  .select {
-    padding: 10px 14px;
-    font-size: 15px;
-  }
-
-  .modalActions {
-    margin-top: 24px;
-    padding-top: 20px;
-  }
-
-  .cancelButton,
-  .saveButton {
-    padding: 12px 20px;
-    font-size: 13px;
-  }
-
-  .filePreview {
-    max-height: 120px;
-  }
 }
 
 /* Print styles */
@@ -540,8 +368,7 @@
   .select,
   .fileInput,
   .cancelButton,
-  .saveButton,
-  .removeFileButton {
+  .saveButton {
     transition: none;
   }
 
@@ -549,39 +376,7 @@
     animation: none;
   }
 
-  .inputError,
-  .errorText,
-  .errorAlert,
-  .selectedFile {
+  .inputError {
     animation: none;
-  }
-}
-
-/* Dark mode support (optional) */
-@media (prefers-color-scheme: dark) {
-  .input,
-  .select {
-    background: #1f2937;
-    color: #f9fafb;
-    border-color: #374151;
-  }
-
-  .input::placeholder {
-    color: #6b7280;
-  }
-
-  .fileInput {
-    background: #1f2937;
-    border-color: #374151;
-    color: #9ca3af;
-  }
-
-  .label {
-    color: #f9fafb;
-  }
-
-  .fieldHelp,
-  .fileHelp small {
-    color: #9ca3af;
   }
 }
