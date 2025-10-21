@@ -41,6 +41,17 @@ const NavigationBar = () => {
   const [profileCache, setProfileCache] = useState(null);
   const [lastProfileFetch, setLastProfileFetch] = useState(0);
 
+  const [visibleMenuItems, setVisibleMenuItems] = useState([]);
+
+  const allMenuItems = React.useMemo(() => [
+    { path: "/main", label: "หน้าหลัก", icon: MainIcon },
+    { path: "/dashboard", label: "แดชบอร์ด", icon: DashboardIcon },
+    { path: "/activity-management", label: "จัดการกิจกรรม", icon: ActivityIcon },
+    { path: "/application", label: "จัดการแอปพลิเคชัน", icon: ApplicationIcon },
+    { path: "/name-register", label: "ทะเบียนรายชื่อ", icon: NameRegisterIcon },
+    { path: "/staff-management", label: "จัดการเจ้าหน้าที่", icon: StaffManagementIcon }
+  ], []);
+
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
@@ -246,6 +257,20 @@ const NavigationBar = () => {
     return { allowed: true };
   };
 
+  const filterMenuByPermission = useCallback((userType) => {
+    return allMenuItems.filter(item => {
+      const permission = checkPermission(item.path, userType);
+      return permission.allowed;
+    });
+  }, [allMenuItems]);
+
+  useEffect(() => {
+    if (Data_UsersType && !isLoadingUserType) {
+      const filteredMenu = filterMenuByPermission(Data_UsersType);
+      setVisibleMenuItems(filteredMenu);
+    }
+  }, [Data_UsersType, isLoadingUserType, filterMenuByPermission]);
+
   const handleNavigation = (path) => {
     if (isLoadingUserType) {
       setAlertMessage("กำลังโหลดข้อมูลผู้ใช้ โปรดลองอีกครั้งในภายหลัง.");
@@ -332,24 +357,21 @@ const NavigationBar = () => {
         <div className={styles.linearBlank}></div>
 
         <ul className={styles.navbarList}>
-          <li className={`${styles.navbarItem} ${activePath === "/main" ? styles.active : ""}`} onClick={() => handleNavigation("/main")}>
-            <span className={styles.navbarLink}><MainIcon width="20" height="20" /> หน้าหลัก</span>
-          </li>
-          <li className={`${styles.navbarItem} ${activePath === "/dashboard" ? styles.active : ""}`} onClick={() => handleNavigation("/dashboard")}>
-            <span className={styles.navbarLink}><DashboardIcon width="20" height="20" /> แดชบอร์ด</span>
-          </li>
-          <li className={`${styles.navbarItem} ${activePath === "/activity-management" ? styles.active : ""}`} onClick={() => handleNavigation("/activity-management")}>
-            <span className={styles.navbarLink}><ActivityIcon width="20" height="20" /> จัดการกิจกรรม</span>
-          </li>
-          <li className={`${styles.navbarItem} ${activePath === "/application" ? styles.active : ""}`} onClick={() => handleNavigation("/application")}>
-            <span className={styles.navbarLink}><ApplicationIcon width="20" height="20" /> จัดการแอปพลิเคชัน</span>
-          </li>
-          <li className={`${styles.navbarItem} ${activePath === "/name-register" ? styles.active : ""}`} onClick={() => handleNavigation("/name-register")}>
-            <span className={styles.navbarLink}><NameRegisterIcon width="20" height="20" /> ทะเบียนรายชื่อ</span>
-          </li>
-          <li className={`${styles.navbarItem} ${activePath === "/staff-management" ? styles.active : ""}`} onClick={() => handleNavigation("/staff-management")}>
-            <span className={styles.navbarLink}><StaffManagementIcon width="20" height="20" /> จัดการเจ้าหน้าที่</span>
-          </li>
+          {visibleMenuItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <li
+                key={item.path}
+                className={`${styles.navbarItem} ${activePath === item.path ? styles.active : ""}`}
+                onClick={() => handleNavigation(item.path)}
+              >
+                <span className={styles.navbarLink}>
+                  <Icon width="20" height="20" />
+                  {item.label}
+                </span>
+              </li>
+            );
+          })}
         </ul>
 
         <div className={styles.logoutButton} onClick={handleLogoutClick}>

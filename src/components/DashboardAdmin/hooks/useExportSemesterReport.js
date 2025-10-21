@@ -6,7 +6,7 @@ import { useExportSemesterReport } from './hooks/useExportSemesterReport';
 import styles from './SemesterReport.module.css';
 
 function SemesterReport() {
-  const currentYear = new Date().getFullYear() + 543; // Thai Buddhist year
+  const currentYear = new Date().getFullYear() + 543;
   const [selectedSemester, setSelectedSemester] = useState('');
   const [selectedYear, setSelectedYear] = useState(currentYear.toString());
 

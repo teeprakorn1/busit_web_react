@@ -10,7 +10,6 @@ const getApiUrl = (endpoint) => {
   return `${protocol}${baseUrl}${port}${endpoint}`;
 };
 
-// Axios instance with default config
 const apiClient = axios.create({
   timeout: 30000,
   withCredentials: true,
@@ -20,7 +19,6 @@ const apiClient = axios.create({
   }
 });
 
-// Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -34,9 +32,10 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
@@ -56,6 +55,17 @@ export const useDashboard = (initialSemester = '', initialYear = '') => {
   const [academicYear, setAcademicYear] = useState(initialYear);
   const isMountedRef = useRef(true);
   const abortControllerRef = useRef(null);
+
+  const semesterRef = useRef(semester);
+  const academicYearRef = useRef(academicYear);
+  
+  useEffect(() => {
+    semesterRef.current = semester;
+  }, [semester]);
+  
+  useEffect(() => {
+    academicYearRef.current = academicYear;
+  }, [academicYear]);
 
   const [dashboardData, setDashboardData] = useState({
     userInfo: {
@@ -84,27 +94,27 @@ export const useDashboard = (initialSemester = '', initialYear = '') => {
     }
   });
 
-  const fetchDashboardData = useCallback(async (sem = semester, year = academicYear) => {
-    // Cancel previous request if exists
+  const fetchDashboardData = useCallback(async (sem, year) => {
+    const finalSem = sem !== undefined ? sem : semesterRef.current;
+    const finalYear = year !== undefined ? year : academicYearRef.current;
+
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
 
-    // Create new abort controller
     abortControllerRef.current = new AbortController();
 
     try {
       setLoading(true);
       setError(null);
 
-      // Build query parameters
       const params = {};
-      if (sem) params.semester = sem;
-      if (year) params.academicYear = year;
-
-      console.log('🔄 Fetching dashboard data with params:', params);
-      console.log('📍 API URL:', getApiUrl('/api/admin/dashboard'));
-
+      if (finalSem && finalSem !== '') {
+        params.semester = String(finalSem);
+      }
+      if (finalYear && finalYear !== '') {
+        params.academicYear = String(finalYear);
+      }
       const response = await apiClient.get(getApiUrl('/api/admin/dashboard'), {
         params,
         signal: abortControllerRef.current.signal
@@ -112,13 +122,8 @@ export const useDashboard = (initialSemester = '', initialYear = '') => {
 
       if (!isMountedRef.current) return;
 
-      console.log('✅ Dashboard data received:', response.data);
-
       if (response.data) {
-        // Handle different response formats
         const data = response.data.data || response.data;
-        
-        // Validate and set default values
         setDashboardData({
           userInfo: data.userInfo || {
             isDean: false,
@@ -151,10 +156,7 @@ export const useDashboard = (initialSemester = '', initialYear = '') => {
 
     } catch (err) {
       if (!isMountedRef.current) return;
-      
-      // Ignore abort errors
       if (axios.isCancel(err) || err.name === 'CanceledError') {
-        console.log('Request cancelled');
         return;
       }
 
@@ -179,7 +181,6 @@ export const useDashboard = (initialSemester = '', initialYear = '') => {
               break;
             case 401:
               errorMessage = 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่';
-              // Handled by interceptor
               break;
             case 403:
               errorMessage = 'ไม่มีสิทธิ์เข้าถึงข้อมูลนี้';
@@ -197,11 +198,6 @@ export const useDashboard = (initialSemester = '', initialYear = '') => {
               break;
             case 500:
               errorMessage = serverMessage || 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์ กรุณาลองใหม่อีกครั้ง';
-              console.error('Server Error Details:', {
-                url: err.config?.url,
-                params: err.config?.params,
-                data: err.response.data
-              });
               break;
             case 502:
             case 503:
@@ -218,23 +214,20 @@ export const useDashboard = (initialSemester = '', initialYear = '') => {
       }
 
       setError(errorMessage);
-      
-      // Don't throw error, just set error state
-      // This prevents the component from crashing
+
     } finally {
       if (isMountedRef.current) {
         setLoading(false);
       }
     }
-  }, [semester, academicYear, navigate]);
+  }, [navigate]);
 
   useEffect(() => {
     isMountedRef.current = true;
-    fetchDashboardData();
+    fetchDashboardData('', '');
 
     return () => {
       isMountedRef.current = false;
-      // Cancel ongoing request on unmount
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }

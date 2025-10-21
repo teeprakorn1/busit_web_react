@@ -14,7 +14,8 @@ import {
   ArcElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 } from 'chart.js';
 import {
   FiActivity,
@@ -32,6 +33,7 @@ import {
 } from 'react-icons/fi';
 import { useDashboard } from './hooks/useDashboard';
 import { useExportDashboard } from './hooks/useExportDashboard';
+import { decryptValue } from "../../utils/crypto";
 
 ChartJS.register(
   CategoryScale,
@@ -42,7 +44,8 @@ ChartJS.register(
   ArcElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 function DashboardAdmin() {
@@ -51,6 +54,8 @@ function DashboardAdmin() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [showFilters, setShowFilters] = useState(false);
+  const [userType, setUserType] = useState("");
+  const [isDean, setIsDean] = useState(false);
 
   const { loading, error, dashboardData, updateFilters, semester, academicYear, setSemester, setAcademicYear, refetch } = useDashboard();
   const { exporting, exportToExcel } = useExportDashboard(dashboardData);
@@ -58,7 +63,29 @@ function DashboardAdmin() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
 
-  // จัดการ Resize
+  useEffect(() => {
+    const loadUserInfo = () => {
+      try {
+        const sessionUsersTypeRaw = sessionStorage.getItem("UsersType");
+        const adminRaw = sessionStorage.getItem("admin");
+
+        if (sessionUsersTypeRaw) {
+          const decryptedUserType = decryptValue(sessionUsersTypeRaw);
+          setUserType(decryptedUserType.toLowerCase().trim());
+        }
+
+        if (adminRaw) {
+          const adminData = JSON.parse(decryptValue(adminRaw));
+          setIsDean(adminData.isDean || false);
+        }
+      } catch (error) {
+        console.error("Error loading user info:", error);
+      }
+    };
+
+    loadUserInfo();
+  }, []);
+
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
@@ -69,22 +96,19 @@ function DashboardAdmin() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // จัดการ Error - แสดงแจ้งเตือนแต่ไม่ redirect อัตโนมัติ
   useEffect(() => {
     if (error) {
       console.error('Dashboard Error:', error);
-      
-      // ตรวจสอบว่าเป็น error 401 หรือไม่
+
       const errorStr = String(error).toLowerCase();
-      const isUnauthorized = errorStr.includes('401') || 
-                            errorStr.includes('unauthorized') || 
-                            errorStr.includes('เซสชัน');
+      const isUnauthorized = errorStr.includes('401') ||
+        errorStr.includes('unauthorized') ||
+        errorStr.includes('เซสชัน');
 
       if (isUnauthorized) {
         setModalMessage('เซสชันของคุณหมดอายุแล้ว กรุณาเข้าสู่ระบบใหม่');
         setModalOpen(true);
-        
-        // Redirect หลัง 2 วินาที
+
         setTimeout(() => {
           localStorage.removeItem('token');
           localStorage.removeItem('userData');
@@ -106,16 +130,16 @@ function DashboardAdmin() {
     }
   };
 
-  const handleApplyFilters = () => {
-    updateFilters(semester, academicYear);
+  const handleApplyFilters = async () => {
     setShowFilters(false);
+    await updateFilters(semester, academicYear);
   };
 
-  const handleClearFilters = () => {
+  const handleClearFilters = async () => {
     setSemester('');
     setAcademicYear('');
-    updateFilters('', '');
     setShowFilters(false);
+    await updateFilters('', '');
   };
 
   const handleRetry = () => {
@@ -124,48 +148,57 @@ function DashboardAdmin() {
 
   const academicYears = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
+  const isRestrictedTeacher = userType === 'teacher' && !isDean;
+  const hasRestrictedAccess = dashboardData.userInfo.departmentRestricted || isRestrictedTeacher;
+
   const summaryCards = [
     {
       title: "กิจกรรมทั้งหมด",
       value: loading ? "..." : dashboardData.totalActivities,
       icon: <FiActivity size={28} />,
       color: "#2563eb",
-      bgColor: "#dbeafe"
+      bgColor: "#dbeafe",
+      restricted: false
     },
     {
-      title: "นักศึกษาทั้งหมด",
+      title: hasRestrictedAccess ? "นักศึกษาทั้งหมด" : "นักศึกษาทั้งหมด",
       value: loading ? "..." : dashboardData.totalStudents.toLocaleString(),
       icon: <FiUsers size={28} />,
       color: "#7c3aed",
-      bgColor: "#ede9fe"
+      bgColor: "#ede9fe",
+      restricted: false
     },
     {
-      title: "อาจารย์ทั้งหมด",
+      title: hasRestrictedAccess ? "อาจารย์ทั้งหมด" : "อาจารย์ทั้งหมด",
       value: loading ? "..." : dashboardData.totalTeachers.toLocaleString(),
       icon: <FiUserCheck size={28} />,
       color: "#0891b2",
-      bgColor: "#cffafe"
+      bgColor: "#cffafe",
+      restricted: false
     },
     {
       title: "อัตราเข้าร่วม",
       value: loading ? "..." : `${dashboardData.participationRate}%`,
       icon: <FiBarChart2 size={28} />,
       color: "#10b981",
-      bgColor: "#d1fae5"
+      bgColor: "#d1fae5",
+      restricted: false
     },
     {
       title: "กิจกรรมที่เปิดรับสมัคร",
       value: loading ? "..." : dashboardData.activeActivities,
       icon: <FiCalendar size={28} />,
       color: "#f59e0b",
-      bgColor: "#fef3c7"
+      bgColor: "#fef3c7",
+      restricted: false
     },
     {
       title: "กิจกรรมที่สำเร็จ",
       value: loading ? "..." : dashboardData.completedActivities,
       icon: <FiTrendingUp size={28} />,
       color: "#14b8a6",
-      bgColor: "#ccfbf1"
+      bgColor: "#ccfbf1",
+      restricted: false
     },
   ];
 
@@ -361,7 +394,14 @@ function DashboardAdmin() {
       />
       <main className={`${styles.mainContent} ${isMobile ? styles.mobileContent : ""} ${sidebarOpen && !isMobile ? styles.contentShift : ""}`}>
         <div className={styles.headerBar}>
-          <h1 className={styles.heading}>แดชบอร์ด</h1>
+          <h1 className={styles.heading}>
+            แดชบอร์ด
+            {hasRestrictedAccess && (
+              <span className={styles.restrictedBadge}>
+                เฉพาะสาขา
+              </span>
+            )}
+          </h1>
           <div className={styles.headerRight}>
             <button
               className={styles.filterButton}
@@ -423,6 +463,7 @@ function DashboardAdmin() {
 
               <div className={styles.filterActions}>
                 <button
+                  type="button"
                   className={styles.applyButton}
                   onClick={handleApplyFilters}
                   disabled={loading}
@@ -431,8 +472,10 @@ function DashboardAdmin() {
                   ใช้ตัวกรอง
                 </button>
                 <button
+                  type="button"
                   className={styles.clearButton}
                   onClick={handleClearFilters}
+                  disabled={loading}
                 >
                   ล้างตัวกรอง
                 </button>
@@ -451,10 +494,15 @@ function DashboardAdmin() {
           </div>
         )}
 
-        {dashboardData.userInfo.departmentRestricted && (
+        {hasRestrictedAccess && (
           <div className={styles.infoAlert}>
             <FiUsers size={20} />
-            <span>คุณกำลังดูข้อมูลเฉพาะสาขาของคุณเท่านั้น</span>
+            <span>
+              {userType === 'teacher' && !isDean
+                ? 'คุณกำลังดูข้อมูลเฉพาะสาขาของคุณเท่านั้น'
+                : 'ข้อมูลถูกกรองตามสิทธิ์การเข้าถึงของคุณ'
+              }
+            </span>
           </div>
         )}
 
@@ -627,6 +675,7 @@ function DashboardAdmin() {
           <h2>
             <FiCalendar size={20} />
             รายการกิจกรรมล่าสุด
+            {hasRestrictedAccess && <span className={styles.tableBadge}>เฉพาะสาขา</span>}
           </h2>
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
@@ -638,12 +687,13 @@ function DashboardAdmin() {
                   <th>ผู้เข้าร่วม</th>
                   <th>ประเภท</th>
                   <th>สถานะ</th>
+                  {!hasRestrictedAccess && <th>สาขา</th>}
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className={styles.loadingCell}>กำลังโหลดข้อมูล...</td>
+                    <td colSpan={hasRestrictedAccess ? "6" : "7"} className={styles.loadingCell}>กำลังโหลดข้อมูล...</td>
                   </tr>
                 ) : dashboardData.recentActivities.length > 0 ? (
                   dashboardData.recentActivities.slice(0, 15).map((act, i) => (
@@ -674,11 +724,14 @@ function DashboardAdmin() {
                           {act.ActivityStatus_Name || 'ไม่ระบุ'}
                         </span>
                       </td>
+                      {!hasRestrictedAccess && (
+                        <td className={styles.departments}>{act.departments || '-'}</td>
+                      )}
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className={styles.noDataCell}>ไม่มีข้อมูลกิจกรรม</td>
+                    <td colSpan={hasRestrictedAccess ? "6" : "7"} className={styles.noDataCell}>ไม่มีข้อมูลกิจกรรม</td>
                   </tr>
                 )}
               </tbody>
